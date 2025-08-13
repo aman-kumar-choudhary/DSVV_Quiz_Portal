@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - DSVV Quiz System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        }
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.15);
+        }
+        .input-focus:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+        .gradient-text {
+            background: linear-gradient(90deg, #1e40af 0%, #1e3a8a 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .glow-on-hover {
+            transition: box-shadow 0.3s ease;
+        }
+        .glow-on-hover:hover {
+            box-shadow: 0 0 15px rgba(37, 99, 235, 0.3);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 bg-gray-50">
+    <div class="w-full max-w-md animate__animated animate__fadeIn">
+        <!-- DSVV Logo Header -->
+        <div class="flex flex-col items-center mb-8">
+            <div class="flex items-center mb-2">
+                <img src="/static/images/dsvvlogo.png" alt="DSVV Logo" class="h-14 mr-3">
+                <span class="text-3xl font-bold gradient-text">Quiz Portal</span>
+            </div>
+            <p class="text-gray-500 text-sm">Department of Computer Science</p>
+        </div>
+        
+        <!-- Signup Card -->
+        <div class="bg-white rounded-2xl shadow-lg overflow-hidden card-hover">
+            <!-- Card Header with Gradient -->
+            <div class="bg-gradient-to-r from-blue-800 to-blue-900 py-5 px-6 text-center">
+                <h1 class="text-2xl font-bold text-white">Create Your Account</h1>
+                <p class="text-blue-100 text-sm mt-1 opacity-90">Join our quiz community today</p>
+            </div>
+            
+            <!-- Card Body -->
+            <div class="p-6 sm:p-8">
+                {% if error %}
+                <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg flex items-start">
+                    <svg class="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                    </svg>
+                    <div class="ml-3">
+                        <p class="text-sm text-red-700">{{ error }}</p>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <form method="POST" action="/signup" class="space-y-4">
+                    <!-- Scholar ID -->
+                    <div>
+                        <label for="scholar_id" class="block text-sm font-medium text-gray-700 mb-2">Scholar ID</label>
+                        <input type="text" id="scholar_id" name="scholar_id" 
+                               class="input-focus block w-full px-4 py-2.5 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 placeholder-gray-400" 
+                               placeholder="Enter your scholar id" required>
+                    </div>
+                    
+                    <!-- Name -->
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                        <input type="text" id="name" name="name" 
+                               class="input-focus block w-full px-4 py-2.5 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 placeholder-gray-400" 
+                               placeholder="Enter your full name" required>
+                    </div>
+                    
+                    <!-- Course and Semester Row -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="course" class="block text-sm font-medium text-gray-700 mb-2">Course</label>
+                            <select id="course" name="course" 
+                                    class="input-focus block w-full px-4 py-2.5 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500">
+                                <option value="" disabled selected>Choose Course</option>
+                                <option value="MCA-DS">MCA-DS</option>
+                                <option value="BSC IT">BSC IT</option>
+                                <option value="BCA">BCA</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="semester" class="block text-sm font-medium text-gray-700 mb-2">Semester</label>
+                            <select id="semester" name="semester" 
+                                    class="input-focus block w-full px-4 py-2.5 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500">
+                                <option value="" disabled selected>Semester</option>
+                                <option value="1">I</option>
+                                <option value="2">II</option>
+                                <option value="3">III</option>
+                                <option value="4">IV</option>
+                                <option value="5">V</option>
+                                <option value="6">VI</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Email -->
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                        <input type="email" id="email" name="email" 
+                               class="input-focus block w-full px-4 py-2.5 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 placeholder-gray-400" 
+                               placeholder="Enter your email" required>
+                    </div>
+                    
+                    <!-- Password and Confirm Password Row -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                            <input type="password" id="password" name="password" 
+                                   class="input-focus block w-full px-4 py-2.5 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 placeholder-gray-400" 
+                                   placeholder="••••••••" required>
+                        </div>
+                        <div>
+                            <label for="retype-password" class="block text-sm font-medium text-gray-700 mb-2">Confirm</label>
+                            <input type="password" id="retype-password" name="retype-password" 
+                                   class="input-focus block w-full px-4 py-2.5 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 placeholder-gray-400" 
+                                   placeholder="••••••••" required>
+                        </div>
+                    </div>
+                    
+                    <!-- Terms Checkbox -->
+                    <div class="flex items-start mt-4">
+                        <div class="flex items-center h-5">
+                            <input id="terms" name="terms" type="checkbox" 
+                                   class="input-focus h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" required>
+                        </div>
+                        <div class="ml-3">
+                            <label for="terms" class="text-sm text-gray-700">I agree to the <a href="#" class="text-blue-600 hover:underline">Terms of Service</a> and <a href="#" class="text-blue-600 hover:underline">Privacy Policy</a></label>
+                        </div>
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <div class="mt-6">
+                        <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 glow-on-hover">
+                            Create Account
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Divider -->
+                <div class="relative my-6">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-gray-200"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="px-2 bg-white text-gray-500">Already registered?</span>
+                    </div>
+                </div>
+                
+                <!-- Sign In Link -->
+                <div class="text-center">
+                    <a href="/login" class="w-full inline-flex justify-center py-2.5 px-4 border border-gray-200 rounded-xl shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200">
+                        Sign in to your account
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer Note -->
+        <div class="mt-8 text-center text-sm text-gray-500">
+            <p>© 2023 Dev Sanskriti Vishwavidyalaya. All rights reserved.</p>
+            <p class="mt-1">Version 2.1.0</p>
+        </div>
+    </div>
+</body>
+</html>

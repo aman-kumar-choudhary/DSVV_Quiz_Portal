@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/static/js/main.js"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="min-h-screen flex flex-col">
+        <!-- Navigation Bar -->
+        <nav class="bg-blue-600 p-4">
+            <div class="container mx-auto flex justify-between items-center">
+                <div class="flex space-x-4">
+                    <a href="{{ url_for('index') }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded">Home</a>
+                    <a href="{{ url_for('view_score') }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded">View Score</a>
+                    <a href="{{ url_for('student_dashboard') }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded">Quiz</a>
+                    <a href="{{ url_for('logout') }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded">Logout</a>
+                </div>
+                {% if user %}
+                <div class="text-white">
+                    <span>Scholar ID: {{ user.scholar_id }}</span> |
+                    <span>Name: {{ user.name }}</span> |
+                    <span>Course: {{ user.course }}</span> |
+                    <span>Semester: {{ user.semester }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="container mx-auto mt-8 p-4">
+            <h1 class="text-2xl font-bold mb-4">Quiz</h1>
+            <p>Time Left: <span id="time-left">600</span> seconds</p>
+            <div id="quiz-container" class="bg-white p-6 rounded shadow-md mb-4"></div>
+            <button id="next-question" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" style="display: none;">Next Question</button>
+            <button id="submit-quiz" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700" style="display: none;">Submit Quiz</button>
+        </div>
+    </div>
+</body>
+</html>

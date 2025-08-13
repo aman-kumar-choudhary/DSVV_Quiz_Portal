@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Results - DSVV Quiz System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(to right, #e5e7eb, #d1d5db, #e5e7eb);
+            position: relative;
+        }
+        body::before {
+            content: "";
+            background-image: url('/static/images/dsvvquiz.webp');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: contain;
+            opacity: 0.1;
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            z-index: -1;
+            pointer-events: none;
+        }
+        .btn-glow {
+            transition: all 0.3s ease-in-out;
+        }
+        .btn-glow:hover {
+            box-shadow: 0 0 15px rgba(255, 255, 0, 0.7);
+            transform: translateY(-2px);
+        }
+        @keyframes fadeInUp {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeInUp 0.8s ease forwards;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .float {
+            animation: float 3s ease-in-out infinite;
+        }
+        .content-container {
+            position: relative;
+            z-index: 1;
+        }
+        .card-hover {
+            transition: all 0.3s ease-in-out;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col content-container">
+    <!-- Navigation Bar -->
+    <nav class="bg-gradient-to-r from-blue-700 via-blue-600 to-blue-500 shadow-lg p-4">
+        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center gap-2">
+            <div class="flex items-center">
+                <img src="/static/images/dsvvlogo.png" alt="DSVV Logo" class="h-16 mr-3 float">
+                <span class="text-white font-bold text-xl">DEPARTMENT OF COMPUTER SCIENCE</span>
+            </div>
+            <div class="flex flex-wrap gap-3">
+                <a href="{{ url_for('index') }}" class="btn-glow text-white px-4 py-2 hover:bg-blue-700 rounded-lg font-medium">Home</a>
+                <a href="{{ url_for('view_score') }}" class="btn-glow text-white px-4 py-2 bg-blue-700 rounded-lg font-medium">Results</a>
+                <a href="{{ url_for('student_dashboard') }}" class="btn-glow text-white px-4 py-2 hover:bg-blue-700 rounded-lg font-medium">Quiz</a>
+                <a href="{{ url_for('logout') }}" class="btn-glow text-white px-4 py-2 hover:bg-blue-700 rounded-lg font-medium">Logout</a>
+            </div>
+            {% if user %}
+            <div class="text-white text-sm md:text-base mt-2 md:mt-0 text-center md:text-left fade-in">
+                <span class="font-semibold">Scholar ID:</span> {{ user.scholar_id }} |
+                <span class="font-semibold">Name:</span> {{ user.name }} |
+                <span class="font-semibold">Course:</span> {{ user.course }} |
+                <span class="font-semibold">Semester:</span> {{ user.semester }}
+            </div>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8 flex-grow">
+        <div class="max-w-6xl mx-auto">
+            <!-- Page Header -->
+            <div class="mb-8 text-center fade-in">
+                <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-2">Your Quiz Results</h1>
+                <p class="text-lg md:text-xl text-gray-700">View your performance and progress</p>
+            </div>
+
+            <!-- Latest Result Card -->
+            {% if latest_result %}
+            <div class="bg-white rounded-xl shadow-md overflow-hidden card-hover mb-8 fade-in" style="animation-delay: 0.2s">
+                <div class="bg-gradient-to-r from-blue-50 to-blue-100 py-4 px-6 border-b border-blue-200">
+                    <h2 class="text-xl font-semibold text-blue-800">Latest Result</h2>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="bg-blue-50 p-4 rounded-lg text-center card-hover">
+                            <p class="text-sm font-medium text-blue-600 mb-1">Score</p>
+                            <p class="text-2xl font-bold text-blue-800">
+                                {{ latest_result.score }} / {{ latest_result.total }}
+                            </p>
+                        </div>
+                        <div class="bg-blue-50 p-4 rounded-lg text-center card-hover">
+                            <p class="text-sm font-medium text-blue-600 mb-1">Percentage</p>
+                            <p class="text-2xl font-bold text-blue-800">
+                                {{ (latest_result.score / latest_result.total * 100) | round(2) }}%
+                            </p>
+                        </div>
+                        <div class="bg-blue-50 p-4 rounded-lg text-center card-hover">
+                            <p class="text-sm font-medium text-blue-600 mb-1">Date Taken</p>
+                            <p class="text-lg font-semibold text-blue-800">
+                                {{ latest_result.timestamp.strftime('%d %b %Y') }}
+                            </p>
+                        </div>
+                        <div class="bg-blue-50 p-4 rounded-lg text-center card-hover">
+                            <p class="text-sm font-medium text-blue-600 mb-1">Course</p>
+                            <p class="text-lg font-semibold text-blue-800">
+                                {{ latest_result.course }} - Sem {{ latest_result.semester }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="bg-white rounded-xl shadow-md overflow-hidden p-6 mb-8 text-center fade-in" style="animation-delay: 0.2s">
+                <p class="text-red-500">No published results available yet.</p>
+            </div>
+            {% endif %}
+
+            <!-- Results History -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden card-hover fade-in" style="animation-delay: 0.3s">
+                <div class="bg-gradient-to-r from-blue-50 to-blue-100 py-4 px-6 border-b border-blue-200">
+                    <h2 class="text-xl font-semibold text-blue-800">Results History</h2>
+                </div>
+                <div class="p-6">
+                    {% if all_results %}
+                    <div class="overflow-x-auto">
+                        <table class="w-full border-collapse">
+                            <thead>
+                                <tr class="bg-blue-50 text-left">
+                                    <th class="py-3 px-4 font-medium text-blue-700">Date</th>
+                                    <th class="py-3 px-4 font-medium text-blue-700">Course</th>
+                                    <th class="py-3 px-4 font-medium text-blue-700">Semester</th>
+                                    <th class="py-3 px-4 font-medium text-blue-700">Score</th>
+                                    <th class="py-3 px-4 font-medium text-blue-700">Percentage</th>
+                                    <th class="py-3 px-4 font-medium text-blue-700">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                {% for result in all_results %}
+                                <tr class="hover:bg-blue-50">
+                                    <td class="py-3 px-4">{{ result.timestamp.strftime('%d %b %Y') }}</td>
+                                    <td class="py-3 px-4">{{ result.course }}</td>
+                                    <td class="py-3 px-4">Sem {{ result.semester }}</td>
+                                    <td class="py-3 px-4">{{ result.score }}/{{ result.total }}</td>
+                                    <td class="py-3 px-4">{{ (result.score / result.total * 100) | round(2) }}%</td>
+                                    <td class="py-3 px-4">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                            {% if result.published %}bg-green-100 text-green-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                            {% if result.published %}Published{% else %}Pending{% endif %}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-gray-500 text-center py-4">No quiz attempts found.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Back Button -->
+            <div class="mt-6 text-center fade-in" style="animation-delay: 0.4s">
+                <a href="{{ url_for('index') }}" class="inline-flex items-center px-4 py-2 btn-glow bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white font-bold rounded-lg shadow-md">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                    </svg>
+                    Back to Home
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 mt-12 py-6">
+        <div class="container mx-auto px-4 text-center text-sm text-gray-500">
+            <p>© 2023 Dev Sanskriti Vishwavidyalaya. All rights reserved.</p>
+            <p class="mt-1">Department of Computer Science</p>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - DSVV Quiz System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        .card-hover:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+    
+    <script>
+        function uploadQuestions() {
+            const formData = new FormData();
+            const fileInput = document.getElementById('json_file');
+            const course = document.getElementById('upload_course').value;
+            const semester = document.getElementById('upload_semester').value;
+            
+            if (!fileInput.files[0]) {
+                alert('Please select a JSON file to upload');
+                return;
+            }
+            
+            formData.append('json_file', fileInput.files[0]);
+            formData.append('course', course);
+            formData.append('semester', semester);
+            
+            fetch('/admin/upload_questions', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                } else {
+                    alert(data.message);
+                    window.location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while uploading questions');
+            });
+        }
+
+        function startQuiz() {
+            const course = document.getElementById('quiz_course').value;
+            const semester = document.getElementById('quiz_semester').value;
+            
+            fetch('/admin/start_quiz', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ course, semester })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                } else {
+                    alert(`${data.message}\n${data.modified_count} questions activated`);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while starting quiz');
+            });
+        }
+    </script>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen flex flex-col">
+        <!-- Navigation Bar -->
+        <nav class="bg-gradient-to-r from-blue-700 to-blue-800 shadow-lg p-4">
+            <div class="container mx-auto flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center mb-4 md:mb-0">
+                    <img src="/static/images/dsvvlogo.png" alt="DSVV Logo" class="h-14 mr-3">
+                    <span class="text-white font-bold text-lg">Computer Science Admin Panel</span>
+                </div>
+                
+                <div class="flex flex-wrap justify-center gap-2 md:gap-4">
+                    <a href="{{ url_for('index') }}" class="text-white hover:bg-blue-600 px-3 py-2 rounded transition-all">Home</a>
+                    <a href="{{ url_for('admin') }}" class="bg-blue-600 text-white px-3 py-2 rounded font-medium">Dashboard</a>
+                    <a href="{{ url_for('admin_questions') }}" class="text-white hover:bg-blue-600 px-3 py-2 rounded transition-all">Questions</a>
+                    <a href="{{ url_for('admin_results') }}" class="text-white hover:bg-blue-600 px-3 py-2 rounded transition-all">Results</a>
+                    <a href="{{ url_for('logout') }}" class="text-white hover:bg-red-500 px-3 py-2 rounded transition-all">Logout</a>
+                </div>
+                
+                <div class="mt-4 md:mt-0 text-white text-sm md:text-base">
+                    <span class="font-medium">Admin: {{ session['username'] }}</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="container mx-auto mt-8 p-4 animate-fade-in">
+            <div class="flex items-center justify-between mb-8">
+                <h1 class="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
+                <div class="text-sm text-gray-500">
+                    Last login: {{ stats.last_login if stats.last_login else 'Today' }}
+                </div>
+            </div>
+            
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-blue-500 transition-all duration-300 card-hover">
+                    <div class="flex items-center">
+                        <div class="p-3 bg-blue-100 rounded-full mr-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Total Students</p>
+                            <p class="text-2xl font-bold text-gray-800">{{ stats.total_students }}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-green-500 transition-all duration-300 card-hover">
+                    <div class="flex items-center">
+                        <div class="p-3 bg-green-100 rounded-full mr-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Total Questions</p>
+                            <p class="text-2xl font-bold text-gray-800">{{ stats.total_questions }}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-purple-500 transition-all duration-300 card-hover">
+                    <div class="flex items-center">
+                        <div class="p-3 bg-purple-100 rounded-full mr-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Quizzes Taken</p>
+                            <p class="text-2xl font-bold text-gray-800">{{ stats.total_quizzes }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <a href="{{ url_for('admin_questions') }}" class="bg-white p-6 rounded-xl shadow-md border-t-4 border-blue-500 transition-all duration-300 card-hover">
+                    <div class="flex items-start">
+                        <div class="p-3 bg-blue-100 rounded-lg mr-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-semibold mb-2 text-gray-800">Manage Questions</h2>
+                            <p class="text-gray-600">View, add, edit, and delete quiz questions. Maintain your question bank efficiently.</p>
+                        </div>
+                    </div>
+                </a>
+                
+                <a href="{{ url_for('admin_results') }}" class="bg-white p-6 rounded-xl shadow-md border-t-4 border-green-500 transition-all duration-300 card-hover">
+                    <div class="flex items-start">
+                        <div class="p-3 bg-green-100 rounded-lg mr-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-semibold mb-2 text-gray-800">View Results</h2>
+                            <p class="text-gray-600">Check student performance, generate reports, and publish examination results.</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Admin Tools Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Upload Questions Card -->
+                <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-yellow-500 animate-fade-in" style="animation-delay: 0.2s">
+                    <h2 class="text-xl font-semibold mb-4 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        Upload Questions
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="upload_course" class="block text-sm font-medium text-gray-700 mb-1">Course</label>
+                                <select id="upload_course" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                    {% for course in stats.courses %}
+                                    <option value="{{ course }}">{{ course }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div>
+                                <label for="upload_semester" class="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+                                <select id="upload_semester" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                    {% for semester in stats.semesters %}
+                                    <option value="{{ semester }}">Semester {{ semester }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="json_file" class="block text-sm font-medium text-gray-700 mb-1">Question JSON File</label>
+                            <div class="mt-1 flex items-center">
+                                <input type="file" id="json_file" accept=".json" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <p class="mt-1 text-sm text-gray-500">* Upload a properly formatted JSON file containing questions</p>
+                        </div>
+                        
+                        <button onclick="uploadQuestions()" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 px-4 rounded-md shadow-sm transition-all duration-300 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                            Upload Questions
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Start Quiz Card -->
+                <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-green-500 animate-fade-in" style="animation-delay: 0.4s">
+                    <h2 class="text-xl font-semibold mb-4 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Start Quiz
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="quiz_course" class="block text-sm font-medium text-gray-700 mb-1">Course</label>
+                                <select id="quiz_course" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                    {% for course in stats.courses %}
+                                    <option value="{{ course }}">{{ course }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div>
+                                <label for="quiz_semester" class="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+                                <select id="quiz_semester" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                    {% for semester in stats.semesters %}
+                                    <option value="{{ semester }}">Semester {{ semester }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-blue-50 p-4 rounded-md border border-blue-100">
+                            <h3 class="text-sm font-medium text-blue-800 mb-1">Important Note</h3>
+                            <p class="text-xs text-blue-600"> * Starting a quiz will activate all questions for the selected course and semester. Students will be able to access the quiz immediately.</p>
+                        </div>
+                        
+                        <button onclick="startQuiz()" class="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-md shadow-sm transition-all duration-300 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Start Quiz Now
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Activity Section -->
+            <div class="bg-white p-6 rounded-xl shadow-md mt-8 animate-fade-in" style="animation-delay: 0.6s">
+                <h2 class="text-xl font-semibold mb-4 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Recent Activity ..
+                </h2>
+                
+                <div class="space-y-4">
+                    <div class="flex items-start p-3 hover:bg-gray-50 rounded-lg transition-colors">
+                        <div class="p-2 bg-blue-100 rounded-full mr-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-800">New questions uploaded for B.Tech CSE Semester 5</p>
+                            <p class="text-xs text-gray-500">2 hours ago</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start p-3 hover:bg-gray-50 rounded-lg transition-colors">
+                        <div class="p-2 bg-green-100 rounded-full mr-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-800">Quiz started for BCA Semester 3</p>
+                            <p class="text-xs text-gray-500">1 day ago</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
