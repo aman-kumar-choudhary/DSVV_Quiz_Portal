@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: quiz-app
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: MONGO_URI
+        value: MONGO_URI=mongodb+srv://pyaman003:vjkdRaysGU3rRoTj@quizapp.kcjc3is.mongodb.net/?retryWrites=true&w=majority&appName=quizapp
+      - key: SECRET_KEY
+        value: secrets.token_hex(24)
