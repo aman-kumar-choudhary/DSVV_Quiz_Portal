@@ -3,4 +3,4 @@ pymongo
 python-dotenv
 flask-bcrypt
 pandas
-gunicorncls
+gunicorn
