@@ -1,0 +1,663 @@
+## admin_users.html
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - DSVV Quiz System</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            margin: 0;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background: linear-gradient(180deg, #1e40af 0%, #3b82f6 100%);
+            position: fixed;
+            top: 60px;
+            bottom: 0;
+            left: 0;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar.collapsed {
+            width: 70px;
+        }
+        
+        .main-content {
+            margin-left: 250px;
+            margin-top: 60px;
+            transition: all 0.3s ease;
+        }
+        
+        .main-content.expanded {
+            margin-left: 70px;
+        }
+        
+        .nav-item {
+            transition: all 0.2s ease;
+            border-left: 4px solid transparent;
+        }
+        
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-left: 4px solid #93c5fd;
+        }
+        
+        .nav-item.active {
+            background: rgba(255, 255, 255, 0.15);
+            border-left: 4px solid #ffffff;
+        }
+        
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 2000;
+            height: 60px;
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 70px;
+                top: 60px;
+            }
+            .sidebar .menu-text {
+                display: none;
+            }
+            .main-content {
+                margin-left: 70px;
+            }
+            .main-content.expanded {
+                margin-left: 0;
+            }
+            #hamburger-toggle {
+                display: block;
+            }
+        }
+        
+        #hamburger-toggle {
+            display: none;
+        }
+        
+        .action-btn {
+            transition: all 0.2s ease;
+        }
+        
+        .action-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        .modal {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            transform: translateY(-20px);
+            opacity: 0;
+        }
+        
+        .modal.active {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        header .logo-container img {
+            height: 70px; /* Adjusted logo size to fit wider header */
+        }
+        
+        
+        
+        
+        .logo-container {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            border-bottom-right-radius: 20px;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            max-height: calc(100vh - 300px);
+        }
+        
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+    <header class="bg-white shadow-md py-4 px-6 flex justify-between items-center fixed top-0 left-0 right-0 z-50">
+        <div class="flex items-center">
+            <div class="logo-container flex items-center">
+                <img src="/static/images/dsvvlogo.png" alt="DSVV Logo" class="h-24 mr-3">
+            </div>
+        </div>
+        <div class="flex items-center space-x-4">
+            <button id="hamburger-toggle" class="text-gray-600 focus:outline-none md:hidden">
+                <i class="fas fa-bars text-xl"></i>
+            </button>
+            <div class="relative">
+                <button class="text-gray-600 focus:outline-none">
+                    <i class="fas fa-bell text-xl"></i>
+                    <span class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 text-xs flex items-center justify-center">3</span>
+                </button>
+            </div>
+            <div class="relative">
+                <button id="user-menu-button" class="flex items-center focus:outline-none">
+                    <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold">A</div>
+                    <span class="ml-2 text-gray-700 hidden md:block">admin.computer</span>
+                    <i class="fas fa-chevron-down ml-1 text-gray-600 text-xs hidden md:block"></i>
+                </button>
+                <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 hidden z-50">
+                    <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                        <i class="fas fa-user-circle mr-2"></i>Profile
+                    </a>
+                    <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                        <i class="fas fa-cog mr-2"></i>Settings
+                    </a>
+                    <a href="/logout" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <nav id="dropdown-menu" class="hidden md:hidden bg-gradient-to-b from-blue-800 to-blue-600 text-white shadow-lg mt-16 fixed left-0 right-0 z-40">
+        <ul class="space-y-2 px-4 py-4">
+            <li class="nav-item">
+                <a href="/admin" class="flex items-center p-3 rounded-lg hover:bg-blue-700">
+                    <i class="fas fa-tachometer-alt w-6 text-center"></i>
+                    <span class="ml-3">Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/questions" class="flex items-center p-3 rounded-lg hover:bg-blue-700">
+                    <i class="fas fa-question-circle w-6 text-center"></i>
+                    <span class="ml-3">Questions</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/results" class="flex items-center p-3 rounded-lg hover:bg-blue-700">
+                    <i class="fas fa-chart-bar w-6 text-center"></i>
+                    <span class="ml-3">Results</span>
+                </a>
+            </li>
+            <li class="nav-item active">
+                <a href="/admin/users" class="flex items-center p-3 rounded-lg hover:bg-blue-700">
+                    <i class="fas fa-users w-6 text-center"></i>
+                    <span class="ml-3">User Management</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="flex items-center p-3 rounded-lg hover:bg-blue-700">
+                    <i class="fas fa-cog w-6 text-center"></i>
+                    <span class="ml-3">Settings</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/logout" class="flex items-center p-3 rounded-lg hover:bg-blue-700">
+                    <i class="fas fa-sign-out-alt w-6 text-center"></i>
+                    <span class="ml-3">Logout</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="sidebar h-[calc(100vh-60px)]">
+        <div class="py-6">
+            <ul class="space-y-2 px-4">
+                <li class="nav-item">
+                    <a href="/admin" class="flex items-center p-3 text-white rounded-lg">
+                        <i class="fas fa-tachometer-alt w-6 text-center"></i>
+                        <span class="ml-3 menu-text">Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/admin/questions" class="flex items-center p-3 text-white rounded-lg">
+                        <i class="fas fa-question-circle w-6 text-center"></i>
+                        <span class="ml-3 menu-text">Questions</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/admin/results" class="flex items-center p-3 text-white rounded-lg">
+                        <i class="fas fa-chart-bar w-6 text-center"></i>
+                        <span class="ml-3 menu-text">Results</span>
+                    </a>
+                </li>
+                <li class="nav-item active">
+                    <a href="/admin/users" class="flex items-center p-3 text-white rounded-lg">
+                        <i class="fas fa-users w-6 text-center"></i>
+                        <span class="ml-3 menu-text">User Management</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="flex items-center p-3 text-white rounded-lg">
+                        <i class="fas fa-cog w-6 text-center"></i>
+                        <span class="ml-3 menu-text">Settings</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/logout" class="flex items-center p-3 text-white rounded-lg">
+                        <i class="fas fa-sign-out-alt w-6 text-center"></i>
+                        <span class="ml-3 menu-text">Logout</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="main-content min-h-[calc(100vh-60px)]">
+        <main class="p-6 mt-0">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+                <h1 class="text-3xl font-bold text-gray-800 flex items-center">
+                    <i class="fas fa-users text-blue-600 mr-3"></i> User Management
+                </h1>
+                <div class="mt-4 md:mt-0">
+                    <span class="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full">
+                        Total Students: {{ stats.total_students }}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="bg-white p-6 rounded-xl shadow-md mb-8">
+                <h2 class="text-xl font-semibold mb-4 flex items-center text-blue-700">
+                    <i class="fas fa-filter mr-2"></i> Filter Users
+                </h2>
+                <form method="GET" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Course</label>
+                        <select name="course" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                            <option value="" {% if selected_course == '' %}selected{% endif %}>All Courses</option>
+                            <option value="MCA-DS" {% if selected_course == 'MCA-DS' %}selected{% endif %}>MCA-DS</option>
+                            <option value="BSC IT" {% if selected_course == 'BSC IT' %}selected{% endif %}>BSC IT</option>
+                            <option value="BCA" {% if selected_course == 'BCA' %}selected{% endif %}>BCA</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Semester</label>
+                        <select name="semester" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                            <option value="" {% if selected_semester == '' %}selected{% endif %}>All Semesters</option>
+                            <option value="1" {% if selected_semester == '1' %}selected{% endif %}>1</option>
+                            <option value="2" {% if selected_semester == '2' %}selected{% endif %}>2</option>
+                            <option value="3" {% if selected_semester == '3' %}selected{% endif %}>3</option>
+                            <option value="4" {% if selected_semester == '4' %}selected{% endif %}>4</option>
+                            <option value="5" {% if selected_semester == '5' %}selected{% endif %}>5</option>
+                            <option value="6" {% if selected_semester == '6' %}selected{% endif %}>6</option>
+                        </select>
+                    </div>
+                    <div class="flex items-end">
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                            Apply Filters
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Students Table -->
+            <div class="bg-white p-6 rounded-xl shadow-md mb-8">
+                <h2 class="text-xl font-semibold mb-4 flex items-center text-green-700">
+                    <i class="fas fa-list mr-2"></i> Student List
+                </h2>
+                
+                <div class="table-container">
+                    {% if students %}
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scholar ID</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Semester</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for student in students %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">{{ student.scholar_id }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">{{ student.name }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">{{ student.course }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">{{ student.semester }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">{{ student.email }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    {% if student.blocked %}
+                                    <span class="status-badge bg-red-100 text-red-800">Blocked</span>
+                                    {% else %}
+                                    <span class="status-badge bg-green-100 text-green-800">Active</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm space-x-2">
+                                    <button onclick="editUser('{{ student.scholar_id }}', '{{ student.name }}', '{{ student.course }}', '{{ student.semester }}', '{{ student.email }}', '{{ student.blocked|lower }}')" 
+                                            class="action-btn text-blue-600 hover:text-blue-800" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button onclick="viewMarks('{{ student.scholar_id }}')" 
+                                            class="action-btn text-green-600 hover:text-green-800" title="View Results">
+                                        <i class="fas fa-chart-bar"></i>
+                                    </button>
+                                    <button onclick="deleteUser('{{ student.scholar_id }}')" 
+                                            class="action-btn text-red-600 hover:text-red-800" title="Delete">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    {% if student.blocked %}
+                                    <button onclick="blockUser('{{ student.scholar_id }}', false)" 
+                                            class="action-btn text-yellow-600 hover:text-yellow-800" title="Unblock">
+                                        <i class="fas fa-lock-open"></i>
+                                    </button>
+                                    {% else %}
+                                    <button onclick="blockUser('{{ student.scholar_id }}', true)" 
+                                            class="action-btn text-yellow-600 hover:text-yellow-800" title="Block">
+                                        <i class="fas fa-lock"></i>
+                                    </button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="text-center py-8">
+                        <i class="fas fa-exclamation-triangle text-gray-400 text-4xl mb-4"></i>
+                        <p class="text-gray-500">No students found</p>
+                        <p class="text-sm text-gray-400 mt-2">Try adjusting your filters.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div id="edit-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div class="px-6 py-4 border-b">
+                <h2 class="text-xl font-semibold text-gray-800">Edit User</h2>
+            </div>
+            <form id="edit-form" class="px-6 py-4">
+                <input type="hidden" id="edit-scholar_id">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                    <input type="text" id="edit-name" class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Course</label>
+                    <select id="edit-course" class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Select Course</option>
+                        <option value="MCA-DS">MCA-DS</option>
+                        <option value="BSC IT">BSC IT</option>
+                        <option value="BCA">BCA</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+                    <select id="edit-semester" class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Select Semester</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="edit-email" class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <select id="edit-blocked" class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                        <option value="false">Active</option>
+                        <option value="true">Blocked</option>
+                    </select>
+                </div>
+            </form>
+            <div class="px-6 py-4 border-t flex justify-end space-x-3">
+                <button type="button" onclick="closeModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors">
+                    Cancel
+                </button>
+                <button type="button" onclick="submitEdit()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                    Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Marks Modal -->
+    <div id="marks-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl">
+            <div class="px-6 py-4 border-b flex justify-between items-center">
+                <h2 class="text-xl font-semibold text-gray-800">Student Results</h2>
+                <button onclick="closeMarksModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="px-6 py-4">
+                <div id="marks-content" class="max-h-96 overflow-y-auto">
+                    <!-- Results will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Toggle mobile menu
+        document.getElementById('hamburger-toggle').addEventListener('click', function() {
+            const menu = document.getElementById('dropdown-menu');
+            menu.classList.toggle('hidden');
+        });
+
+        // Toggle user dropdown
+        document.getElementById('user-menu-button').addEventListener('click', function() {
+            document.getElementById('user-dropdown').classList.toggle('hidden');
+        });
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            const userMenu = document.getElementById('user-menu-button');
+            const dropdown = document.getElementById('user-dropdown');
+            if (!userMenu.contains(event.target) && !dropdown.contains(event.target)) {
+                dropdown.classList.add('hidden');
+            }
+            
+            const toggle = document.getElementById('hamburger-toggle');
+            const menu = document.getElementById('dropdown-menu');
+            if (!toggle.contains(event.target) && !menu.contains(event.target)) {
+                menu.classList.add('hidden');
+            }
+        });
+
+        // Edit user function with prefilled data
+        function editUser(scholar_id, name, course, semester, email, blocked) {
+            document.getElementById('edit-scholar_id').value = scholar_id;
+            document.getElementById('edit-name').value = name;
+            document.getElementById('edit-course').value = course;
+            document.getElementById('edit-semester').value = semester;
+            document.getElementById('edit-email').value = email;
+            document.getElementById('edit-blocked').value = blocked.toString();
+            
+            // Show modal with animation
+            const modal = document.getElementById('edit-modal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.add('active');
+            }, 10);
+        }
+
+        // Submit edit form
+        function submitEdit() {
+            const data = {
+                scholar_id: document.getElementById('edit-scholar_id').value,
+                name: document.getElementById('edit-name').value,
+                course: document.getElementById('edit-course').value,
+                semester: document.getElementById('edit-semester').value,
+                email: document.getElementById('edit-email').value,
+                blocked: document.getElementById('edit-blocked').value === 'true'
+            };
+            
+            fetch('/api/edit_user', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      alert('User updated successfully');
+                      location.reload();
+                  } else {
+                      alert(data.error || 'Failed to update user');
+                  }
+              }).catch(error => {
+                  alert('Error updating user: ' + error);
+              });
+        }
+
+        // Close modal
+        function closeModal() {
+            const modal = document.getElementById('edit-modal');
+            modal.classList.remove('active');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        // View student marks
+        function viewMarks(scholar_id) {
+            fetch(`/api/user_results/${scholar_id}`)
+                .then(response => response.json())
+                .then(data => {
+                    const content = document.getElementById('marks-content');
+                    content.innerHTML = '';
+                    
+                    if (data.results && data.results.length > 0) {
+                        let html = `
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Course</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Semester</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Score</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                        `;
+                        
+                        data.results.forEach(result => {
+                            const date = new Date(result.timestamp);
+                            html += `
+                                <tr>
+                                    <td class="px-4 py-2 whitespace-nowrap">${result.course || 'N/A'}</td>
+                                    <td class="px-4 py-2 whitespace-nowrap">${result.semester || 'N/A'}</td>
+                                    <td class="px-4 py-2 whitespace-nowrap">${result.score}</td>
+                                    <td class="px-4 py-2 whitespace-nowrap">${result.total}</td>
+                                    <td class="px-4 py-2 whitespace-nowrap">${date.toLocaleDateString()}</td>
+                                </tr>
+                            `;
+                        });
+                        
+                        html += `
+                                    </tbody>
+                                </table>
+                            </div>
+                        `;
+                        
+                        content.innerHTML = html;
+                    } else {
+                        content.innerHTML = '<p class="text-center py-4 text-gray-500">No results found for this student.</p>';
+                    }
+                    
+                    // Show marks modal
+                    const modal = document.getElementById('marks-modal');
+                    modal.classList.remove('hidden');
+                    setTimeout(() => {
+                        modal.classList.add('active');
+                    }, 10);
+                })
+                .catch(error => {
+                    const content = document.getElementById('marks-content');
+                    content.innerHTML = `<p class="text-center py-4 text-red-500">Error loading results: ${error}</p>`;
+                    
+                    const modal = document.getElementById('marks-modal');
+                    modal.classList.remove('hidden');
+                    setTimeout(() => {
+                        modal.classList.add('active');
+                    }, 10);
+                });
+        }
+
+        // Close marks modal
+        function closeMarksModal() {
+            const modal = document.getElementById('marks-modal');
+            modal.classList.remove('active');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        // Delete user
+        function deleteUser(scholar_id) {
+            if (confirm('Are you sure you want to delete this user? This action cannot be undone and will delete all related data.')) {
+                fetch('/api/delete_user', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({scholar_id})
+                }).then(response => response.json())
+                  .then(data => {
+                      if (data.success) {
+                          alert('User deleted successfully');
+                          location.reload();
+                      } else {
+                          alert(data.error || 'Failed to delete user');
+                      }
+                  }).catch(error => {
+                      alert('Error deleting user: ' + error);
+                  });
+            }
+        }
+
+        // Block/unblock user
+        function blockUser(scholar_id, block) {
+            const action = block ? 'block' : 'unblock';
+            if (confirm(`Are you sure you want to ${action} this user?`)) {
+                fetch('/api/block_user', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({scholar_id, block})
+                }).then(response => response.json())
+                  .then(data => {
+                      if (data.success) {
+                          alert(`User ${action}ed successfully`);
+                          location.reload();
+                      } else {
+                          alert(data.error || `Failed to ${action} user`);
+                      }
+                  }).catch(error => {
+                      alert(`Error ${action}ing user: ` + error);
+                  });
+            }
+        }
+    </script>
+</body>
+</html>

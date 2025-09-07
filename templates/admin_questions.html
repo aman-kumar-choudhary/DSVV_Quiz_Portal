@@ -1,203 +1,622 @@
+## admin_questions.html
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Question Management - DSVV Quiz System</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body {
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
             font-family: 'Poppins', sans-serif;
         }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            margin: 0;
         }
-        .animate-fade-in {
-            animation: fadeIn 0.5s ease-out forwards;
+        
+        .sidebar {
+            width: 250px;
+            background: linear-gradient(180deg, #1e40af 0%, #3b82f6 100%);
+            position: fixed;
+            top: 60px;
+            bottom: 0;
+            left: 0;
+            overflow-y: auto;
+            transition: all 0.3s ease;
         }
-        .card-hover:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        
+        .sidebar.collapsed {
+            width: 70px;
         }
-        .question-card {
+        
+        .main-content {
+            margin-left: 250px;
+            margin-top: 60px;
+            transition: all 0.3s ease;
+        }
+        
+        .main-content.expanded {
+            margin-left: 70px;
+        }
+        
+        .nav-item {
             transition: all 0.2s ease;
+            border-left: 4px solid transparent;
         }
-        .question-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-left: 4px solid #93c5fd;
         }
-    </style>
-    
-    <script>
-        function deleteQuestion(questionId) {
-            if (confirm('Are you sure you want to delete this question?')) {
-                fetch('/admin', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: `delete_question_id=${questionId}`
-                })
-                .then(response => response.json())
-                .then(data => {
-                    alert(data.message);
-                    window.location.reload();
-                })
-                .catch(error => console.error('Error:', error));
+        
+        .nav-item.active {
+            background: rgba(255, 255, 255, 0.15);
+            border-left: 4px solid #ffffff;
+        }
+        
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 2000;
+            height: 60px;
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 70px;
+                top: 60px;
+            }
+            .sidebar .menu-text {
+                display: none;
+            }
+            .main-content {
+                margin-left: 70px;
+            }
+            .main-content.expanded {
+                margin-left: 0;
+            }
+            #hamburger-toggle {
+                display: block;
             }
         }
-    </script>
-</head>
-<body class="bg-gray-50">
-    <div class="min-h-screen flex flex-col">
-        <!-- Navigation Bar -->
-        <nav class="bg-gradient-to-r from-blue-700 to-blue-800 shadow-lg p-4">
-            <div class="container mx-auto flex flex-col md:flex-row justify-between items-center">
-                <div class="flex items-center mb-4 md:mb-0">
-                    <img src="/static/images/dsvvlogo.png" 
-     alt="DSVV Logo" 
-     class="hue-rotate-14 mr-3"
-     width="73" height="73">
-<span class="text-white font-bold text-lg">Question Management</span>
+        
+        #hamburger-toggle {
+            display: none;
+        }
 
-                </div>
-                
-                <div class="flex flex-wrap justify-center gap-2 md:gap-4">
-                    <a href="{{ url_for('index') }}" class="text-white hover:bg-blue-600 px-3 py-2 rounded transition-all">Home</a>
-                    <a href="{{ url_for('admin') }}" class="text-white hover:bg-blue-600 px-3 py-2 rounded transition-all">Dashboard</a>
-                    <a href="{{ url_for('admin_questions') }}" class="bg-blue-600 text-white px-3 py-2 rounded font-medium">Questions</a>
-                    <a href="{{ url_for('admin_results') }}" class="text-white hover:bg-blue-600 px-3 py-2 rounded transition-all">Results</a>
-                    <a href="{{ url_for('logout') }}" class="text-white hover:bg-red-500 px-3 py-2 rounded transition-all">Logout</a>
-                </div>
-                
-                <div class="mt-4 md:mt-0 text-white text-sm md:text-base">
-                    <span class="font-medium">Admin: {{ session['username'] }}</span>
+        header .logo-container img {
+            height: 70px; /* Adjusted logo size to fit wider header */
+        }
+        
+        
+        
+        
+        .logo-container {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            border-bottom-right-radius: 20px;
+        }
+        
+        .action-btn {
+            transition: all 0.2s ease;
+        }
+        
+        .action-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        .modal {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            transform: translateY(-20px);
+            opacity: 0;
+        }
+        
+        .modal.active {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+    <header class="bg-white shadow-md py-4 px-6 flex justify-between items-center fixed top-0 left-0 right-0 z-50">
+        <div class="flex items-center">
+            <div class="logo-container flex items-center">
+                <img src="/static/images/dsvvlogo.png" alt="DSVV Logo" class="h-24 mr-3">
+            </div>
+        </div>
+        <div class="flex items-center space-x-4">
+            <button id="hamburger-toggle" class="text-gray-600 focus:outline-none md:hidden">
+                <i class="fas fa-bars text-xl"></i>
+            </button>
+            <div class="relative">
+                <button class="text-gray-600 focus:outline-none">
+                    <i class="fas fa-bell text-xl"></i>
+                    <span class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 text-xs flex items-center justify-center">3</span>
+                </button>
+            </div>
+            <div class="relative">
+                <button id="user-menu-button" class="flex items-center focus:outline-none">
+                    <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold">A</div>
+                    <span class="ml-2 text-gray-700 hidden md:block">{{ session['username'] }}</span>
+                    <i class="fas fa-chevron-down ml-1 text-gray-600 text-xs hidden md:block"></i>
+                </button>
+                <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 hidden z-50">
+                    <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                        <i class="fas fa-user-circle mr-2"></i>Profile
+                    </a>
+                    <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                        <i class="fas fa-cog mr-2"></i>Settings
+                    </a>
+                    <a href="/logout" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </a>
                 </div>
             </div>
-        </nav>
+        </div>
+    </header>
 
-        <!-- Main Content -->
-        <div class="container mx-auto mt-8 p-4 animate-fade-in">
-            <h1 class="text-3xl font-bold text-gray-800 mb-6">Question Management</h1>
-            
-            <!-- Filter Questions Card -->
-            <div class="bg-white p-6 rounded-xl shadow-md mb-8 card-hover">
-                <h2 class="text-xl font-semibold mb-4 flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                    </svg>
-                    Filter Questions
+    <nav id="dropdown-menu" class="hidden md:hidden bg-gradient-to-b from-blue-800 to-blue-600 text-white shadow-lg mt-16 fixed left-0 right-0 z-40">
+        <ul class="space-y-2 px-4 py-4">
+            <li class="nav-item">
+                <a href="/admin" class="flex items-center p-3 rounded-lg hover:bg-blue-700">
+                    <i class="fas fa-tachometer-alt w-6 text-center"></i>
+                    <span class="ml-3">Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item active">
+                <a href="/admin/questions" class="flex items-center p-3 rounded-lg hover:bg-blue-700">
+                    <i class="fas fa-question-circle w-6 text-center"></i>
+                    <span class="ml-3">Questions</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/results" class="flex items-center p-3 rounded-lg hover:bg-blue-700">
+                    <i class="fas fa-chart-bar w-6 text-center"></i>
+                    <span class="ml-3">Results</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/users" class="flex items-center p-3 rounded-lg hover:bg-blue-700">
+                    <i class="fas fa-users w-6 text-center"></i>
+                    <span class="ml-3">User Management</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="flex items-center p-3 rounded-lg hover:bg-blue-700">
+                    <i class="fas fa-cog w-6 text-center"></i>
+                    <span class="ml-3">Settings</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/logout" class="flex items-center p-3 rounded-lg hover:bg-blue-700">
+                    <i class="fas fa-sign-out-alt w-6 text-center"></i>
+                    <span class="ml-3">Logout</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="sidebar h-[calc(100vh-60px)]">
+        <div class="py-6">
+            <ul class="space-y-2 px-4">
+                <li class="nav-item">
+                    <a href="/admin" class="flex items-center p-3 text-white rounded-lg">
+                        <i class="fas fa-tachometer-alt w-6 text-center"></i>
+                        <span class="ml-3 menu-text">Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item active">
+                    <a href="/admin/questions" class="flex items-center p-3 text-white rounded-lg">
+                        <i class="fas fa-question-circle w-6 text-center"></i>
+                        <span class="ml-3 menu-text">Questions</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/admin/results" class="flex items-center p-3 text-white rounded-lg">
+                        <i class="fas fa-chart-bar w-6 text-center"></i>
+                        <span class="ml-3 menu-text">Results</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/admin/users" class="flex items-center p-3 text-white rounded-lg">
+                        <i class="fas fa-users w-6 text-center"></i>
+                        <span class="ml-3 menu-text">User Management</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="flex items-center p-3 text-white rounded-lg">
+                        <i class="fas fa-cog w-6 text-center"></i>
+                        <span class="ml-3 menu-text">Settings</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/logout" class="flex items-center p-3 text-white rounded-lg">
+                        <i class="fas fa-sign-out-alt w-6 text-center"></i>
+                        <span class="ml-3 menu-text">Logout</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="main-content min-h-[calc(100vh-60px)]">
+        <main class="p-6 mt-0">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+                <h1 class="text-3xl font-bold text-gray-800 flex items-center">
+                    <i class="fas fa-question-circle text-blue-600 mr-3"></i> Question Management
+                </h1>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-md mb-8">
+                <h2 class="text-xl font-semibold mb-4 flex items-center text-green-700">
+                    <i class="fas fa-plus mr-2"></i> Add New Question
                 </h2>
-                <form method="GET" action="{{ url_for('admin_questions') }}">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                        <div>
-                            <label for="course" class="block text-sm font-medium text-gray-700 mb-1">Course</label>
-                            <select name="course" id="course" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                                <option value="">All Courses</option>
-                                <option value="MCA-DS" {% if selected_course == 'MCA-DS' %}selected{% endif %}>MCA-DS</option>
-                                <option value="BSC IT" {% if selected_course == 'BSC IT' %}selected{% endif %}>BSC IT</option>
-                                <option value="BCA" {% if selected_course == 'BCA' %}selected{% endif %}>BCA</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="semester" class="block text-sm font-medium text-gray-700 mb-1">Semester</label>
-                            <select name="semester" id="semester" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                                <option value="">All Semesters</option>
-                                <option value="1" {% if selected_semester == '1' %}selected{% endif %}>Semester I</option>
-                                <option value="2" {% if selected_semester == '2' %}selected{% endif %}>Semester II</option>
-                                <option value="3" {% if selected_semester == '3' %}selected{% endif %}>Semester III</option>
-                                <option value="4" {% if selected_semester == '4' %}selected{% endif %}>Semester IV</option>
-                                <option value="5" {% if selected_semester == '5' %}selected{% endif %}>Semester V</option>
-                                <option value="6" {% if selected_semester == '6' %}selected{% endif %}>Semester VI</option>
-                            </select>
-                        </div>
+                <form id="add-form" method="POST" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Course</label>
+                        <select name="course" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                            <option value="">Select Course</option>
+                            <option value="MCA-DS">MCA-DS</option>
+                            <option value="BSC IT">BSC IT</option>
+                            <option value="BCA">BCA</option>
+                        </select>
                     </div>
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow-sm transition-all duration-300 flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                        </svg>
-                        Filter Questions
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Semester</label>
+                        <select name="semester" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                            <option value="">Select Semester</option>
+                            <option value="1">Semester 1</option>
+                            <option value="2">Semester 2</option>
+                            <option value="3">Semester 3</option>
+                            <option value="4">Semester 4</option>
+                            <option value="5">Semester 5</option>
+                            <option value="6">Semester 6</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700">Question Text</label>
+                        <textarea name="question_text" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" rows="3"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Option 1</label>
+                        <input type="text" name="option1" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Option 2</label>
+                        <input type="text" name="option2" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Option 3</label>
+                        <input type="text" name="option3" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Option 4</label>
+                        <input type="text" name="option4" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700">Correct Answer (exact match to one option)</label>
+                        <input type="text" name="correct_answer" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700">Question Image (optional)</label>
+                        <input type="file" name="image" accept="image/*" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                    </div>
+                    <button type="submit" class="mt-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm transition-colors md:col-span-2">
+                        Add Question
                     </button>
                 </form>
             </div>
 
-            <!-- Add/Edit Question Card -->
-            <div class="bg-white p-6 rounded-xl shadow-md mb-8 card-hover">
-                <h2 class="text-xl font-semibold mb-4 flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                    Add/Edit Question
+            <div class="bg-white p-6 rounded-xl shadow-md mb-8">
+                <h2 class="text-xl font-semibold mb-4 flex items-center text-blue-700">
+                    <i class="fas fa-filter mr-2"></i> Filter Questions
                 </h2>
-                <form method="POST" action="/admin">
-                    <!-- Form fields same as before -->
-                    <!-- ... -->
+                <form method="GET" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Course</label>
+                        <select name="course" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                            <option value="All" {% if selected_course == '' %}selected{% endif %}>All Courses</option>
+                            <option value="MCA-DS" {% if selected_course == 'MCA-DS' %}selected{% endif %}>MCA-DS</option>
+                            <option value="BSC IT" {% if selected_course == 'BSC IT' %}selected{% endif %}>BSC IT</option>
+                            <option value="BCA" {% if selected_course == 'BCA' %}selected{% endif %}>BCA</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Semester</label>
+                        <select name="semester" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                            <option value="All" {% if selected_semester == '' %}selected{% endif %}>All Semesters</option>
+                            <option value="1" {% if selected_semester == '1' %}selected{% endif %}>Semester 1</option>
+                            <option value="2" {% if selected_semester == '2' %}selected{% endif %}>Semester 2</option>
+                            <option value="3" {% if selected_semester == '3' %}selected{% endif %}>Semester 3</option>
+                            <option value="4" {% if selected_semester == '4' %}selected{% endif %}>Semester 4</option>
+                            <option value="5" {% if selected_semester == '5' %}selected{% endif %}>Semester 5</option>
+                            <option value="6" {% if selected_semester == '6' %}selected{% endif %}>Semester 6</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition-colors md:col-span-2">
+                        Apply Filters
+                    </button>
                 </form>
             </div>
 
-            <!-- Existing Questions Section -->
-            <div class="bg-white p-6 rounded-xl shadow-md">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-xl font-semibold flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        Existing Questions
-                    </h2>
-                    <div class="text-sm text-gray-500">
-                        Showing {{ questions|length }} questions
-                    </div>
-                </div>
-                
-                {% if questions %}
-                    <div class="space-y-4">
-                        {% for question in questions %}
-                        <div class="question-card bg-gray-50 p-6 rounded-lg border border-gray-200">
-                            <div class="flex justify-between items-start">
-                                <div class="flex-1">
-                                    <p class="font-medium text-gray-800">{{ question.text }}</p>
-                                    <div class="mt-2 flex flex-wrap gap-2 text-sm">
-                                        <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full">{{ question.course }}</span>
-                                        <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full">Semester {{ question.semester }}</span>
-                                        <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded-full">{{ question.created_at }}</span>
-                                    </div>
-                                    
-                                    <ul class="mt-3 space-y-1">
-                                        {% for option in question.options %}
-                                        <li class="flex items-center">
-                                            <span class="inline-block w-4 h-4 rounded-full border border-gray-400 mr-2"></span>
-                                            {{ option }}
-                                        </li>
-                                        {% endfor %}
-                                    </ul>
-                                    
-                                    <div class="mt-3">
-                                        <span class="text-sm font-medium">Correct Answer:</span>
-                                        <span class="ml-2 px-2 py-1 bg-green-100 text-green-800 rounded text-sm">{{ question.correct_answer }}</span>
-                                    </div>
-                                </div>
-                                <button onclick="deleteQuestion('{{ question.question_id }}')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm font-medium transition-all duration-300 flex items-center ml-4">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                    </svg>
-                                    Delete
-                                </button>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
+            <div class="bg-white p-6 rounded-xl shadow-md mb-8">
+                <h2 class="text-xl font-semibold mb-4 flex items-center text-green-700">
+                    <i class="fas fa-list mr-2"></i> Existing Questions
+                </h2>
+                <p class="text-gray-600 mb-4">{{ questions|length }} questions</p>
+                <div class="overflow-x-auto">
+                    {% if questions %}
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Question</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Semester</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Options</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for question in questions %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">{{ question.text }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    {% if question.image_path %}
+                                    <img src="/static/uploads/{{ question.image_path }}" class="h-20" alt="Question Image">
+                                    {% else %}
+                                    No Image
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">{{ question.course }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">{{ question.semester }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">{{ question.created_at.strftime('%Y-%m-%d %H:%M') if question.created_at else 'N/A' }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    {% for option in question.options %}
+                                    <p>{{ option }} {% if option == question.correct_answer %} (Correct) {% endif %}</p>
+                                    {% endfor %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm space-x-2">
+                                    <button data-question='{{ question | tojson | safe }}' onclick="editQuestion(this)" class="action-btn text-blue-600 hover:text-blue-800" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button onclick="deleteQuestion('{{ question.question_id }}')" class="action-btn text-red-600 hover:text-red-800" title="Delete">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
                     <div class="text-center py-8">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <h3 class="mt-2 text-lg font-medium text-gray-900">No questions found</h3>
-                        <p class="mt-1 text-gray-500">Try adjusting your filters or add new questions.</p>
+                        <i class="fas fa-exclamation-triangle text-gray-400 text-4xl mb-4"></i>
+                        <p class="text-gray-500">No questions found</p>
+                        <p class="text-sm text-gray-400 mt-2">Try adjusting your filters or add new questions.</p>
                     </div>
-                {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Edit Question Modal -->
+    <div id="edit-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl">
+            <div class="px-6 py-4 border-b">
+                <h2 class="text-xl font-semibold text-gray-800">Edit Question</h2>
+            </div>
+            <form id="edit-form" class="px-6 py-4 grid grid-cols-1 md:grid-cols-2 gap-4" enctype="multipart/form-data">
+                <input type="hidden" id="edit-question_id" name="question_id">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Course</label>
+                    <select id="edit-course" name="course" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                        <option value="">Select Course</option>
+                        <option value="MCA-DS">MCA-DS</option>
+                        <option value="BSC IT">BSC IT</option>
+                        <option value="BCA">BCA</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Semester</label>
+                    <select id="edit-semester" name="semester" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                        <option value="">Select Semester</option>
+                        <option value="1">Semester 1</option>
+                        <option value="2">Semester 2</option>
+                        <option value="3">Semester 3</option>
+                        <option value="4">Semester 4</option>
+                        <option value="5">Semester 5</option>
+                        <option value="6">Semester 6</option>
+                    </select>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700">Question Text</label>
+                    <textarea id="edit-question_text" name="question_text" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" rows="3"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Option 1</label>
+                    <input type="text" id="edit-option1" name="option1" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Option 2</label>
+                    <input type="text" id="edit-option2" name="option2" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Option 3</label>
+                    <input type="text" id="edit-option3" name="option3" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Option 4</label>
+                    <input type="text" id="edit-option4" name="option4" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700">Correct Answer (exact match to one option)</label>
+                    <input type="text" id="edit-correct_answer" name="correct_answer" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700">Current Image</label>
+                    <div id="current-image" class="mt-1"></div>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700">Upload New Image (optional)</label>
+                    <input type="file" name="image" accept="image/*" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                </div>
+            </form>
+            <div class="px-6 py-4 border-t flex justify-end space-x-3">
+                <button type="button" onclick="closeModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors">
+                    Cancel
+                </button>
+                <button type="button" onclick="submitEdit()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                    Save Changes
+                </button>
             </div>
         </div>
     </div>
+
+    <script>
+        // Toggle mobile menu
+        document.getElementById('hamburger-toggle').addEventListener('click', function() {
+            const menu = document.getElementById('dropdown-menu');
+            menu.classList.toggle('hidden');
+        });
+
+        // Toggle user dropdown
+        document.getElementById('user-menu-button').addEventListener('click', function() {
+            document.getElementById('user-dropdown').classList.toggle('hidden');
+        });
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            const userMenu = document.getElementById('user-menu-button');
+            const dropdown = document.getElementById('user-dropdown');
+            if (!userMenu.contains(event.target) && !dropdown.contains(event.target)) {
+                dropdown.classList.add('hidden');
+            }
+            
+            const toggle = document.getElementById('hamburger-toggle');
+            const menu = document.getElementById('dropdown-menu');
+            if (!toggle.contains(event.target) && !menu.contains(event.target)) {
+                menu.classList.add('hidden');
+            }
+        });
+
+        // Add question form submit
+        document.getElementById('add-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            fetch('/admin/questions', {
+                method: 'POST',
+                body: formData
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      alert(data.message);
+                      location.reload();
+                  } else {
+                      alert(data.error || 'Failed to add question');
+                  }
+              }).catch(error => {
+                  alert('Error: ' + error);
+              });
+        });
+
+        // Edit question
+        function editQuestion(button) {
+    try {
+        const question = JSON.parse(button.getAttribute('data-question'));
+        
+        document.getElementById('edit-question_id').value = question.question_id;
+        document.getElementById('edit-course').value = question.course;
+        document.getElementById('edit-semester').value = question.semester;
+        document.getElementById('edit-question_text').value = question.text;
+        document.getElementById('edit-option1').value = question.options[0];
+        document.getElementById('edit-option2').value = question.options[1];
+        document.getElementById('edit-option3').value = question.options[2];
+        document.getElementById('edit-option4').value = question.options[3];
+        document.getElementById('edit-correct_answer').value = question.correct_answer;
+        
+        const currentImage = document.getElementById('current-image');
+        if (question.image_path) {
+            currentImage.innerHTML = `<img src="/static/uploads/${question.image_path}" class="h-20" alt="Current Question Image">`;
+        } else {
+            currentImage.innerHTML = '<p>No image</p>';
+        }
+        
+        const modal = document.getElementById('edit-modal');
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            modal.classList.add('active');
+        }, 10);
+    } catch (error) {
+        console.error('Error parsing question:', error);
+        alert('Error loading question data');
+    }
+}
+
+        // Submit edit
+        function submitEdit() {
+            const formData = new FormData(document.getElementById('edit-form'));
+            formData.append('is_edit','true');
+            fetch('/admin/questions', {
+                method: 'POST',
+                body: formData
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      alert(data.message);
+                      location.reload();
+                  } else {
+                      alert(data.error || 'Failed to update question');
+                  }
+              }).catch(error => {
+                  alert('Error: ' + error);
+              });
+        }
+
+        // Close modal
+        function closeModal() {
+            const modal = document.getElementById('edit-modal');
+            modal.classList.remove('active');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        // Delete question
+        function deleteQuestion(question_id) {
+            if (confirm('Are you sure you want to delete this question?')) {
+                const formData = new FormData();
+                formData.append('delete_question_id', question_id);
+                fetch('/admin/questions', {
+                    method: 'POST',
+                    body: formData
+                }).then(response => response.json())
+                  .then(data => {
+                      if (data.success) {
+                          alert(data.message);
+                          location.reload();
+                      } else {
+                          alert(data.error || 'Failed to delete question');
+                      }
+                  }).catch(error => {
+                      alert('Error: ' + error);
+                  });
+            }
+        }
+    </script>
 </body>
 </html>

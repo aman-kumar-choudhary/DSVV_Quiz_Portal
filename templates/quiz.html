@@ -3,40 +3,611 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quiz</title>
+    <title>Quiz - DSVV Quiz System</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="/static/js/main.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        .question-text {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        .option-text {
+            font-size: 1.2rem;
+        }
+        .correct-answer {
+            border: 3px solid #10B981;
+            background-color: #ECFDF5;
+        }
+        .wrong-answer {
+            border: 3px solid #EF4444;
+            background-color: #FEF2F2;
+        }
+        .show-answer {
+            border: 3px solid #3B82F6;
+            background-color: #EFF6FF;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .time-warning {
+            animation: pulse 1s infinite;
+            background-color: #FEF3C7;
+            border: 2px solid #F59E0B;
+            color: #92400E;
+        }
+        .time-critical {
+            animation: pulse 0.5s infinite;
+            background-color: #FEE2E2;
+            border: 2px solid #EF4444;
+            color: #991B1B;
+        }
+        .question-status-correct {
+            background-color: #10B981 !important;
+            color: white !important;
+        }
+        .question-status-wrong {
+            background-color: #EF4444 !important;
+            color: white !important;
+        }
+        .question-status-skipped {
+            background-color: #9CA3AF !important;
+            color: white !important;
+        }
+        .question-status-current {
+            border: 2px solid #3B82F6 !important;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+        }
+        .option-disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        .timer-container {
+            transition: all 0.3s ease;
+        }
+    </style>
 </head>
-<body class="bg-gray-100 font-sans">
+<body class="bg-gray-100">
     <div class="min-h-screen flex flex-col">
-        <!-- Navigation Bar -->
-        <nav class="bg-blue-600 p-4">
-            <div class="container mx-auto flex justify-between items-center">
-                <div class="flex space-x-4">
-                    <a href="{{ url_for('index') }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded">Home</a>
-                    <a href="{{ url_for('view_score') }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded">View Score</a>
-                    <a href="{{ url_for('student_dashboard') }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded">Quiz</a>
-                    <a href="{{ url_for('logout') }}" class="text-white hover:bg-blue-700 px-3 py-2 rounded">Logout</a>
+        <!-- Navigation Bar (without timer) -->
+        <nav class="bg-gradient-to-r from-blue-700 to-blue-800 shadow-lg p-4">
+            <div class="container mx-auto flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center mb-4 md:mb-0">
+                    <img src="/static/images/dsvvlogo.png" alt="DSVV Logo" class="h-24 mr-4 float">
+                    <span class="text-white font-bold text-lg">Quiz Session</span>
                 </div>
+                
+                <div class="flex flex-wrap justify-center gap-2 md:gap-4">
+                    <a href="{{ url_for('logout') }}" class="text-white hover:bg-red-500 px-3 py-1 rounded transition-all">Exit Quiz</a>
+                </div>
+                
                 {% if user %}
-                <div class="text-white">
-                    <span>Scholar ID: {{ user.scholar_id }}</span> |
-                    <span>Name: {{ user.name }}</span> |
-                    <span>Course: {{ user.course }}</span> |
-                    <span>Semester: {{ user.semester }}</span>
+                <div class="mt-4 md:mt-0 text-white text-sm md:text-base">
+                    <span class="font-medium">{{ user.name }} ({{ user.scholar_id }})</span>
                 </div>
                 {% endif %}
             </div>
         </nav>
 
         <!-- Main Content -->
-        <div class="container mx-auto mt-8 p-4">
-            <h1 class="text-2xl font-bold mb-4">Quiz</h1>
-            <p>Time Left: <span id="time-left">600</span> seconds</p>
-            <div id="quiz-container" class="bg-white p-6 rounded shadow-md mb-4"></div>
-            <button id="next-question" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" style="display: none;">Next Question</button>
-            <button id="submit-quiz" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700" style="display: none;">Submit Quiz</button>
+        <div class="container mx-auto mt-8 p-4 flex-grow">
+            <!-- Timer moved from header to here -->
+            <div class="max-w-4xl mx-auto mb-6">
+                <div id="time-display" class="timer-container bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg text-center text-xl font-bold">
+                    <i class="fas fa-clock mr-2"></i>
+                    Time Remaining: <span id="time-left-minutes">10</span>:<span id="time-left-seconds">00</span>
+                </div>
+            </div>
+            
+            <div class="flex flex-col lg:flex-row gap-6">
+                <!-- Question Navigation Panel -->
+                <div class="w-full lg:w-1/4 bg-white p-4 rounded-xl shadow-lg h-fit">
+                    <h3 class="text-lg font-semibold text-blue-800 mb-4 flex items-center">
+                        <i class="fas fa-list-ol mr-2"></i> Questions
+                    </h3>
+                    <div class="grid grid-cols-5 gap-2" id="question-navigation">
+                        <!-- Question numbers will be populated here -->
+                    </div>
+                    
+                    <div class="mt-6 pt-4 border-t border-gray-200">
+                        <div class="flex items-center mb-2">
+                            <div class="w-4 h-4 rounded-full bg-green-500 mr-2"></div>
+                            <span class="text-sm">Answered Correctly</span>
+                        </div>
+                        <div class="flex items-center mb-2">
+                            <div class="w-4 h-4 rounded-full bg-red-500 mr-2"></div>
+                            <span class="text-sm">Answered Incorrectly</span>
+                        </div>
+                        <div class="flex items-center mb-2">
+                            <div class="w-4 h-4 rounded-full bg-gray-400 mr-2"></div>
+                            <span class="text-sm">Skipped</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-4 h-4 rounded-full border-2 border-blue-500 mr-2"></div>
+                            <span class="text-sm">Current Question</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Question Content -->
+                <div class="w-full lg:w-3/4 bg-white p-8 rounded-xl shadow-lg animate-fade-in">
+                    <div id="quiz-container" class="mb-8">
+                        <!-- Question and options will be loaded here by JavaScript -->
+                    </div>
+                    
+                    <div id="answer-feedback" class="hidden mb-6 p-4 rounded-lg">
+                        <!-- Correct answer will be shown here -->
+                    </div>
+                    
+                    <div class="flex flex-wrap gap-3 justify-between">
+                        <button id="skip-question" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition-all duration-300 flex items-center">
+                            <i class="fas fa-forward mr-2"></i> Skip
+                        </button>
+                        
+                        <div class="flex gap-3">
+                            <button id="submit-answer" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-300 flex items-center">
+                                <i class="fas fa-paper-plane mr-2"></i> Submit Answer
+                            </button>
+                            <button id="next-question" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-300 hidden flex items-center">
+                                <i class="fas fa-arrow-right mr-2"></i> Next Question
+                            </button>
+                            <button id="finish-quiz" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-300 hidden flex items-center">
+                                <i class="fas fa-flag-checkered mr-2"></i> Finish Quiz
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+
+    <script>
+        let questions = [];
+        let currentQuestionIndex = 0;
+        let selectedAnswer = null;
+        let answerSubmitted = false;
+        let quizSubmitted = false;
+        let questionStatuses = []; // Track status of each question: null=unanswered, 'correct', 'wrong', 'skipped'
+        let userAnswers = {}; // Store user's answers for each question
+        let timerInterval; // Store the timer interval
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const quizContainer = document.getElementById('quiz-container');
+            const nextButton = document.getElementById('next-question');
+            const submitButton = document.getElementById('submit-answer');
+            const finishButton = document.getElementById('finish-quiz');
+            const skipButton = document.getElementById('skip-question');
+            const answerFeedback = document.getElementById('answer-feedback');
+            const timeMinutes = document.getElementById('time-left-minutes');
+            const timeSeconds = document.getElementById('time-left-seconds');
+            const timeDisplay = document.getElementById('time-display');
+            const questionNavigation = document.getElementById('question-navigation');
+
+            // Initialize question statuses and navigation
+            function initializeQuestionNavigation() {
+                questionNavigation.innerHTML = '';
+                questionStatuses = new Array(questions.length).fill(null);
+                userAnswers = {};
+                
+                questions.forEach((_, index) => {
+                    const questionButton = document.createElement('button');
+                    questionButton.className = 'w-8 h-8 rounded-full flex items-center justify-center bg-gray-200 text-gray-700 font-medium transition-all';
+                    questionButton.textContent = index + 1;
+                    questionButton.addEventListener('click', () => {
+                        if (index !== currentQuestionIndex) {
+                            navigateToQuestion(index);
+                        }
+                    });
+                    
+                    // Mark current question
+                    if (index === currentQuestionIndex) {
+                        questionButton.classList.add('question-status-current');
+                    }
+                    
+                    questionNavigation.appendChild(questionButton);
+                });
+            }
+            
+            // Update question status in navigation
+            function updateQuestionStatus(index, status) {
+                const questionButtons = questionNavigation.querySelectorAll('button');
+                if (index < questionButtons.length) {
+                    // Remove all status classes
+                    questionButtons[index].classList.remove(
+                        'question-status-correct', 
+                        'question-status-wrong', 
+                        'question-status-skipped',
+                        'bg-gray-200',
+                        'text-gray-700'
+                    );
+                    
+                    // Add appropriate status class
+                    if (status === 'correct') {
+                        questionButtons[index].classList.add('question-status-correct');
+                    } else if (status === 'wrong') {
+                        questionButtons[index].classList.add('question-status-wrong');
+                    } else if (status === 'skipped') {
+                        questionButtons[index].classList.add('question-status-skipped');
+                    } else {
+                        questionButtons[index].classList.add('bg-gray-200', 'text-gray-700');
+                    }
+                    
+                    // Update current question indicator
+                    if (index === currentQuestionIndex) {
+                        questionButtons[index].classList.add('question-status-current');
+                    } else {
+                        questionButtons[index].classList.remove('question-status-current');
+                    }
+                }
+            }
+            
+            // Navigate to a specific question
+            function navigateToQuestion(index) {
+                if (index >= 0 && index < questions.length) {
+                    currentQuestionIndex = index;
+                    loadQuestion(questions[currentQuestionIndex]);
+                    
+                    // Update navigation highlights
+                    const questionButtons = questionNavigation.querySelectorAll('button');
+                    questionButtons.forEach((btn, i) => {
+                        btn.classList.remove('question-status-current');
+                        if (i === currentQuestionIndex) {
+                            btn.classList.add('question-status-current');
+                        }
+                    });
+                }
+            }
+
+            // Start the timer with visual indicators
+            function updateTimer() {
+                fetch('/check_time')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.time_up && !quizSubmitted) {
+                            clearInterval(timerInterval);
+                            alert('Time is up! Your quiz will be submitted automatically.');
+                            submitQuiz();
+                            return;
+                        }
+                        
+                        timeMinutes.textContent = String(data.time_left_minutes).padStart(2, '0');
+                        timeSeconds.textContent = String(data.time_left_seconds).padStart(2, '0');
+                        
+                        // Add visual indicators based on time left
+                        timeDisplay.classList.remove('time-warning', 'time-critical', 'bg-blue-600');
+                        if (data.time_left_minutes < 2) {
+                            timeDisplay.classList.add('time-critical');
+                        } else if (data.time_left_minutes < 5) {
+                            timeDisplay.classList.add('time-warning');
+                        } else {
+                            timeDisplay.classList.add('bg-blue-600');
+                        }
+                    })
+                    .catch(error => console.error('Error checking time:', error));
+            }
+
+            // Load questions
+            fetch('/api/get_questions')
+                .then(response => response.json())
+                .then(data => {
+                    questions = data;
+                    if (questions.length > 0) {
+                        initializeQuestionNavigation();
+                        loadQuestion(questions[0]);
+                        
+                        // Start the timer
+                        updateTimer();
+                        timerInterval = setInterval(updateTimer, 1000);
+                    } else {
+                        quizContainer.innerHTML = '<p class="text-red-500 text-center text-xl">No questions available. Please contact support.</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading questions:', error);
+                    quizContainer.innerHTML = '<p class="text-red-500 text-center text-xl">Error loading questions. Please try again.</p>';
+                });
+
+            function loadQuestion(question) {
+                answerSubmitted = false;
+                selectedAnswer = null;
+                answerFeedback.classList.add('hidden');
+                
+                const questionIndex = currentQuestionIndex;
+                const isAnswered = questionStatuses[questionIndex] === 'correct' || questionStatuses[questionIndex] === 'wrong';
+                const isSkipped = questionStatuses[questionIndex] === 'skipped';
+                
+                // Show appropriate buttons based on question status
+                if (isAnswered) {
+                    // Already answered - show the result but don't allow changes
+                    submitButton.classList.add('hidden');
+                    skipButton.classList.add('hidden');
+                    
+                    if (questionIndex < questions.length - 1) {
+                        nextButton.classList.remove('hidden');
+                    } else {
+                        finishButton.classList.remove('hidden');
+                    }
+                } else if (isSkipped) {
+                    // Skipped question - allow reattempt
+                    submitButton.classList.remove('hidden');
+                    skipButton.classList.remove('hidden');
+                    nextButton.classList.add('hidden');
+                    finishButton.classList.add('hidden');
+                    
+                    // Show finish button if this is the last question
+                    if (questionIndex === questions.length - 1) {
+                        finishButton.classList.remove('hidden');
+                        submitButton.classList.add('hidden');
+                    }
+                } else {
+                    // New question - allow answering or skipping
+                    submitButton.classList.remove('hidden');
+                    skipButton.classList.remove('hidden');
+                    nextButton.classList.add('hidden');
+                    finishButton.classList.add('hidden');
+                    
+                    // Show finish button if this is the last question
+                    if (questionIndex === questions.length - 1) {
+                        finishButton.classList.remove('hidden');
+                        submitButton.classList.add('hidden');
+                    }
+                }
+                
+                quizContainer.innerHTML = `
+                    <div class="mb-6">
+                        <p class="question-text text-blue-800 mb-6">Question ${questionIndex + 1} of ${questions.length}: ${question.text}</p>
+                        ${question.image_path ? `<img src="/static/uploads/${question.image_path}" alt="Question image" class="mb-4 max-w-full h-auto rounded-lg">` : ''}
+                        <div class="space-y-4">
+                            ${question.options.map((option, i) => {
+                                const isSelected = userAnswers[questionIndex] === option;
+                                const isDisabled = isAnswered && !isSkipped;
+                                
+                                return `
+                                <label class="block option-text p-4 border-2 border-gray-200 rounded-lg cursor-pointer transition-all option-label ${isDisabled ? 'option-disabled' : ''} ${isSelected ? (questionStatuses[questionIndex] === 'correct' ? 'correct-answer' : 'wrong-answer') : ''}">
+                                    <input type="radio" name="answer" value="${option}" class="mr-3 hidden option-input" ${isDisabled ? 'disabled' : ''} ${isSelected ? 'checked' : ''}>
+                                    ${String.fromCharCode(65 + i)}. ${option}
+                                </label>
+                            `}).join('')}
+                        </div>
+                    </div>
+                `;
+
+                // If already answered, show the correct answer
+                if (isAnswered) {
+                    answerFeedback.classList.remove('hidden');
+                    const wasCorrect = questionStatuses[questionIndex] === 'correct';
+                    
+                    answerFeedback.innerHTML = `
+                        <p class="font-semibold ${wasCorrect ? 'text-green-600' : 'text-red-600'}">
+                            ${wasCorrect ? '✓ Correct! +1 point' : '✗ Incorrect! No points'}
+                        </p>
+                        <p class="mt-2">Correct answer: <span class="font-medium">${question.correct_answer}</span></p>
+                        <p class="mt-1 text-sm text-gray-600">Question ${questionIndex + 1} of ${questions.length}</p>
+                    `;
+                }
+
+                // Add event listeners to options (only if not already answered)
+                if (!isAnswered) {
+                    const optionLabels = document.querySelectorAll('.option-label');
+                    const optionInputs = document.querySelectorAll('.option-input');
+                    
+                    optionLabels.forEach((label, index) => {
+                        label.addEventListener('click', () => {
+                            if (answerSubmitted) return;
+                            
+                            // Remove selected class from all options
+                            optionLabels.forEach(l => l.classList.remove('border-blue-500', 'bg-blue-50'));
+                            
+                            // Add selected class to clicked option
+                            label.classList.add('border-blue-500', 'bg-blue-50');
+                            optionInputs[index].checked = true;
+                            selectedAnswer = optionInputs[index].value;
+                            userAnswers[questionIndex] = selectedAnswer;
+                        });
+                    });
+                }
+                
+                // Update navigation to show current question
+                const questionButtons = questionNavigation.querySelectorAll('button');
+                questionButtons.forEach((btn, i) => {
+                    btn.classList.remove('question-status-current');
+                    if (i === currentQuestionIndex) {
+                        btn.classList.add('question-status-current');
+                    }
+                });
+            }
+
+            submitButton.addEventListener('click', () => {
+                if (!selectedAnswer) {
+                    alert('Please select an answer before submitting.');
+                    return;
+                }
+
+                submitAnswer();
+            });
+
+            skipButton.addEventListener('click', () => {
+                
+                    skipQuestion();
+                
+            });
+
+            finishButton.addEventListener('click', () => {
+                if (!selectedAnswer && !confirm('You haven\'t answered this question. Do you want to finish without answering?')) {
+                    return;
+                }
+
+                if (selectedAnswer) {
+                    submitAnswer(true);
+                } else {
+                    skipQuestion(true);
+                }
+            });
+
+            nextButton.addEventListener('click', () => {
+                // Move to next question
+                if (currentQuestionIndex < questions.length - 1) {
+                    currentQuestionIndex++;
+                    loadQuestion(questions[currentQuestionIndex]);
+                } else {
+                    // This is the last question, show finish button
+                    submitButton.classList.add('hidden');
+                    finishButton.classList.remove('hidden');
+                }
+            });
+
+            function skipQuestion(isFinalQuestion = false) {
+                // Mark question as skipped
+                questionStatuses[currentQuestionIndex] = 'skipped';
+                updateQuestionStatus(currentQuestionIndex, 'skipped');
+                
+                if (isFinalQuestion) {
+                    // If this is the last question, submit the entire quiz
+                    submitQuiz();
+                } else {
+                    // Move to next question
+                    if (currentQuestionIndex < questions.length - 1) {
+                        currentQuestionIndex++;
+                        loadQuestion(questions[currentQuestionIndex]);
+                    } else {
+                        // This is the last question, show finish button
+                        submitButton.classList.add('hidden');
+                        finishButton.classList.remove('hidden');
+                    }
+                }
+            }
+
+            function submitAnswer(isFinalQuestion = false) {
+                if (!selectedAnswer) {
+                    alert('Please select an answer before submitting.');
+                    return;
+                }
+
+                // Submit answer and show feedback
+                fetch('/api/submit_answer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        answer: selectedAnswer,
+                        question_index: currentQuestionIndex
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        answerSubmitted = true;
+                        
+                        // Update question status
+                        const status = data.is_correct ? 'correct' : 'wrong';
+                        questionStatuses[currentQuestionIndex] = status;
+                        updateQuestionStatus(currentQuestionIndex, status);
+                        
+                        // Highlight correct and incorrect answers
+                        const optionLabels = document.querySelectorAll('.option-label');
+                        const optionInputs = document.querySelectorAll('.option-input');
+                        
+                        optionLabels.forEach((label, index) => {
+                            const optionValue = optionInputs[index].value;
+                            
+                            if (optionValue === data.correct_answer) {
+                                label.classList.add('correct-answer');
+                            } else if (optionValue === selectedAnswer && !data.is_correct) {
+                                label.classList.add('wrong-answer');
+                            }
+                            
+                            // Disable all options after submission
+                            optionInputs[index].disabled = true;
+                            label.classList.add('option-disabled');
+                        });
+                        
+                        // Show correct answer
+                        answerFeedback.innerHTML = `
+                            <p class="font-semibold ${data.is_correct ? 'text-green-600' : 'text-red-600'}">
+                                ${data.is_correct ? '✓ Correct! +1 point' : '✗ Incorrect! No points'}
+                            </p>
+                            <p class="mt-2">Correct answer: <span class="font-medium">${data.correct_answer}</span></p>
+                            <p class="mt-1 text-sm text-gray-600">Question ${currentQuestionIndex + 1} of ${questions.length}</p>
+                        `;
+                        answerFeedback.classList.remove('hidden');
+                        
+                        // Hide skip button after submitting
+                        skipButton.classList.add('hidden');
+                        submitButton.classList.add('hidden');
+                        
+                        if (isFinalQuestion) {
+                            // If this is the last question, submit the entire quiz
+                            submitQuiz();
+                        } else {
+                            // Show next button
+                            nextButton.classList.remove('hidden');
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error submitting answer:', error);
+                    alert('Error submitting answer. Please try again.');
+                });
+            }
+
+            function submitQuiz() {
+                if (quizSubmitted) return; // Prevent multiple submissions
+                quizSubmitted = true;
+                
+                // Clear the timer interval
+                clearInterval(timerInterval);
+                
+                console.log('Submitting quiz...');
+                
+                // Submit the quiz directly instead of debugging first
+                fetch('/api/finish_quiz', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                })
+                .then(response => {
+                    // First check if response is JSON
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        return response.json();
+                    } else {
+                        // If not JSON, it might be an HTML error page
+                        return response.text().then(text => {
+                            throw new Error(`Server returned non-JSON response: ${text.substring(0, 100)}...`);
+                        });
+                    }
+                })
+                .then(data => {
+                    console.log('Quiz submission response:', data);
+                    if (data.redirect) {
+                        window.location.href = data.redirect;
+                    } else if (data.error) {
+                        alert('Error submitting quiz: ' + data.error);
+                    } else if (data.success) {
+                        alert(`Quiz submitted successfully! Your score: ${data.score}/${data.total}`);
+                        window.location.href = data.redirect || '/feedback';
+                    } else {
+                        // Fallback if no specific response format
+                        window.location.href = '/feedback';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error submitting quiz:', error);
+                    alert('Quiz submission completed. Redirecting to feedback page.');
+                    window.location.href = '/feedback';
+                });
+            }
+        });
+    </script>
 </body>
 </html>
