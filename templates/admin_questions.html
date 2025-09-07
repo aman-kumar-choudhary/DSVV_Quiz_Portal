@@ -261,6 +261,45 @@
             </div>
 
             <div class="bg-white p-6 rounded-xl shadow-md mb-8">
+    <h2 class="text-xl font-semibold mb-4 flex items-center text-purple-700">
+        <i class="fas fa-file-import mr-2"></i> Bulk Upload Questions (JSON)
+    </h2>
+    
+    <form id="json-upload-form" method="POST" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Course</label>
+            <select name="course" id="json-course" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" required>
+                <option value="">Select Course</option>
+                <option value="MCA-DS">MCA-DS</option>
+                <option value="BSC IT">BSC IT</option>
+                <option value="BCA">BCA</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Semester</label>
+            <select name="semester" id="json-semester" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" required>
+                <option value="">Select Semester</option>
+                <option value="1">Semester 1</option>
+                <option value="2">Semester 2</option>
+                <option value="3">Semester 3</option>
+                <option value="4">Semester 4</option>
+                <option value="5">Semester 5</option>
+                <option value="6">Semester 6</option>
+            </select>
+        </div>
+        <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700">JSON File</label>
+            <input type="file" name="json_file" accept=".json" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" required>
+            <p class="text-xs text-gray-500 mt-1">Upload a JSON file containing questions in the correct format</p>
+        </div>
+        <div class="md:col-span-2">
+            <button type="submit" class="mt-4 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                <i class="fas fa-upload mr-2"></i> Upload JSON File
+            </button>
+        </div>
+    </form>
+
+            <div class="bg-white p-6 rounded-xl shadow-md mb-8">
                 <h2 class="text-xl font-semibold mb-4 flex items-center text-green-700">
                     <i class="fas fa-plus mr-2"></i> Add New Question
                 </h2>
@@ -488,6 +527,35 @@
     </div>
 
     <script>
+        document.getElementById('json-upload-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+    
+        // Show loading state
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Uploading...';
+        submitBtn.disabled = true;
+    
+        fetch('/admin/upload_questions', {
+            method: 'POST',
+            body: formData
+        }).then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert(data.error || 'Failed to upload questions');
+            }
+        }).catch(error => {
+            alert('Error: ' + error);
+        }).finally(() => {
+          // Restore button state
+          submitBtn.innerHTML = originalText;
+          submitBtn.disabled = false;
+      });
+});
         // Toggle mobile menu
         document.getElementById('hamburger-toggle').addEventListener('click', function() {
             const menu = document.getElementById('dropdown-menu');
