@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for, session, abort, send_file,flash
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session, abort, send_file, flash
 from pymongo import MongoClient
 from dotenv import load_dotenv
 import os
@@ -39,7 +39,7 @@ notifications_collection = db.notifications
 
 # Session configuration
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=2)
-app.config['SESSION_COOKIE_SECURE'] = True  # Set to True in production with HTTPS
+app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
@@ -645,8 +645,8 @@ def end_quiz():
     course = request.json.get('course')
     semester = request.json.get('semester')
     
-    if not course:
-        return jsonify({"error": "Course is required"}), 400
+    if not course or not semester:
+        return jsonify({"error": "Course and semester are required"}), 400
     
     # Deactivate questions for this course
     result = questions_collection.update_many(
@@ -657,6 +657,49 @@ def end_quiz():
     return jsonify({
         "success": True,
         "message": f"Quiz ended for {course} - Semester {semester}",
+        "modified_count": result.modified_count
+    })
+
+# Add function to check if quiz is active
+def is_quiz_active(course, semester):
+    active_quiz = questions_collection.find_one({
+        "course": course,
+        "semester": semester,
+        "active": True
+    })
+    return active_quiz is not None
+
+# Add route to start quiz
+@app.route('/admin/start_quiz', methods=['POST'])
+def start_quiz_admin():
+    if 'username' not in session or session['role'] != 'admin':
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    course = request.json.get('course')
+    semester = request.json.get('semester')
+    
+    if not course or not semester:
+        return jsonify({"error": "Course and semester are required"}), 400
+    
+    # Activate questions for this course and semester
+    result = questions_collection.update_many(
+        {"course": course, "semester": semester},
+        {"$set": {"active": True, "activated_at": datetime.now()}}
+    )
+    
+    # Create notification for students
+    students = users_collection.find({"course": course, "semester": semester})
+    for student in students:
+        create_notification(
+            student['scholar_id'],
+            "Quiz Started",
+            f"A new quiz for {course} Semester {semester} has started. You can now take the quiz.",
+            "info"
+        )
+    
+    return jsonify({
+        "success": True,
+        "message": f"Quiz started for {course} - Semester {semester}",
         "modified_count": result.modified_count
     })
 
@@ -975,7 +1018,7 @@ def admin_questions():
             "correct_answer": correct_answer,
             "course": course,
             "semester": semester,
-            "active": True,
+            "active": False,  # Default to inactive
             "updated_at": datetime.now()
         }
         
@@ -1098,6 +1141,10 @@ def student_dashboard():
     user_stats = get_user_stats(session['scholar_id'])
     user.update(user_stats)
     
+    # Check if user's course/semester has an active quiz
+    quiz_active = is_quiz_active(user['course'], user['semester'])
+    user['quiz_active'] = quiz_active
+    
     if user.get('blocked', False):
         return render_template('student_dashboard.html', 
                                error="You have been blocked from participating in quizzes. Contact admin.", 
@@ -1112,6 +1159,12 @@ def student_dashboard():
             if user['course'].strip() != course or user['semester'].strip() != semester:
                 return render_template('student_dashboard.html', 
                                     error="Please select your registered course and semester", 
+                                    user=user)
+            
+            # Check if quiz is active
+            if not is_quiz_active(course, semester):
+                return render_template('student_dashboard.html', 
+                                    error="No active quiz for your course and semester at the moment.", 
                                     user=user)
             
             # Store course and semester in session
@@ -1458,7 +1511,15 @@ def user_results(scholar_id):
     results = list(results_collection.find({"scholar_id": scholar_id}, {'_id': 0}).sort('timestamp', -1))
     return jsonify({"results": results})
 
+# if __name__ == '__main__':
+#     # port = int(os.environ.get('PORT', 5000))
+#     # app.run(host='0.0.0.0', port=port)
+#     app.run(debug=True)
+
+
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
-    
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--port', type=int, default=5000, help='Port to run the app on')
+    args = parser.parse_args()
+    app.run(host='0.0.0.0', port=args.port, debug=True)

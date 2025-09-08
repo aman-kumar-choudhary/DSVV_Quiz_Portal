@@ -1,5 +1,3 @@
-## admin_questions.html
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -99,11 +97,8 @@
         }
 
         header .logo-container img {
-            height: 70px; /* Adjusted logo size to fit wider header */
+            height: 70px;
         }
-        
-        
-        
         
         .logo-container {
             background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
@@ -261,43 +256,87 @@
             </div>
 
             <div class="bg-white p-6 rounded-xl shadow-md mb-8">
-    <h2 class="text-xl font-semibold mb-4 flex items-center text-purple-700">
-        <i class="fas fa-file-import mr-2"></i> Bulk Upload Questions (JSON)
-    </h2>
-    
-    <form id="json-upload-form" method="POST" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-            <label class="block text-sm font-medium text-gray-700">Course</label>
-            <select name="course" id="json-course" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" required>
-                <option value="">Select Course</option>
-                <option value="MCA-DS">MCA-DS</option>
-                <option value="BSC IT">BSC IT</option>
-                <option value="BCA">BCA</option>
-            </select>
-        </div>
-        <div>
-            <label class="block text-sm font-medium text-gray-700">Semester</label>
-            <select name="semester" id="json-semester" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" required>
-                <option value="">Select Semester</option>
-                <option value="1">Semester 1</option>
-                <option value="2">Semester 2</option>
-                <option value="3">Semester 3</option>
-                <option value="4">Semester 4</option>
-                <option value="5">Semester 5</option>
-                <option value="6">Semester 6</option>
-            </select>
-        </div>
-        <div class="md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700">JSON File</label>
-            <input type="file" name="json_file" accept=".json" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" required>
-            <p class="text-xs text-gray-500 mt-1">Upload a JSON file containing questions in the correct format</p>
-        </div>
-        <div class="md:col-span-2">
-            <button type="submit" class="mt-4 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">
-                <i class="fas fa-upload mr-2"></i> Upload JSON File
-            </button>
-        </div>
-    </form>
+                <h2 class="text-xl font-semibold mb-4 flex items-center text-purple-700">
+                    <i class="fas fa-file-import mr-2"></i> Bulk Upload Questions (JSON)
+                </h2>
+                <form id="json-upload-form" method="POST" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Course</label>
+                        <select name="course" id="json-course" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" required>
+                            <option value="">Select Course</option>
+                            <option value="MCA-DS">MCA-DS</option>
+                            <option value="BSC IT">BSC IT</option>
+                            <option value="BCA">BCA</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Semester</label>
+                        <select name="semester" id="json-semester" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" required>
+                            <option value="">Select Semester</option>
+                            <option value="1">Semester 1</option>
+                            <option value="2">Semester 2</option>
+                            <option value="3">Semester 3</option>
+                            <option value="4">Semester 4</option>
+                            <option value="5">Semester 5</option>
+                            <option value="6">Semester 6</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700">JSON File</label>
+                        <input type="file" name="json_file" accept=".json" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" required>
+                        <p class="text-xs text-gray-500 mt-1">Upload a JSON file containing questions in the correct format</p>
+                    </div>
+                    <div class="md:col-span-2">
+                        <button type="submit" class="mt-4 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                            <i class="fas fa-upload mr-2"></i> Upload JSON File
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-md mb-8">
+                <h2 class="text-xl font-semibold mb-4 flex items-center text-blue-700">
+                    <i class="fas fa-clock mr-2"></i> Manage Quiz
+                </h2>
+                <form id="manage-quiz-form" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Course</label>
+                        <select name="course" id="quiz-course" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" required>
+                            <option value="">Select Course</option>
+                            <option value="MCA-DS">MCA-DS</option>
+                            <option value="BSC IT">BSC IT</option>
+                            <option value="BCA">BCA</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Semester</label>
+                        <select name="semester" id="quiz-semester" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" required>
+                            <option value="">Select Semester</option>
+                            <option value="1">Semester 1</option>
+                            <option value="2">Semester 2</option>
+                            <option value="3">Semester 3</option>
+                            <option value="4">Semester 4</option>
+                            <option value="5">Semester 5</option>
+                            <option value="6">Semester 6</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Quiz Duration (minutes)</label>
+                        <input type="number" name="duration" id="quiz-duration" min="1" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" placeholder="Enter duration" required>
+                    </div>
+                    <div class="md:col-span-3 flex space-x-4">
+                        <button type="button" onclick="setQuizTime()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                            <i class="fas fa-clock mr-2"></i> Set Quiz Time
+                        </button>
+                        <button type="button" onclick="startQuiz()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                            <i class="fas fa-play mr-2"></i> Start Quiz
+                        </button>
+                        <button type="button" onclick="endQuiz()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                            <i class="fas fa-stop mr-2"></i> End Quiz
+                        </button>
+                    </div>
+                </form>
+            </div>
 
             <div class="bg-white p-6 rounded-xl shadow-md mb-8">
                 <h2 class="text-xl font-semibold mb-4 flex items-center text-green-700">
@@ -527,35 +566,145 @@
     </div>
 
     <script>
+        // JSON Upload Form Submission
         document.getElementById('json-upload-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-    
-        // Show loading state
-        const submitBtn = e.target.querySelector('button[type="submit"]');
-        const originalText = submitBtn.innerHTML;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Uploading...';
-        submitBtn.disabled = true;
-    
-        fetch('/admin/upload_questions', {
-            method: 'POST',
-            body: formData
-        }).then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert(data.message);
-                location.reload();
-            } else {
-                alert(data.error || 'Failed to upload questions');
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Uploading...';
+            submitBtn.disabled = true;
+
+            fetch('/admin/upload_questions', {
+                method: 'POST',
+                body: formData
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      alert(data.message);
+                      location.reload();
+                  } else {
+                      alert(data.error || 'Failed to upload questions');
+                  }
+              }).catch(error => {
+                  alert('Error: ' + error);
+              }).finally(() => {
+                  submitBtn.innerHTML = originalText;
+                  submitBtn.disabled = false;
+              });
+        });
+
+        // Set Quiz Time
+        function setQuizTime() {
+            const course = document.getElementById('quiz-course').value;
+            const semester = document.getElementById('quiz-semester').value;
+            const duration = document.getElementById('quiz-duration').value;
+
+            if (!course || !semester || !duration) {
+                alert('Please select a course, semester, and enter a duration');
+                return;
             }
-        }).catch(error => {
-            alert('Error: ' + error);
-        }).finally(() => {
-          // Restore button state
-          submitBtn.innerHTML = originalText;
-          submitBtn.disabled = false;
-      });
-});
+
+            const submitBtn = document.querySelector('#manage-quiz-form button[onclick="setQuizTime()"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Setting...';
+            submitBtn.disabled = true;
+
+            fetch('/admin/set_quiz_time', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ course, semester, duration })
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      alert(data.message);
+                  } else {
+                      alert(data.error || 'Failed to set quiz time');
+                  }
+              }).catch(error => {
+                  alert('Error: ' + error);
+              }).finally(() => {
+                  submitBtn.innerHTML = originalText;
+                  submitBtn.disabled = false;
+              });
+        }
+
+        // Start Quiz
+        function startQuiz() {
+            const course = document.getElementById('quiz-course').value;
+            const semester = document.getElementById('quiz-semester').value;
+
+            if (!course || !semester) {
+                alert('Please select a course and semester');
+                return;
+            }
+
+            const submitBtn = document.querySelector('#manage-quiz-form button[onclick="startQuiz()"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Starting...';
+            submitBtn.disabled = true;
+
+            fetch('/admin/start_quiz', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ course, semester })
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      alert(data.message);
+                      location.reload();
+                  } else {
+                      alert(data.error || 'Failed to start quiz');
+                  }
+              }).catch(error => {
+                  alert('Error: ' + error);
+              }).finally(() => {
+                  submitBtn.innerHTML = originalText;
+                  submitBtn.disabled = false;
+              });
+        }
+
+        // End Quiz
+        function endQuiz() {
+            const course = document.getElementById('quiz-course').value;
+            const semester = document.getElementById('quiz-semester').value;
+
+            if (!course || !semester) {
+                alert('Please select a course and semester');
+                return;
+            }
+
+            const submitBtn = document.querySelector('#manage-quiz-form button[onclick="endQuiz()"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Ending...';
+            submitBtn.disabled = true;
+
+            fetch('/admin/end_quiz', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ course, semester })
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      alert(data.message);
+                      location.reload();
+                  } else {
+                      alert(data.error || 'Failed to end quiz');
+                  }
+              }).catch(error => {
+                  alert('Error: ' + error);
+              }).finally(() => {
+                  submitBtn.innerHTML = originalText;
+                  submitBtn.disabled = false;
+              });
+        }
+
         // Toggle mobile menu
         document.getElementById('hamburger-toggle').addEventListener('click', function() {
             const menu = document.getElementById('dropdown-menu');
@@ -604,41 +753,41 @@
 
         // Edit question
         function editQuestion(button) {
-    try {
-        const question = JSON.parse(button.getAttribute('data-question'));
-        
-        document.getElementById('edit-question_id').value = question.question_id;
-        document.getElementById('edit-course').value = question.course;
-        document.getElementById('edit-semester').value = question.semester;
-        document.getElementById('edit-question_text').value = question.text;
-        document.getElementById('edit-option1').value = question.options[0];
-        document.getElementById('edit-option2').value = question.options[1];
-        document.getElementById('edit-option3').value = question.options[2];
-        document.getElementById('edit-option4').value = question.options[3];
-        document.getElementById('edit-correct_answer').value = question.correct_answer;
-        
-        const currentImage = document.getElementById('current-image');
-        if (question.image_path) {
-            currentImage.innerHTML = `<img src="/static/uploads/${question.image_path}" class="h-20" alt="Current Question Image">`;
-        } else {
-            currentImage.innerHTML = '<p>No image</p>';
+            try {
+                const question = JSON.parse(button.getAttribute('data-question'));
+                
+                document.getElementById('edit-question_id').value = question.question_id;
+                document.getElementById('edit-course').value = question.course;
+                document.getElementById('edit-semester').value = question.semester;
+                document.getElementById('edit-question_text').value = question.text;
+                document.getElementById('edit-option1').value = question.options[0];
+                document.getElementById('edit-option2').value = question.options[1];
+                document.getElementById('edit-option3').value = question.options[2];
+                document.getElementById('edit-option4').value = question.options[3];
+                document.getElementById('edit-correct_answer').value = question.correct_answer;
+                
+                const currentImage = document.getElementById('current-image');
+                if (question.image_path) {
+                    currentImage.innerHTML = `<img src="/static/uploads/${question.image_path}" class="h-20" alt="Current Question Image">`;
+                } else {
+                    currentImage.innerHTML = '<p>No image</p>';
+                }
+                
+                const modal = document.getElementById('edit-modal');
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modal.classList.add('active');
+                }, 10);
+            } catch (error) {
+                console.error('Error parsing question:', error);
+                alert('Error loading question data');
+            }
         }
-        
-        const modal = document.getElementById('edit-modal');
-        modal.classList.remove('hidden');
-        setTimeout(() => {
-            modal.classList.add('active');
-        }, 10);
-    } catch (error) {
-        console.error('Error parsing question:', error);
-        alert('Error loading question data');
-    }
-}
 
         // Submit edit
         function submitEdit() {
             const formData = new FormData(document.getElementById('edit-form'));
-            formData.append('is_edit','true');
+            formData.append('is_edit', 'true');
             fetch('/admin/questions', {
                 method: 'POST',
                 body: formData
