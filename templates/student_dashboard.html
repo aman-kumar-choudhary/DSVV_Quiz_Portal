@@ -29,6 +29,23 @@
         {% endif %}
     </div>
 
+    <!-- Student Notifications -->
+    <div class="bg-white p-6 rounded-xl shadow-md mb-8">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold text-gray-800 flex items-center">
+                <i class="fas fa-bell text-blue-500 mr-3"></i> Notifications
+            </h2>
+            <button id="mark-notifications-read" class="text-blue-600 text-sm hover:underline">Mark all as read</button>
+        </div>
+        
+        <div id="notifications-list" class="space-y-3 max-h-64 overflow-y-auto">
+            <div class="text-center py-8">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                <p class="mt-4 text-gray-600">Loading notifications...</p>
+            </div>
+        </div>
+    </div>
+
     <!-- Course-specific Leaderboard -->
     <div class="bg-white p-6 rounded-xl shadow-md mb-8">
         <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
@@ -293,6 +310,67 @@ document.addEventListener('DOMContentLoaded', function() {
             updateLeaderboard();
         }
     });
+    
+    // Load student notifications
+    function loadNotifications() {
+        fetch('/api/notifications')
+            .then(response => response.json())
+            .then(data => {
+                const notifications = data.notifications;
+                const notificationsList = document.getElementById('notifications-list');
+                
+                if (notifications.length > 0) {
+                    notificationsList.innerHTML = notifications.map(notification => `
+                        <div class="p-3 border border-gray-200 rounded-lg ${notification.read ? 'bg-white' : 'bg-blue-50'}">
+                            <div class="flex justify-between items-start mb-1">
+                                <span class="text-sm font-medium ${notification.read ? 'text-gray-700' : 'text-blue-700'}">
+                                    ${notification.title}
+                                </span>
+                                <span class="text-xs text-gray-500">
+                                    ${new Date(notification.timestamp).toLocaleTimeString()}
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-600">${notification.message}</p>
+                            <div class="text-xs text-gray-400 mt-1">
+                                ${new Date(notification.timestamp).toLocaleDateString()}
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    notificationsList.innerHTML = `
+                        <div class="text-center py-8">
+                            <i class="fas fa-bell-slash text-gray-400 text-4xl mb-4"></i>
+                            <p class="text-gray-500">No notifications</p>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading notifications:', error);
+            });
+    }
+    
+    // Load notifications initially
+    loadNotifications();
+    
+    // Mark all notifications as read
+    document.getElementById('mark-notifications-read').addEventListener('click', function() {
+        fetch('/api/notifications/read', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                loadNotifications();
+            }
+        })
+        .catch(error => {
+            console.error('Error marking notifications as read:', error);
+        });
+    });
+    
+    // Poll for new notifications every 30 seconds
+    setInterval(loadNotifications, 30000);
 });
 </script>
 {% endblock %}

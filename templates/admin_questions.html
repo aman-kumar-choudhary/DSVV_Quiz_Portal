@@ -593,117 +593,117 @@
                   submitBtn.disabled = false;
               });
         });
-
         // Set Quiz Time
-        function setQuizTime() {
-            const course = document.getElementById('quiz-course').value;
-            const semester = document.getElementById('quiz-semester').value;
-            const duration = document.getElementById('quiz-duration').value;
+function setQuizTime() {
+    const course = document.getElementById('quiz-course').value;
+    const semester = document.getElementById('quiz-semester').value;
+    const duration = document.getElementById('quiz-duration').value;
 
-            if (!course || !semester || !duration) {
-                alert('Please select a course, semester, and enter a duration');
-                return;
-            }
+    if (!course || !semester || !duration) {
+        alert('Please select a course, semester, and enter a duration');
+        return;
+    }
 
-            const submitBtn = document.querySelector('#manage-quiz-form button[onclick="setQuizTime()"]');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Setting...';
-            submitBtn.disabled = true;
+    const submitBtn = document.querySelector('#manage-quiz-form button[onclick="setQuizTime()"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Setting...';
+    submitBtn.disabled = true;
 
-            fetch('/admin/set_quiz_time', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ course, semester, duration })
-            }).then(response => response.json())
-              .then(data => {
-                  if (data.success) {
-                      alert(data.message);
-                  } else {
-                      alert(data.error || 'Failed to set quiz time');
-                  }
-              }).catch(error => {
-                  alert('Error: ' + error);
-              }).finally(() => {
-                  submitBtn.innerHTML = originalText;
-                  submitBtn.disabled = false;
-              });
-        }
+    fetch('/admin/set_quiz_time', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ course, semester, duration })
+    }).then(response => response.json())
+      .then(data => {
+          if (data.success) {
+              alert(data.message);
+          } else {
+              alert(data.error || 'Failed to set quiz time');
+          }
+      }).catch(error => {
+          alert('Error: ' + error);
+      }).finally(() => {
+          submitBtn.innerHTML = originalText;
+          submitBtn.disabled = false;
+      });
+}
 
-        // Start Quiz
-        function startQuiz() {
-            const course = document.getElementById('quiz-course').value;
-            const semester = document.getElementById('quiz-semester').value;
+// Start Quiz
+function startQuiz() {
+    const course = document.getElementById('quiz-course').value;
+    const semester = document.getElementById('quiz-semester').value;
+    const duration = document.getElementById('quiz-duration').value;
 
-            if (!course || !semester) {
-                alert('Please select a course and semester');
-                return;
-            }
+    if (!course || !semester) {
+        alert('Please select a course and semester');
+        return;
+    }
 
-            const submitBtn = document.querySelector('#manage-quiz-form button[onclick="startQuiz()"]');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Starting...';
-            submitBtn.disabled = true;
+    const submitBtn = document.querySelector('#manage-quiz-form button[onclick="startQuiz()"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Starting...';
+    submitBtn.disabled = true;
 
-            fetch('/admin/start_quiz', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ course, semester })
-            }).then(response => response.json())
-              .then(data => {
-                  if (data.success) {
-                      alert(data.message);
-                      location.reload();
-                  } else {
-                      alert(data.error || 'Failed to start quiz');
-                  }
-              }).catch(error => {
-                  alert('Error: ' + error);
-              }).finally(() => {
-                  submitBtn.innerHTML = originalText;
-                  submitBtn.disabled = false;
-              });
-        }
+    fetch('/admin/start_quiz', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ course, semester, duration })
+    }).then(response => response.json())
+      .then(data => {
+          if (data.success) {
+              alert(data.message);
+              location.reload();
+          } else {
+              alert(data.error || 'Failed to start quiz');
+          }
+      }).catch(error => {
+          alert('Error: ' + error);
+      }).finally(() => {
+          submitBtn.innerHTML = originalText;
+          submitBtn.disabled = false;
+      });
+}
 
-        // End Quiz
-        function endQuiz() {
-            const course = document.getElementById('quiz-course').value;
-            const semester = document.getElementById('quiz-semester').value;
+// End Quiz
+function endQuiz() {
+    const course = document.getElementById('quiz-course').value;
+    const semester = document.getElementById('quiz-semester').value;
 
-            if (!course || !semester) {
-                alert('Please select a course and semester');
-                return;
-            }
+    if (!course || !semester) {
+        alert('Please select a course and semester');
+        return;
+    }
 
-            const submitBtn = document.querySelector('#manage-quiz-form button[onclick="endQuiz()"]');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Ending...';
-            submitBtn.disabled = true;
+    const submitBtn = document.querySelector('#manage-quiz-form button[onclick="endQuiz()"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Ending...';
+    submitBtn.disabled = true;
 
-            fetch('/admin/end_quiz', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ course, semester })
-            }).then(response => response.json())
-              .then(data => {
-                  if (data.success) {
-                      alert(data.message);
-                      location.reload();
-                  } else {
-                      alert(data.error || 'Failed to end quiz');
-                  }
-              }).catch(error => {
-                  alert('Error: ' + error);
-              }).finally(() => {
-                  submitBtn.innerHTML = originalText;
-                  submitBtn.disabled = false;
-              });
-        }
+    fetch('/admin/end_quiz', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ course, semester })
+    }).then(response => response.json())
+      .then(data => {
+          if (data.success) {
+              alert(data.message);
+              location.reload();
+          } else {
+              alert(data.error || 'Failed to end quiz');
+          }
+      }).catch(error => {
+          alert('Error: ' + error);
+      }).finally(() => {
+          submitBtn.innerHTML = originalText;
+          submitBtn.disabled = false;
+      });
+}
 
         // Toggle mobile menu
         document.getElementById('hamburger-toggle').addEventListener('click', function() {

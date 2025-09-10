@@ -36,6 +36,8 @@ user_sessions_collection = db.user_sessions
 quiz_settings_collection = db.quiz_settings
 feedback_collection = db.feedback
 notifications_collection = db.notifications
+admin_notifications_collection = db.admin_notifications
+activities_collection = db.activities
 
 # Session configuration
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=2)
@@ -45,7 +47,6 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 # Admin credentials
 ADMIN_CREDENTIALS = {"username": "admin.computer", "password": bcrypt.generate_password_hash("admin123").decode('utf-8')}
-
 
 # Create indexes for better performance
 def create_indexes():
@@ -64,7 +65,9 @@ def create_indexes():
     notifications_collection.create_index("scholar_id")
     notifications_collection.create_index("timestamp")
     users_collection.create_index("blocked")
-
+    admin_notifications_collection.create_index("timestamp")
+    admin_notifications_collection.create_index("read")
+    activities_collection.create_index("timestamp")
 
 def cleanup_duplicate_emails():
     # Find duplicate emails
@@ -112,6 +115,38 @@ def create_notification(scholar_id, title, message, notification_type="info"):
         "timestamp": datetime.now()
     }
     notifications_collection.insert_one(notification)
+    return notification
+
+def create_admin_notification(title, message, notification_type="info", scholar_id=None, course=None, semester=None):
+    notification = {
+        "title": title,
+        "message": message,
+        "type": notification_type,
+        "read": False,
+        "timestamp": datetime.now(),
+        "scholar_id": scholar_id,
+        "course": course,
+        "semester": semester
+    }
+    admin_notifications_collection.insert_one(notification)
+    return notification
+
+def get_admin_notifications(limit=20):
+    notifications = list(admin_notifications_collection.find().sort("timestamp", -1).limit(limit))
+    
+    # Convert ObjectId to string for JSON serialization
+    for notification in notifications:
+        notification['_id'] = str(notification['_id'])
+        if 'timestamp' in notification and isinstance(notification['timestamp'], datetime):
+            notification['timestamp'] = notification['timestamp'].isoformat()
+    
+    return notifications
+
+def mark_admin_notifications_read():
+    admin_notifications_collection.update_many(
+        {"read": False},
+        {"$set": {"read": True}}
+    )
 
 def get_notifications(scholar_id, limit=10):
     notifications = list(notifications_collection.find(
@@ -164,6 +199,19 @@ def add_created_at_to_users():
     )
     print("Added created_at field to users")
 
+def log_activity(activity_type, description, scholar_id=None, course=None, semester=None):
+    """Log activity for admin dashboard"""
+    activity = {
+        "type": activity_type,
+        "description": description,
+        "scholar_id": scholar_id,
+        "course": course,
+        "semester": semester,
+        "timestamp": datetime.now()
+    }
+    activities_collection.insert_one(activity)
+    return activity
+
 # Call this function once
 add_created_at_to_users()
 
@@ -200,7 +248,6 @@ def login():
         return render_template('login.html', error="Invalid student credentials")
     return render_template('login.html')
 
-
 # Add API endpoint for notifications
 @app.route('/api/notifications')
 def api_notifications():
@@ -209,6 +256,24 @@ def api_notifications():
     
     notifications = get_notifications(session['scholar_id'])
     return jsonify({"notifications": notifications})
+
+# Add API endpoint for admin notifications
+@app.route('/api/admin_notifications')
+def api_admin_notifications():
+    if 'username' not in session or session['role'] != 'admin':
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    notifications = get_admin_notifications()
+    return jsonify({"notifications": notifications})
+
+# Add API endpoint for marking admin notifications as read
+@app.route('/api/admin_notifications/read', methods=['POST'])
+def mark_admin_notifications_read():
+    if 'username' not in session or session['role'] != 'admin':
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    mark_admin_notifications_read()
+    return jsonify({"success": True})
 
 # Add API endpoint for marking notifications as read
 @app.route('/api/notifications/read', methods=['POST'])
@@ -274,7 +339,6 @@ def daily_leaderboard():
         print(f"Error in daily_leaderboard: {str(e)}")
         return jsonify({"error": "Failed to load leaderboard data"}), 500
 
-
 # Add API endpoint for course-specific leaderboard
 @app.route('/api/course_leaderboard/<course>/<semester>')
 def course_leaderboard(course, semester):
@@ -332,7 +396,6 @@ def course_leaderboard(course, semester):
     except Exception as e:
         print(f"Error in course_leaderboard: {str(e)}")
         return jsonify({"error": "Failed to load leaderboard data"}), 500
-
 
 @app.route('/admin-login',methods=['GET','POST'])
 def admin_login():
@@ -415,8 +478,6 @@ def signup():
                                 error="An error occurred during registration. Please try again.")
     
     return render_template('signup.html')
-
-
 
 @app.route('/quiz')
 def quiz():
@@ -560,6 +621,25 @@ def finish_quiz():
             # Save new results
             results_collection.insert_one(quiz_data)
         
+        # Create admin notification for quiz completion
+        create_admin_notification(
+            "Quiz Completed",
+            f"{user_name} ({session['scholar_id']}) has completed the {session.get('course', '')} Semester {session.get('semester', '')} quiz with score {score}/{len(questions)}",
+            "success",
+            session['scholar_id'],
+            session.get('course', ''),
+            session.get('semester', '')
+        )
+        
+        # Log activity
+        log_activity(
+            "quiz_completed",
+            f"{user_name} completed {session.get('course', '')} Semester {session.get('semester', '')} quiz with score {score}/{len(questions)}",
+            session['scholar_id'],
+            session.get('course', ''),
+            session.get('semester', '')
+        )
+        
         # Clear session quiz data
         session_keys = ['questions', 'answers', 'current_question', 'quiz_start_time', 'course', 'semester', 'quiz_duration']
         for key in session_keys:
@@ -599,8 +679,6 @@ def check_time():
         "time_left_minutes": int(time_left // 60),
         "time_left_seconds": int(time_left % 60)
     })
-
-
 
 # Add API endpoint for quiz stats
 @app.route('/api/quiz_stats')
@@ -654,6 +732,33 @@ def end_quiz():
         {"$set": {"active": False}}
     )
     
+    # Create notification for students
+    students = users_collection.find({"course": course, "semester": semester})
+    for student in students:
+        create_notification(
+            student['scholar_id'],
+            "Quiz Ended",
+            f"The quiz for {course} Semester {semester} has ended. Results will be published soon.",
+            "info"
+        )
+    
+    # Create admin notification
+    create_admin_notification(
+        "Quiz Ended",
+        f"Quiz for {course} Semester {semester} has been ended",
+        "info",
+        course=course,
+        semester=semester
+    )
+    
+    # Log activity
+    log_activity(
+        "quiz_ended",
+        f"Quiz for {course} Semester {semester} ended",
+        course=course,
+        semester=semester
+    )
+    
     return jsonify({
         "success": True,
         "message": f"Quiz ended for {course} - Semester {semester}",
@@ -697,6 +802,23 @@ def start_quiz_admin():
             "info"
         )
     
+    # Create admin notification
+    create_admin_notification(
+        "Quiz Started",
+        f"Quiz for {course} Semester {semester} has been started",
+        "info",
+        course=course,
+        semester=semester
+    )
+    
+    # Log activity
+    log_activity(
+        "quiz_started",
+        f"Quiz for {course} Semester {semester} started",
+        course=course,
+        semester=semester
+    )
+    
     return jsonify({
         "success": True,
         "message": f"Quiz started for {course} - Semester {semester}",
@@ -732,6 +854,25 @@ def feedback():
         }
         
         feedback_collection.insert_one(feedback_data)
+        
+        # Create admin notification for feedback
+        create_admin_notification(
+            "Feedback Received",
+            f"{user.get('name', '')} ({session['scholar_id']}) submitted feedback for {session.get('course', '')} Semester {session.get('semester', '')} quiz",
+            "info",
+            session['scholar_id'],
+            session.get('course', ''),
+            session.get('semester', '')
+        )
+        
+        # Log activity
+        log_activity(
+            "feedback_submitted",
+            f"{user.get('name', '')} submitted feedback for {session.get('course', '')} Semester {session.get('semester', '')} quiz",
+            session['scholar_id'],
+            session.get('course', ''),
+            session.get('semester', '')
+        )
         
         # Clear any remaining quiz session data
         session_keys = ['questions', 'answers', 'current_question', 'quiz_start_time', 'course', 'semester', 'quiz_duration']
@@ -878,6 +1019,7 @@ def view_score():
 def admin():
     if 'username' not in session or session['role'] != 'admin':
         return redirect(url_for('login'))
+    
     query = {}
     results = list(results_collection.find(query, {'_id': 0}).sort('timestamp', -1))
     
@@ -913,6 +1055,26 @@ def admin():
         if '_id' in item:
             item['_id'] = str(item['_id'])
     
+    # Get recent feedback
+    recent_feedback = list(feedback_collection.find({}, {'_id': 0}).sort('timestamp', -1).limit(5))
+    
+    # Get recent activities
+    recent_activities = list(activities_collection.find({}, {'_id': 0}).sort('timestamp', -1).limit(10))
+    
+    # Get active quizzes
+    active_quizzes = []
+    courses_with_active_quizzes = questions_collection.distinct("course", {"active": True})
+    for course in courses_with_active_quizzes:
+        semesters = questions_collection.distinct("semester", {"course": course, "active": True})
+        for semester in semesters:
+            quiz_settings = quiz_settings_collection.find_one({"course": course, "semester": semester})
+            duration = quiz_settings['duration'] // 60 if quiz_settings and 'duration' in quiz_settings else 10
+            active_quizzes.append({
+                "course": course,
+                "semester": semester,
+                "duration": duration
+            })
+    
     stats = {
         'total_students': users_collection.count_documents({}),
         'total_questions': questions_collection.count_documents({}),
@@ -923,7 +1085,10 @@ def admin():
         'average_score': results_collection.aggregate([
             {"$match": query},
             {"$group": {"_id": None, "avg_score": {"$avg": "$score"}}}
-        ]).next().get('avg_score', 0) if results_collection.count_documents(query) > 0 else 0
+        ]).next().get('avg_score', 0) if results_collection.count_documents(query) > 0 else 0,
+        'recent_feedback': recent_feedback,
+        'recent_activities': recent_activities,
+        'active_quizzes': active_quizzes
     }
     
     return render_template('admin.html', stats=stats, results=results)
@@ -959,12 +1124,19 @@ def admin_upload_questions():
                     {"$set": question},
                     upsert=True
                 )
+            
+            # Log activity
+            log_activity(
+                "questions_uploaded",
+                f"Uploaded {len(data)} questions for {course} Semester {semester}",
+                course=course,
+                semester=semester
+            )
+            
             return jsonify({"success": True, "message": f"{len(data)} questions uploaded successfully"})
         except Exception as e:
             return jsonify({"error": str(e)}), 400
     return jsonify({"error": "Invalid file format"}), 400
-
-
 
 @app.route('/admin/questions', methods=['GET', 'POST'])
 def admin_questions():
@@ -976,6 +1148,13 @@ def admin_questions():
         if 'delete_question_id' in request.form:
             question_id = request.form['delete_question_id']
             questions_collection.delete_one({"question_id": question_id})
+            
+            # Log activity
+            log_activity(
+                "question_deleted",
+                f"Deleted question with ID: {question_id}"
+            )
+            
             return jsonify({"success": True, "message": "Question deleted successfully"})
         
         # Check if this is an edit operation
@@ -1035,10 +1214,28 @@ def admin_questions():
                 {"question_id": question_id},
                 {"$set": question_data}
             )
+            
+            # Log activity
+            log_activity(
+                "question_updated",
+                f"Updated question for {course} Semester {semester}",
+                course=course,
+                semester=semester
+            )
+            
             return jsonify({"success": True, "message": "Question updated successfully"})
         else:
             question_data["question_id"] = str(uuid.uuid4())
             questions_collection.insert_one(question_data)
+            
+            # Log activity
+            log_activity(
+                "question_added",
+                f"Added new question for {course} Semester {semester}",
+                course=course,
+                semester=semester
+            )
+            
             return jsonify({"success": True, "message": "Question added successfully"})
     
     # Filter questions (GET request handling remains the same)
@@ -1125,8 +1322,6 @@ def admin_results():
                          selected_semester=semester_filter,
                          top_students=top_students)
 
-
-
 @app.route('/student_dashboard', methods=['GET', 'POST'])
 def student_dashboard():
     if 'scholar_id' not in session or session['role'] != 'student':
@@ -1196,6 +1391,25 @@ def student_dashboard():
             # Store quiz info in session for the instructions page
             session['quiz_duration'] = duration
             session['total_questions'] = len(questions)
+            
+            # Create admin notification for quiz start
+            create_admin_notification(
+                "Quiz Started by Student",
+                f"{user['name']} ({session['scholar_id']}) has started the {course} Semester {semester} quiz",
+                "info",
+                session['scholar_id'],
+                course,
+                semester
+            )
+            
+            # Log activity
+            log_activity(
+                "quiz_started_by_student",
+                f"{user['name']} started {course} Semester {semester} quiz",
+                session['scholar_id'],
+                course,
+                semester
+            )
             
             # Redirect to instructions page
             return redirect(url_for('instructions'))
@@ -1273,7 +1487,6 @@ def start_quiz():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @app.route('/admin/set_quiz_time', methods=['POST'])
 def set_quiz_time():
     if 'username' not in session or session['role'] != 'admin':
@@ -1296,6 +1509,14 @@ def set_quiz_time():
         upsert=True
     )
     
+    # Log activity
+    log_activity(
+        "quiz_time_set",
+        f"Set quiz time to {duration} minutes for {course} Semester {semester}",
+        course=course,
+        semester=semester
+    )
+    
     return jsonify({"success": True, "message": f"Quiz duration set to {duration} minutes for {course} Semester {semester}"})
 
 @app.route('/publish_results', methods=['POST'])
@@ -1314,6 +1535,36 @@ def publish_results():
     )
     
     if result.modified_count > 0:
+        # Get result details for notification
+        published_result = results_collection.find_one({"workspace_id": workspace_id})
+        if published_result:
+            # Create notification for student
+            create_notification(
+                published_result['scholar_id'],
+                "Results Published",
+                f"Your quiz results for {published_result['course']} Semester {published_result['semester']} have been published. Score: {published_result['score']}/{published_result['total']}",
+                "success"
+            )
+            
+            # Create admin notification
+            create_admin_notification(
+                "Results Published",
+                f"Published results for {published_result['user_name']} ({published_result['scholar_id']}) - {published_result['course']} Semester {published_result['semester']}",
+                "success",
+                published_result['scholar_id'],
+                published_result['course'],
+                published_result['semester']
+            )
+            
+            # Log activity
+            log_activity(
+                "results_published",
+                f"Published results for {published_result['user_name']} - {published_result['course']} Semester {published_result['semester']}",
+                published_result['scholar_id'],
+                published_result['course'],
+                published_result['semester']
+            )
+        
         return jsonify({"success": True, "message": f"Results for workspace {workspace_id} published successfully"})
     
     return jsonify({"error": "Result not found"}), 404
@@ -1460,6 +1711,13 @@ def edit_user():
     result = users_collection.update_one({"scholar_id": scholar_id}, {"$set": updates})
     
     if result.modified_count > 0:
+        # Log activity
+        log_activity(
+            "user_updated",
+            f"Updated user details for {scholar_id}",
+            scholar_id=scholar_id
+        )
+        
         return jsonify({"success": True, "message": "User updated successfully"})
     return jsonify({"error": "No changes made or user not found"}), 404
 
@@ -1480,6 +1738,13 @@ def delete_user():
     notifications_collection.delete_many({"scholar_id": scholar_id})
     user_sessions_collection.delete_many({"scholar_id": scholar_id})
     
+    # Log activity
+    log_activity(
+        "user_deleted",
+        f"Deleted user {scholar_id} and all related data",
+        scholar_id=scholar_id
+    )
+    
     return jsonify({"success": True, "message": "User and related data deleted successfully"})
 
 # API to block/unblock user
@@ -1499,6 +1764,22 @@ def block_user():
     
     if block:
         create_notification(scholar_id, "Account Blocked", "You have been blocked from participating in quizzes. Contact the admin for more details.", "warning")
+        
+        # Log activity
+        log_activity(
+            "user_blocked",
+            f"Blocked user {scholar_id}",
+            scholar_id=scholar_id
+        )
+    else:
+        create_notification(scholar_id, "Account Unblocked", "Your account has been unblocked. You can now participate in quizzes.", "success")
+        
+        # Log activity
+        log_activity(
+            "user_unblocked",
+            f"Unblocked user {scholar_id}",
+            scholar_id=scholar_id
+        )
     
     return jsonify({"success": True, "message": f"User {'blocked' if block else 'unblocked'} successfully"})
 
@@ -1511,11 +1792,14 @@ def user_results(scholar_id):
     results = list(results_collection.find({"scholar_id": scholar_id}, {'_id': 0}).sort('timestamp', -1))
     return jsonify({"results": results})
 
-# if __name__ == '__main__':
-#     # port = int(os.environ.get('PORT', 5000))
-#     # app.run(host='0.0.0.0', port=port)
-#     app.run(debug=True)
-
+# API to get recent activities
+@app.route('/api/recent_activities')
+def api_recent_activities():
+    if 'username' not in session or session['role'] != 'admin':
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    activities = list(activities_collection.find({}, {'_id': 0}).sort('timestamp', -1).limit(20))
+    return jsonify({"activities": activities})
 
 if __name__ == '__main__':
     import argparse
