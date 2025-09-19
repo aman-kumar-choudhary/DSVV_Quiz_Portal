@@ -52,72 +52,52 @@ System{% endblock %} {% block content %}
   </div>
   </div>
 
-  <!-- Student Notifications -->
-  <div class="bg-white p-6 rounded-xl shadow-md mb-8">
-    <div class="flex justify-between items-center mb-4">
-      <h2 class="text-2xl font-bold text-gray-800 flex items-center">
-        <i class="fas fa-bell text-blue-500 mr-3"></i> Notifications
-      </h2>
-      <button
-        id="mark-notifications-read"
-        class="text-blue-600 text-sm hover:underline"
-      >
-        Mark all as read
-      </button>
-    </div>
-
-    <div id="notifications-list" class="space-y-3 max-h-64 overflow-y-auto">
-      <div class="text-center py-8">
-        <div
-          class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"
-        ></div>
-        <p class="mt-4 text-gray-600">Loading notifications...</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Course-specific Leaderboard -->
-  <div class="bg-white p-6 rounded-xl shadow-md mb-8">
-    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-      <i class="fas fa-trophy text-yellow-500 mr-3"></i>
-      {{ user.course }} - Semester {{ user.semester }} Leaderboard
-    </h2>
-
-    <div class="relative">
-      <div class="flex justify-between items-center mb-4">
-        <h3
-          id="course-slider-date-label"
-          class="text-lg font-semibold text-gray-700"
-        >
-          Today's Top Performers
-        </h3>
-        <div class="flex space-x-2">
-          <button
-            id="course-prev-day"
-            class="bg-gray-200 hover:bg-gray-300 rounded-full p-2"
-          >
-            <i class="fas fa-chevron-left"></i>
-          </button>
-          <button
-            id="course-next-day"
-            class="bg-gray-200 hover:bg-gray-300 rounded-full p-2"
-          >
-            <i class="fas fa-chevron-right"></i>
-          </button>
+    <!-- Student Notifications -->
+    <div class="bg-white p-6 rounded-xl shadow-md mb-8">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold text-gray-800 flex items-center">
+                <i class="fas fa-bell text-blue-500 mr-3"></i> Notifications
+            </h2>
+            <button id="mark-notifications-read" class="text-blue-600 text-sm hover:underline">Mark all as read</button>
         </div>
-      </div>
-
-      <div id="course-leaderboard" class="overflow-x-auto">
-        <!-- Course leaderboard will be loaded here by JavaScript -->
-        <div class="text-center py-8">
-          <div
-            class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"
-          ></div>
-          <p class="mt-4 text-gray-600">Loading leaderboard data...</p>
+        
+        <div id="notifications-list" class="space-y-3 max-h-64 overflow-y-auto">
+            <div class="text-center py-8">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                <p class="mt-4 text-gray-600">Loading notifications...</p>
+            </div>
         </div>
-      </div>
     </div>
-  </div>
+
+    <!-- Course-specific Leaderboard -->
+    <div class="bg-white p-6 rounded-xl shadow-md mb-8">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+            <i class="fas fa-trophy text-yellow-500 mr-3"></i> 
+            {{ user.course }} - Semester {{ user.semester }} Leaderboard
+        </h2>
+        
+        <div class="relative">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="course-slider-date-label" class="text-lg font-semibold text-gray-700">Today's Top Performers</h3>
+                <div class="flex space-x-2">
+                    <button id="course-prev-day" class="bg-gray-200 hover:bg-gray-300 rounded-full p-2">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button id="course-next-day" class="bg-gray-200 hover:bg-gray-300 rounded-full p-2">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="course-leaderboard" class="overflow-x-auto">
+                <!-- Course leaderboard will be loaded here by JavaScript -->
+                <div class="text-center py-8">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                    <p class="mt-4 text-gray-600">Loading leaderboard data...</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
   <!-- Quiz Selection Card -->
   <div class="bg-white p-8 rounded-xl shadow-lg mb-10 card-hover">
@@ -457,86 +437,67 @@ System{% endblock %} {% block content %}
         updateLeaderboard();
       }
     });
-
+    
     // Load student notifications
     function loadNotifications() {
-      fetch("/api/notifications")
-        .then((response) => response.json())
-        .then((data) => {
-          const notifications = data.notifications;
-          const notificationsList =
-            document.getElementById("notifications-list");
-
-          if (notifications.length > 0) {
-            notificationsList.innerHTML = notifications
-              .map(
-                (notification) => `
-                            <div class="p-3 border border-gray-200 rounded-lg ${
-                              notification.read ? "bg-white" : "bg-blue-50"
-                            }">
-                                <div class="flex justify-between items-start mb-1">
-                                    <span class="text-sm font-medium ${
-                                      notification.read
-                                        ? "text-gray-700"
-                                        : "text-blue-700"
-                                    }">
-                                        ${notification.title}
-                                    </span>
-                                    <span class="text-xs text-gray-500">
-                                        ${new Date(
-                                          notification.timestamp
-                                        ).toLocaleTimeString()}
-                                    </span>
-                                </div>
-                                <p class="text-sm text-gray-600">${
-                                  notification.message
-                                }</p>
-                                <div class="text-xs text-gray-400 mt-1">
-                                    ${new Date(
-                                      notification.timestamp
-                                    ).toLocaleDateString()}
-                                </div>
+        fetch('/api/notifications')
+            .then(response => response.json())
+            .then(data => {
+                const notifications = data.notifications;
+                const notificationsList = document.getElementById('notifications-list');
+                
+                if (notifications.length > 0) {
+                    notificationsList.innerHTML = notifications.map(notification => `
+                        <div class="p-3 border border-gray-200 rounded-lg ${notification.read ? 'bg-white' : 'bg-blue-50'}">
+                            <div class="flex justify-between items-start mb-1">
+                                <span class="text-sm font-medium ${notification.read ? 'text-gray-700' : 'text-blue-700'}">
+                                    ${notification.title}
+                                </span>
+                                <span class="text-xs text-gray-500">
+                                    ${new Date(notification.timestamp).toLocaleTimeString()}
+                                </span>
                             </div>
-                        `
-              )
-              .join("");
-          } else {
-            notificationsList.innerHTML = `
-                            <div class="text-center py-8">
-                                <i class="fas fa-bell-slash text-gray-400 text-4xl mb-4"></i>
-                                <p class="text-gray-500">No notifications</p>
+                            <p class="text-sm text-gray-600">${notification.message}</p>
+                            <div class="text-xs text-gray-400 mt-1">
+                                ${new Date(notification.timestamp).toLocaleDateString()}
                             </div>
-                        `;
-          }
-        })
-        .catch((error) => {
-          console.error("Error loading notifications:", error);
-        });
+                        </div>
+                    `).join('');
+                } else {
+                    notificationsList.innerHTML = `
+                        <div class="text-center py-8">
+                            <i class="fas fa-bell-slash text-gray-400 text-4xl mb-4"></i>
+                            <p class="text-gray-500">No notifications</p>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading notifications:', error);
+            });
     }
-
+    
     // Load notifications initially
     loadNotifications();
-
+    
     // Mark all notifications as read
-    document
-      .getElementById("mark-notifications-read")
-      .addEventListener("click", function () {
-        fetch("/api/notifications/read", {
-          method: "POST",
+    document.getElementById('mark-notifications-read').addEventListener('click', function() {
+        fetch('/api/notifications/read', {
+            method: 'POST'
         })
-          .then((response) => response.json())
-          .then((data) => {
+        .then(response => response.json())
+        .then(data => {
             if (data.success) {
-              loadNotifications();
+                loadNotifications();
             }
-          })
-          .catch((error) => {
-            console.error("Error marking notifications as read:", error);
-          });
-      });
-
+        })
+        .catch(error => {
+            console.error('Error marking notifications as read:', error);
+        });
+    });
+    
     // Poll for new notifications every 30 seconds
     setInterval(loadNotifications, 30000);
-  });
+});
 </script>
 {% endblock %}

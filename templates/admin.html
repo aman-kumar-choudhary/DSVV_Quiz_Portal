@@ -13,299 +13,247 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
     <style>
-      @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
-
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-        font-family: "Poppins", sans-serif;
-      }
-
-      body {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        min-height: 100vh;
-        margin: 0;
-      }
-
-      .logo-container {
-        background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-        border-bottom-right-radius: 20px;
-      }
-
-      .sidebar {
-        width: 250px;
-        background: linear-gradient(180deg, #1e40af 0%, #3b82f6 100%);
-        transition: all 0.3s ease;
-        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-        z-index: 1000;
-        position: fixed;
-        top: 80px; /* Adjusted to accommodate wider header */
-        bottom: 0;
-        left: 0;
-        overflow-y: auto;
-      }
-
-      .sidebar.collapsed {
-        width: 70px;
-      }
-
-      .main-content {
-        transition: all 0.3s ease;
-        width: calc(100% - 250px);
-        margin-left: 250px;
-        margin-top: 80px; /* Adjusted to accommodate wider header */
-      }
-
-      .main-content.expanded {
-        width: calc(100% - 70px);
-        margin-left: 70px;
-        margin-top: 80px; /* Adjusted to accommodate wider header */
-      }
-
-      .nav-item {
-        transition: all 0.2s ease;
-        border-left: 4px solid transparent;
-      }
-
-      .nav-item:hover {
-        background: rgba(255, 255, 255, 0.1);
-        border-left: 4px solid #93c5fd;
-      }
-
-      .nav-item.active {
-        background: rgba(255, 255, 255, 0.15);
-        border-left: 4px solid #ffffff;
-      }
-
-      .card-hover {
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-      }
-
-      .card-hover:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-      }
-
-      .stats-card {
-        border-left: 4px solid;
-        transition: all 0.3s ease;
-      }
-
-      .stats-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-      }
-
-      /* Leaderboard row styles */
-      .leaderboard-row:nth-child(1) {
-        background: linear-gradient(90deg, #fef3c7 0%, #fde68a 100%);
-        border-left: 4px solid #f59e0b;
-      }
-      .leaderboard-row:nth-child(2) {
-        background: linear-gradient(90deg, #f3f4f6 0%, #e5e7eb 100%);
-        border-left: 4px solid #9ca3af;
-      }
-      .leaderboard-row:nth-child(3) {
-        background: linear-gradient(90deg, #fed7aa 0%, #fdba74 100%);
-        border-left: 4px solid #f97316;
-      }
-
-      @media (max-width: 768px) {
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            margin: 0;
+        }
+        
+        .logo-container {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            border-bottom-right-radius: 20px;
+        }
+        
         .sidebar {
-          width: 70px;
-          top: 80px; /* Adjusted for wider header */
+            width: 250px;
+            background: linear-gradient(180deg, #1e40af 0%, #3b82f6 100%);
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            position: fixed;
+            top: 80px; /* Adjusted to accommodate wider header */
+            bottom: 0;
+            left: 0;
+            overflow-y: auto;
         }
-
-        .sidebar .menu-text {
-          display: none;
-        }
-
-        .main-content {
-          width: calc(100% - 70px);
-          margin-left: 70px;
-          margin-top: 80px; /* Adjusted for wider header */
-        }
-
+        
         .sidebar.collapsed {
-          width: 0;
-          display: none;
+            width: 70px;
         }
-
+        
+        .main-content {
+            transition: all 0.3s ease;
+            width: calc(100% - 250px);
+            margin-left: 250px;
+            margin-top: 80px; /* Adjusted to accommodate wider header */
+        }
+        
         .main-content.expanded {
-          width: 100%;
-          margin-left: 0;
-          margin-top: 80px; /* Adjusted for wider header */
+            width: calc(100% - 70px);
+            margin-left: 70px;
+            margin-top: 80px; /* Adjusted to accommodate wider header */
         }
-
+        
+        .nav-item {
+            transition: all 0.2s ease;
+            border-left: 4px solid transparent;
+        }
+        
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-left: 4px solid #93c5fd;
+        }
+        
+        .nav-item.active {
+            background: rgba(255, 255, 255, 0.15);
+            border-left: 4px solid #ffffff;
+        }
+        
+        .card-hover {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stats-card {
+            border-left: 4px solid;
+            transition: all 0.3s ease;
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Leaderboard row styles */
+        .leaderboard-row:nth-child(1) { 
+            background: linear-gradient(90deg, #fef3c7 0%, #fde68a 100%);
+            border-left: 4px solid #f59e0b;
+        }
+        .leaderboard-row:nth-child(2) { 
+            background: linear-gradient(90deg, #f3f4f6 0%, #e5e7eb 100%);
+            border-left: 4px solid #9ca3af;
+        }
+        .leaderboard-row:nth-child(3) { 
+            background: linear-gradient(90deg, #fed7aa 0%, #fdba74 100%);
+            border-left: 4px solid #f97316;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 70px;
+                top: 80px; /* Adjusted for wider header */
+            }
+            
+            .sidebar .menu-text {
+                display: none;
+            }
+            
+            .main-content {
+                width: calc(100% - 70px);
+                margin-left: 70px;
+                margin-top: 80px; /* Adjusted for wider header */
+            }
+            
+            .sidebar.collapsed {
+                width: 0;
+                display: none;
+            }
+            
+            .main-content.expanded {
+                width: 100%;
+                margin-left: 0;
+                margin-top: 80px; /* Adjusted for wider header */
+            }
+            
+            #hamburger-toggle {
+                display: block;
+            }
+        }
+        
         #hamburger-toggle {
-          display: block;
+            display: none;
         }
-      }
-
-      #hamburger-toggle {
-        display: none;
-      }
-
-      header {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        z-index: 2000;
-        height: 80px; /* Increased height for wider header */
-        padding: 10px 20px; /* Added padding for better spacing */
-        background-color: #ffffff;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      }
-
-      header .logo-container img {
-        height: 70px; /* Adjusted logo size to fit wider header */
-      }
-
-      .notification-badge {
-        position: absolute;
-        top: -5px;
-        right: -5px;
-        background-color: #ef4444;
-        color: white;
-        border-radius: 50%;
-        width: 18px;
-        height: 18px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 10px;
-        font-weight: bold;
-      }
-
-      .activity-item {
-        border-left: 3px solid #3b82f6;
-        transition: all 0.2s ease;
-      }
-
-      .activity-item:hover {
-        background-color: #f8fafc;
-        border-left-color: #1d4ed8;
-      }
-
-      .feedback-item {
-        border-left: 3px solid #10b981;
-      }
-
-      .quiz-active {
-        background: linear-gradient(90deg, #dbeafe 0%, #eff6ff 100%);
-        border-left: 4px solid #3b82f6;
-      }
+        
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 2000;
+            height: 80px; /* Increased height for wider header */
+            padding: 10px 20px; /* Added padding for better spacing */
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        header .logo-container img {
+            height: 70px; /* Adjusted logo size to fit wider header */
+        }
+        
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        
+        .activity-item {
+            border-left: 3px solid #3b82f6;
+            transition: all 0.2s ease;
+        }
+        
+        .activity-item:hover {
+            background-color: #f8fafc;
+            border-left-color: #1d4ed8;
+        }
+        
+        .feedback-item {
+            border-left: 3px solid #10b981;
+        }
+        
+        .quiz-active {
+            background: linear-gradient(90deg, #dbeafe 0%, #eff6ff 100%);
+            border-left: 4px solid #3b82f6;
+        }
     </style>
   </head>
   <body class="flex flex-col min-h-screen">
     <!-- Header with Logo and Hamburger Menu -->
-    <header
-      class="bg-white shadow-md py-4 px-4 flex justify-between items-center fixed top-0 left-0 right-0 z-50 h-20"
-    >
-      <div class="flex items-center w-full justify-between">
-        <!-- Logo in Header -->
-        <div class="logo-container flex items-center">
-          <img
-            src="/static/images/dsvvlogo.png"
-            alt="DSVV Logo"
-            class="h-24 mr-3"
-          />
-        </div>
-        <div class="flex items-center space-x-6">
-          <div class="relative">
-            <button
-              id="admin-notifications-btn"
-              class="text-gray-600 focus:outline-none relative"
-            >
-              <i class="fas fa-bell text-xl"></i>
-              <span
-                id="admin-notification-count"
-                class="notification-badge hidden"
-                >0</span
-              >
-            </button>
-            <div
-              id="admin-notifications-dropdown"
-              class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg py-2 hidden z-50 max-h-96 overflow-y-auto"
-            >
-              <div class="px-4 py-2 border-b border-gray-200">
-                <h3 class="font-semibold text-gray-700">Admin Notifications</h3>
-              </div>
-              <div id="admin-notifications-list" class="p-2">
-                <!-- Notifications will be loaded here -->
-              </div>
-              <div class="px-4 py-2 border-t border-gray-200 text-center">
-                <button
-                  id="mark-all-read"
-                  class="text-blue-600 text-sm hover:underline mr-4"
-                >
-                  Mark all as read
-                </button>
-                <button
-                  id="clearNotificationsBtn"
-                  class="text-red-600 text-sm hover:underline"
-                >
-                  Clear all
-                </button>
-              </div>
+    <header class="bg-white shadow-md py-4 px-4 flex justify-between items-center fixed top-0 left-0 right-0 z-50 h-20">
+        <div class="flex items-center w-full justify-between">
+            <!-- Logo in Header -->
+            <div class="logo-container flex items-center">
+                <img src="/static/images/dsvvlogo.png" alt="DSVV Logo" class="h-24 mr-3">
             </div>
-          </div>
-
-          <!-- Hamburger Menu Button -->
-          <button
-            id="hamburger-toggle"
-            class="text-gray-600 focus:outline-none md:hidden"
-          >
-            <i class="fas fa-bars text-xl"></i>
-          </button>
-
-          <!-- User Profile -->
-          <div class="relative">
-            <button
-              id="user-menu-button"
-              class="flex items-center focus:outline-none"
-            >
-              <div
-                class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold"
-              >
-                A
-              </div>
-              <span class="ml-2 text-gray-700 hidden md:block"
-                >admin.computer</span
-              >
-              <i
-                class="fas fa-chevron-down ml-1 text-gray-600 text-xs hidden md:block"
-              ></i>
-            </button>
-            <!-- User dropdown -->
-            <div
-              id="user-dropdown"
-              class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 hidden z-50"
-            >
-              <a
-                href="#"
-                class="block px-4 py-2 text-gray-700 hover:bg-gray-100"
-              >
-                <i class="fas fa-user-circle mr-2"></i>Profile
-              </a>
-              <a
-                href="#"
-                class="block px-4 py-2 text-gray-700 hover:bg-gray-100"
-              >
-                <i class="fas fa-cog mr-2"></i>Settings
-              </a>
-              <a
-                href="/logout"
-                class="block px-4 py-2 text-gray-700 hover:bg-gray-100"
-              >
-                <i class="fas fa-sign-out-alt mr-2"></i>Logout
-              </a>
+            <div class="flex items-center space-x-6">
+                <!-- Admin Notifications -->
+                <div class="relative">
+                    <button id="admin-notifications-btn" class="text-gray-600 focus:outline-none relative">
+                        <i class="fas fa-bell text-xl"></i>
+                        <span id="admin-notification-count" class="notification-badge hidden">0</span>
+                    </button>
+                    <div id="admin-notifications-dropdown" class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg py-2 hidden z-50 max-h-96 overflow-y-auto">
+                        <div class="px-4 py-2 border-b border-gray-200">
+                            <h3 class="font-semibold text-gray-700">Admin Notifications</h3>
+                        </div>
+                        <div id="admin-notifications-list" class="p-2">
+                            <!-- Notifications will be loaded here -->
+                        </div>
+                        <div class="px-4 py-2 border-t border-gray-200 text-center">
+                            <button id="mark-all-read" class="text-blue-600 text-sm hover:underline">Mark all as read</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Hamburger Menu Button -->
+                <button id="hamburger-toggle" class="text-gray-600 focus:outline-none md:hidden">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+                
+                <!-- User Profile -->
+                <div class="relative">
+                    <button id="user-menu-button" class="flex items-center focus:outline-none">
+                        <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold">A</div>
+                        <span class="ml-2 text-gray-700 hidden md:block">admin.computer</span>
+                        <i class="fas fa-chevron-down ml-1 text-gray-600 text-xs hidden md:block"></i>
+                    </button>
+                    <!-- User dropdown -->
+                    <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 hidden z-50">
+                        <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                            <i class="fas fa-user-circle mr-2"></i>Profile
+                        </a>
+                        <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                            <i class="fas fa-cog mr-2"></i>Settings
+                        </a>
+                        <a href="/logout" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                            <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                        </a>
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
-      </div>
     </header>
 
     <!-- Dropdown Menu (hidden by default) -->
@@ -485,582 +433,509 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div
-            class="stats-card bg-white p-6 rounded-xl shadow-md border-l-4 border-blue-500"
-          >
-            <div class="flex items-center">
-              <div class="p-3 bg-blue-100 rounded-full mr-4">
-                <i class="fas fa-users text-blue-600 text-xl"></i>
-              </div>
-              <div>
-                <p class="text-sm text-gray-500">Total Students</p>
-                <p class="text-2xl font-bold text-gray-800">
-                  {{ stats.total_students }}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div
-            class="stats-card bg-white p-6 rounded-xl shadow-md border-l-4 border-green-500"
-          >
-            <div class="flex items-center">
-              <div class="p-3 bg-green-100 rounded-full mr-4">
-                <i class="fas fa-file-alt text-green-600 text-xl"></i>
-              </div>
-              <div>
-                <p class="text-sm text-gray-500">Total Questions</p>
-                <p class="text-2xl font-bold text-gray-800">
-                  {{ stats.total_questions }}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div
-            class="stats-card bg-white p-6 rounded-xl shadow-md border-l-4 border-purple-500"
-          >
-            <div class="flex items-center">
-              <div class="p-3 bg-purple-100 rounded-full mr-4">
-                <i class="fas fa-chart-pie text-purple-600 text-xl"></i>
-              </div>
-              <div>
-                <p class="text-sm text-gray-500">Quizzes Taken</p>
-                <p class="text-2xl font-bold text-gray-800">
-                  {{ stats.total_quizzes }}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div
-            class="stats-card bg-white p-6 rounded-xl shadow-md border-l-4 border-yellow-500"
-          >
-            <div class="flex items-center">
-              <div class="p-3 bg-yellow-100 rounded-full mr-4">
-                <i class="fas fa-check-circle text-yellow-600 text-xl"></i>
-              </div>
-              <div>
-                <p class="text-sm text-gray-500">Avg. Score</p>
-                <p class="text-2xl font-bold text-gray-800">
-                  {{ stats.average_score | round(2) }}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Active Quizzes Section -->
-        {% if stats.active_quizzes %}
-        <div class="bg-white p-6 rounded-xl shadow-md mb-8 card-hover">
-          <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-            <i class="fas fa-play-circle text-green-500 mr-3"></i> Active
-            Quizzes
-          </h2>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {% for quiz in stats.active_quizzes %}
-            <div class="quiz-active p-4 rounded-lg border border-gray-200">
-              <div class="flex justify-between items-start mb-2">
-                <h3 class="font-semibold text-blue-700">
-                  {{ quiz.course }} - Sem {{ quiz.semester }}
-                </h3>
-                <span
-                  class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full"
-                  >Active</span
-                >
-              </div>
-              <p class="text-sm text-gray-600 mb-3">
-                Duration: {{ quiz.duration }} minutes
-              </p>
-              <!-- <div class="flex space-x-2">
-                <button
-                  class="end-quiz-btn bg-red-100 text-red-700 text-xs px-3 py-1 rounded hover:bg-red-200 transition-colors"
-                  data-course="{{ quiz.course }}"
-                  data-semester="{{ quiz.semester }}"
-                >
-                  <i class="fas fa-stop-circle mr-1"></i> End Quiz
-                </button>
-                <button
-                  class="view-results-btn bg-blue-100 text-blue-700 text-xs px-3 py-1 rounded hover:bg-blue-200 transition-colors"
-                  data-course="{{ quiz.course }}"
-                  data-semester="{{ quiz.semester }}"
-                >
-                  <i class="fas fa-chart-bar mr-1"></i> Results
-                </button>
-              </div> -->
-            </div>
-            {% endfor %}
-          </div>
-        </div>
-        {% endif %}
-
-        <!-- Daily Leaderboard Section -->
-        <div class="bg-white p-6 rounded-xl shadow-md mb-8 card-hover">
-          <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-            <i class="fas fa-trophy text-yellow-500 mr-3"></i> Daily Leaderboard
-          </h2>
-
-          <div class="relative mb-8">
-            <div class="flex justify-between items-center mb-4">
-              <h3
-                id="slider-date-label"
-                class="text-lg font-semibold text-gray-700"
-              >
-                Today's Top Performers
-              </h3>
-              <div class="flex space-x-2">
-                <button
-                  id="prev-day"
-                  class="bg-gray-200 hover:bg-gray-300 rounded-full p-2 transition-colors"
-                >
-                  <i class="fas fa-chevron-left"></i>
-                </button>
-                <button
-                  id="next-day"
-                  class="bg-gray-200 hover:bg-gray-300 rounded-full p-2 transition-colors"
-                >
-                  <i class="fas fa-chevron-right"></i>
-                </button>
-              </div>
-            </div>
-
-            <div
-              id="daily-leaderboard"
-              class="overflow-x-auto rounded-lg border border-gray-200"
-            >
-              <!-- Content will be loaded by JavaScript -->
-            </div>
-          </div>
-        </div>
-
-        <!-- Recent Activities and Feedback Section -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <!-- Recent Activities -->
-          <div class="bg-white p-6 rounded-xl shadow-md">
-            <div class="flex justify-between items-center mb-6">
-              <h2 class="text-xl font-semibold text-gray-800 flex items-center">
-                <i class="fas fa-history text-blue-600 mr-2"></i> Recent
-                Activities
-              </h2>
-              <a href="#" class="text-blue-600 text-sm hover:underline"
-                >View All</a
-              >
-            </div>
-
-            <div class="space-y-4 max-h-96 overflow-y-auto">
-              {% if stats.recent_activities %} {% for activity in
-              stats.recent_activities %}
-              <div class="activity-item p-4 bg-gray-50 rounded-lg">
-                <div class="flex justify-between items-start mb-1">
-                  <span class="text-sm font-medium text-gray-700">
-                    {% if activity.scholar_id %} {{ activity.scholar_id }} {%
-                    else %} System {% endif %}
-                  </span>
-                  <span class="text-xs text-gray-500">
-                    {{ activity.timestamp.strftime('%H:%M') }}
-                  </span>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="stats-card bg-white p-6 rounded-xl shadow-md border-l-4 border-blue-500">
+                    <div class="flex items-center">
+                        <div class="p-3 bg-blue-100 rounded-full mr-4">
+                            <i class="fas fa-users text-blue-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Total Students</p>
+                            <p class="text-2xl font-bold text-gray-800">{{ stats.total_students }}</p>
+                        </div>
+                    </div>
                 </div>
-                <p class="text-sm text-gray-600 mb-1">
-                  {{ activity.description }}
-                </p>
-                <div class="text-xs text-gray-400">
-                  {{ activity.timestamp.strftime('%b %d, %Y') }} {% if
-                  activity.course %} • {{ activity.course }} Sem {{
-                  activity.semester }} {% endif %}
+                
+                <div class="stats-card bg-white p-6 rounded-xl shadow-md border-l-4 border-green-500">
+                    <div class="flex items-center">
+                        <div class="p-3 bg-green-100 rounded-full mr-4">
+                            <i class="fas fa-file-alt text-green-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Total Questions</p>
+                            <p class="text-2xl font-bold text-gray-800">{{ stats.total_questions }}</p>
+                        </div>
+                    </div>
                 </div>
-              </div>
-              {% endfor %} {% else %}
-              <div class="text-center py-8">
-                <i class="fas fa-history text-gray-400 text-4xl mb-4"></i>
-                <p class="text-gray-500">No recent activities</p>
-              </div>
-              {% endif %}
-            </div>
-          </div>
-
-          <!-- Recent Feedback -->
-          <div class="bg-white p-6 rounded-xl shadow-md">
-            <div class="flex justify-between items-center mb-6">
-              <h2 class="text-xl font-semibold text-gray-800 flex items-center">
-                <i class="fas fa-comment-alt text-green-600 mr-2"></i> Recent
-                Feedback
-              </h2>
-              <a href="#" class="text-blue-600 text-sm hover:underline"
-                >View All</a
-              >
-            </div>
-
-            <div class="space-y-4 max-h-96 overflow-y-auto">
-              {% if stats.recent_feedback %} {% for feedback in
-              stats.recent_feedback %}
-              <div class="feedback-item p-4 bg-gray-50 rounded-lg">
-                <div class="flex justify-between items-start mb-2">
-                  <span class="text-sm font-medium text-gray-700">
-                    {{ feedback.name }} ({{ feedback.scholar_id }})
-                  </span>
-                  <div class="flex items-center">
-                    {% for i in range(5) %} {% if i < feedback.rating %}
-                    <i class="fas fa-star text-yellow-400 text-xs"></i>
-                    {% else %}
-                    <i class="far fa-star text-yellow-400 text-xs"></i>
-                    {% endif %} {% endfor %}
-                  </div>
+                
+                <div class="stats-card bg-white p-6 rounded-xl shadow-md border-l-4 border-purple-500">
+                    <div class="flex items-center">
+                        <div class="p-3 bg-purple-100 rounded-full mr-4">
+                            <i class="fas fa-chart-pie text-purple-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Quizzes Taken</p>
+                            <p class="text-2xl font-bold text-gray-800">{{ stats.total_quizzes }}</p>
+                        </div>
+                    </div>
                 </div>
-                <p class="text-sm text-gray-600 mb-2">{{ feedback.text }}</p>
-                <div class="text-xs text-gray-400">
-                  {{ feedback.timestamp.strftime('%b %d, %Y %H:%M') }} {% if
-                  feedback.course %} • {{ feedback.course }} Sem {{
-                  feedback.semester }} {% endif %}
+                
+                <div class="stats-card bg-white p-6 rounded-xl shadow-md border-l-4 border-yellow-500">
+                    <div class="flex items-center">
+                        <div class="p-3 bg-yellow-100 rounded-full mr-4">
+                            <i class="fas fa-check-circle text-yellow-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Avg. Score</p>
+                            <p class="text-2xl font-bold text-gray-800">{{ stats.average_score | round(2) }}</p>
+                        </div>
+                    </div>
                 </div>
-              </div>
-              {% endfor %} {% else %}
-              <div class="text-center py-8">
-                <i class="fas fa-comment-alt text-gray-400 text-4xl mb-4"></i>
-                <p class="text-gray-500">No feedback received yet</p>
-              </div>
-              {% endif %}
             </div>
-          </div>
-        </div>
 
-        <!-- Quick Actions -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div class="bg-white p-6 rounded-xl shadow-md card-hover">
-            <h2
-              class="text-xl font-semibold mb-4 flex items-center text-blue-700"
-            >
-              <i class="fas fa-question-circle mr-2"></i> Question Management
-            </h2>
-            <p class="text-gray-500 mb-4">
-              Manage your question bank, add new questions, or edit existing
-              ones.
-            </p>
-            <div class="flex space-x-3">
-              <a
-                href="/admin/questions/upload"
-                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition-colors"
-              >
-                Manage Questions
-              </a>
-              <!-- <a
-                href="#"
-                class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm transition-colors"
-              >
-                Add New
-              </a> -->
+            <!-- Active Quizzes Section -->
+            {% if stats.active_quizzes %}
+            <div class="bg-white p-6 rounded-xl shadow-md mb-8 card-hover">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fas fa-play-circle text-green-500 mr-3"></i> Active Quizzes
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {% for quiz in stats.active_quizzes %}
+                    <div class="quiz-active p-4 rounded-lg border border-gray-200">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-semibold text-blue-700">{{ quiz.course }} - Sem {{ quiz.semester }}</h3>
+                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Active</span>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-3">Duration: {{ quiz.duration }} minutes</p>
+                        <div class="flex space-x-2">
+                            <button class="end-quiz-btn bg-red-100 text-red-700 text-xs px-3 py-1 rounded hover:bg-red-200 transition-colors" data-course="{{ quiz.course }}" data-semester="{{ quiz.semester }}">
+                                <i class="fas fa-stop-circle mr-1"></i> End Quiz
+                            </button>
+                            <button class="view-results-btn bg-blue-100 text-blue-700 text-xs px-3 py-1 rounded hover:bg-blue-200 transition-colors" data-course="{{ quiz.course }}" data-semester="{{ quiz.semester }}">
+                                <i class="fas fa-chart-bar mr-1"></i> Results
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
-          </div>
+            {% endif %}
 
-          <div class="bg-white p-6 rounded-xl shadow-md card-hover">
-            <h2
-              class="text-xl font-semibold mb-4 flex items-center text-green-700"
-            >
-              <i class="fas fa-chart-bar mr-2"></i> Results Analytics
-            </h2>
-            <p class="text-gray-500 mb-4">
-              View student results, generate reports, and analyze performance
-              data.
-            </p>
-            <div class="flex space-x-3">
-              <a
-                href="/admin/results"
-                class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm transition-colors"
-              >
-                View Results
-              </a>
-              <!-- <a
-                href="#"
-                class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm transition-colors"
-              >
-                Generate Report
-              </a> -->
+            <!-- Daily Leaderboard Section -->
+            <div class="bg-white p-6 rounded-xl shadow-md mb-8 card-hover">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fas fa-trophy text-yellow-500 mr-3"></i> Daily Leaderboard
+                </h2>
+                
+                <div class="relative mb-8">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 id="slider-date-label" class="text-lg font-semibold text-gray-700">Today's Top Performers</h3>
+                        <div class="flex space-x-2">
+                            <button id="prev-day" class="bg-gray-200 hover:bg-gray-300 rounded-full p-2 transition-colors">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <button id="next-day" class="bg-gray-200 hover:bg-gray-300 rounded-full p-2 transition-colors">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="daily-leaderboard" class="overflow-x-auto rounded-lg border border-gray-200">
+                        <!-- Daily leaderboard will be loaded here by JavaScript -->
+                        <div class="text-center py-8">
+                            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                            <p class="mt-4 text-gray-600">Loading leaderboard data...</p>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
-        </div>
-      </main>
+
+            <!-- Recent Activities and Feedback Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <!-- Recent Activities -->
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                            <i class="fas fa-history text-blue-600 mr-2"></i> Recent Activities
+                        </h2>
+                        <a href="#" class="text-blue-600 text-sm hover:underline">View All</a>
+                    </div>
+                    
+                    <div class="space-y-4 max-h-96 overflow-y-auto">
+                        {% if stats.recent_activities %}
+                            {% for activity in stats.recent_activities %}
+                            <div class="activity-item p-4 bg-gray-50 rounded-lg">
+                                <div class="flex justify-between items-start mb-1">
+                                    <span class="text-sm font-medium text-gray-700">
+                                        {% if activity.scholar_id %}
+                                            {{ activity.scholar_id }}
+                                        {% else %}
+                                            System
+                                        {% endif %}
+                                    </span>
+                                    <span class="text-xs text-gray-500">
+                                        {{ activity.timestamp.strftime('%H:%M') }}
+                                    </span>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-1">{{ activity.description }}</p>
+                                <div class="text-xs text-gray-400">
+                                    {{ activity.timestamp.strftime('%b %d, %Y') }}
+                                    {% if activity.course %}
+                                        • {{ activity.course }} Sem {{ activity.semester }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center py-8">
+                                <i class="fas fa-history text-gray-400 text-4xl mb-4"></i>
+                                <p class="text-gray-500">No recent activities</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Recent Feedback -->
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                            <i class="fas fa-comment-alt text-green-600 mr-2"></i> Recent Feedback
+                        </h2>
+                        <a href="#" class="text-blue-600 text-sm hover:underline">View All</a>
+                    </div>
+                    
+                    <div class="space-y-4 max-h-96 overflow-y-auto">
+                        {% if stats.recent_feedback %}
+                            {% for feedback in stats.recent_feedback %}
+                            <div class="feedback-item p-4 bg-gray-50 rounded-lg">
+                                <div class="flex justify-between items-start mb-2">
+                                    <span class="text-sm font-medium text-gray-700">
+                                        {{ feedback.name }} ({{ feedback.scholar_id }})
+                                    </span>
+                                    <div class="flex items-center">
+                                        {% for i in range(5) %}
+                                            {% if i < feedback.rating %}
+                                                <i class="fas fa-star text-yellow-400 text-xs"></i>
+                                            {% else %}
+                                                <i class="far fa-star text-yellow-400 text-xs"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-2">{{ feedback.text }}</p>
+                                <div class="text-xs text-gray-400">
+                                    {{ feedback.timestamp.strftime('%b %d, %Y %H:%M') }}
+                                    {% if feedback.course %}
+                                        • {{ feedback.course }} Sem {{ feedback.semester }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center py-8">
+                                <i class="fas fa-comment-alt text-gray-400 text-4xl mb-4"></i>
+                                <p class="text-gray-500">No feedback received yet</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-xl shadow-md card-hover">
+                    <h2 class="text-xl font-semibold mb-4 flex items-center text-blue-700">
+                        <i class="fas fa-question-circle mr-2"></i> Question Management
+                    </h2>
+                    <p class="text-gray-500 mb-4">Manage your question bank, add new questions, or edit existing ones.</p>
+                    <div class="flex space-x-3">
+                        <a href="/admin/questions" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                            Manage Questions
+                        </a>
+                        <a href="#" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                            Add New
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-md card-hover">
+                    <h2 class="text-xl font-semibold mb-4 flex items-center text-green-700">
+                        <i class="fas fa-chart-bar mr-2"></i> Results Analytics
+                    </h2>
+                    <p class="text-gray-500 mb-4">View student results, generate reports, and analyze performance data.</p>
+                    <div class="flex space-x-3">
+                        <a href="/admin/results" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                            View Results
+                        </a>
+                        <a href="#" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                            Generate Report
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 
     <script>
-      document.addEventListener("DOMContentLoaded", function () {
-        const dateLabel = document.getElementById("slider-date-label");
-        const dailyLeaderboard = document.getElementById("daily-leaderboard");
-        const prevBtn = document.getElementById("prev-day");
-        const nextBtn = document.getElementById("next-day");
-
-        let currentDateIndex = 0;
-        let dateData = [];
-
-        // Fetch date-based leaderboard data
-        fetch("/api/daily_leaderboard")
-          .then((response) => response.json())
-          .then((data) => {
-            dateData = data.dates;
-            updateLeaderboard();
-          });
-
-        function updateDateLabel() {
-          if (dateData.length > 0 && dateData[currentDateIndex]) {
-            const date = new Date(dateData[currentDateIndex].date);
-            const today = new Date();
-            const yesterday = new Date(today);
-            yesterday.setDate(yesterday.getDate() - 1);
-
-            let dateText;
-            if (date.toDateString() === today.toDateString()) {
-              dateText = "Today's Top Performers";
-            } else if (date.toDateString() === yesterday.toDateString()) {
-              dateText = "Yesterday's Top Performers";
-            } else {
-              dateText = `Top Performers on ${date.toLocaleDateString(
-                "en-GB"
-              )}`; // DD/MM/YYYY format
-            }
-
-            dateLabel.textContent = dateText;
-
-            // Update button states
-            prevBtn.disabled = currentDateIndex === 0;
-            nextBtn.disabled = currentDateIndex === dateData.length - 1;
-          }
-        }
-
-        function updateLeaderboard() {
-          if (dateData.length > 0 && dateData[currentDateIndex]) {
-            const leaders = dateData[currentDateIndex].leaders;
-
-            if (leaders.length > 0) {
-              dailyLeaderboard.innerHTML = `
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Percentage</th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            ${leaders
-              .map(
-                (student, index) => `
-              <tr class="${index < 3 ? "leaderboard-row" : "hover:bg-gray-50"}">
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-center">${
-                  index + 1
-                }</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">${
-                  student.user_name
-                }</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm">${
-                  student.score
-                }/${student.total}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">${
-                  student.percentage ? student.percentage.toFixed(2) : 0
-                }%</td>
-              </tr>
-            `
-              )
-              .join("")}
-          </tbody>
-        </table>
-      `;
-            } else {
-              dailyLeaderboard.innerHTML = `
-        <div class="text-center py-8">
-          <i class="fas fa-chart-line text-gray-400 text-4xl mb-4"></i>
-          <p class="text-gray-500">No quiz results for this date.</p>
-        </div>
-      `;
-            }
-
-            updateDateLabel();
-          }
-        }
-
-        // Add event listeners for navigation buttons
-        prevBtn.addEventListener("click", function () {
-          if (currentDateIndex > 0) {
-            currentDateIndex--;
-            updateLeaderboard();
-          }
-        });
-
-        nextBtn.addEventListener("click", function () {
-          if (currentDateIndex < dateData.length - 1) {
-            currentDateIndex++;
-            updateLeaderboard();
-          }
-        });
-
-        // End Quiz button functionality
-        document.querySelectorAll(".end-quiz-btn").forEach((button) => {
-          button.addEventListener("click", function () {
-            const course = this.dataset.course;
-            const semester = this.dataset.semester;
-
-            if (
-              confirm(
-                `Are you sure you want to end the quiz for ${course} Semester ${semester}?`
-              )
-            ) {
-              fetch("/admin/end_quiz", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  course: course,
-                  semester: semester,
-                }),
-              })
-                .then((response) => response.json())
-                .then((data) => {
-                  if (data.success) {
-                    alert(data.message);
-                    location.reload();
-                  } else {
-                    alert("Error: " + data.error);
-                  }
+        document.addEventListener('DOMContentLoaded', function() {
+            const dateLabel = document.getElementById('slider-date-label');
+            const dailyLeaderboard = document.getElementById('daily-leaderboard');
+            const prevBtn = document.getElementById('prev-day');
+            const nextBtn = document.getElementById('next-day');
+            
+            let currentDateIndex = 0;
+            let dateData = [];
+            
+            // Fetch date-based leaderboard data
+            fetch('/api/daily_leaderboard')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
                 })
-                .catch((error) => {
-                  console.error("Error:", error);
-                  alert("An error occurred while ending the quiz.");
+                .then(data => {
+                    dateData = data.dates;
+                    updateLeaderboard();
+                })
+                .catch(error => {
+                    console.error('Error loading leaderboard:', error);
+                    dailyLeaderboard.innerHTML = `
+                        <div class="text-center py-8">
+                            <i class="fas fa-exclamation-triangle text-red-500 text-4xl mb-4"></i>
+                            <p class="text-gray-500">Error loading leaderboard data.</p>
+                            <p class="text-sm text-gray-400 mt-2">Please try refreshing the page.</p>
+                        </div>
+                    `;
                 });
-            }
-          });
-        });
-
-        // View Results button functionality
-        document.querySelectorAll(".view-results-btn").forEach((button) => {
-          button.addEventListener("click", function () {
-            const course = this.dataset.course;
-            const semester = this.dataset.semester;
-            window.location.href = `/admin/results?course=${course}&semester=${semester}`;
-          });
-        });
-
-        // Admin notifications functionality
-        const adminNotificationsBtn = document.getElementById(
-          "admin-notifications-btn"
-        );
-        const adminNotificationsDropdown = document.getElementById(
-          "admin-notifications-dropdown"
-        );
-        const adminNotificationCount = document.getElementById(
-          "admin-notification-count"
-        );
-        const adminNotificationsList = document.getElementById(
-          "admin-notifications-list"
-        );
-        const markAllReadBtn = document.getElementById("mark-all-read");
-
-        // Load admin notifications
-        function loadAdminNotifications() {
-          fetch("/api/admin_notifications")
-            .then((response) => response.json())
-            .then((data) => {
-              const notifications = data.notifications;
-              const unreadCount = notifications.filter((n) => !n.read).length;
-
-              // Update notification count
-              if (unreadCount > 0) {
-                adminNotificationCount.textContent = unreadCount;
-                adminNotificationCount.classList.remove("hidden");
-              } else {
-                adminNotificationCount.classList.add("hidden");
-              }
-
-              // Update notifications list
-              if (notifications.length > 0) {
-                adminNotificationsList.innerHTML = notifications
-                  .map(
-                    (notification) => `
-          <div class="p-3 border-b border-gray-100 ${
-            notification.read ? "" : "bg-blue-50"
-          }">
-            <div class="flex justify-between items-start mb-1">
-              <span class="text-sm font-medium ${
-                notification.read ? "text-gray-700" : "text-blue-700"
-              }">
-                ${notification.title}
-              </span>
-              <span class="text-xs text-gray-500">
-                ${new Date(notification.timestamp).toLocaleTimeString()}
-              </span>
-            </div>
-            <p class="text-sm text-gray-600">${notification.message}</p>
-            <div class="text-xs text-gray-400 mt-1">
-              ${new Date(notification.timestamp).toLocaleDateString()}
-              ${
-                notification.course
-                  ? ` • ${notification.course} Sem ${notification.semester}`
-                  : ""
-              }
-            </div>
-          </div>
-        `
-                  )
-                  .join("");
-              } else {
-                adminNotificationsList.innerHTML = `
-          <div class="p-4 text-center text-gray-500">
-            <i class="fas fa-bell-slash text-2xl mb-2"></i>
-            <p>No notifications</p>
-          </div>
-        `;
-              }
-            });
-        }
-        // Mark all as read
-        markAllReadBtn.addEventListener("click", function () {
-          fetch("/api/admin_notifications/read", {
-            method: "POST",
-          })
-            .then((response) => response.json())
-            .then((data) => {
-              if (data.success) {
-                loadAdminNotifications();
-              }
-            });
-        });
-        // Clear all notifications
-        clearNotificationsBtn.addEventListener("click", function () {
-          if (confirm("Are you sure you want to clear all notifications?")) {
-            fetch("/api/admin_notifications/clear", {
-              method: "POST",
-            })
-              .then((response) => response.json())
-              .then((data) => {
-                if (data.success) {
-                  loadAdminNotifications();
+            
+            function updateDateLabel() {
+                if (dateData.length > 0 && dateData[currentDateIndex]) {
+                    const date = new Date(dateData[currentDateIndex].date);
+                    const today = new Date();
+                    const yesterday = new Date(today);
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    
+                    let dateText;
+                    if (date.toDateString() === today.toDateString()) {
+                        dateText = "Today's Top Performers";
+                    } else if (date.toDateString() === yesterday.toDateString()) {
+                        dateText = "Yesterday's Top Performers";
+                    } else {
+                        dateText = `Top Performers on ${date.toLocaleDateString()}`;
+                    }
+                    
+                    dateLabel.textContent = dateText;
+                    
+                    // Update button states
+                    prevBtn.disabled = currentDateIndex === 0;
+                    nextBtn.disabled = currentDateIndex === dateData.length - 1;
+                    
+                    // Update button styles based on state
+                    if (prevBtn.disabled) {
+                        prevBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                        prevBtn.classList.remove('hover:bg-gray-300');
+                    } else {
+                        prevBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                        prevBtn.classList.add('hover:bg-gray-300');
+                    }
+                    
+                    if (nextBtn.disabled) {
+                        nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                        nextBtn.classList.remove('hover:bg-gray-300');
+                    } else {
+                        nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                        nextBtn.classList.add('hover:bg-gray-300');
+                    }
                 }
-              });
-          }
+            }
+            
+            function updateLeaderboard() {
+                if (dateData.length > 0 && dateData[currentDateIndex]) {
+                    const leaders = dateData[currentDateIndex].leaders;
+                    
+                    if (leaders.length > 0) {
+                        dailyLeaderboard.innerHTML = `
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Percentage</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    ${leaders.map((student, index) => `
+                                        <tr class="${index < 3 ? 'leaderboard-row' : 'hover:bg-gray-50'}">
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-center">${index + 1}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">${student.user_name}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm">${student.score}/${student.total}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">${student.percentage ? student.percentage.toFixed(2) : 0}%</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        `;
+                    } else {
+                        dailyLeaderboard.innerHTML = `
+                            <div class="text-center py-8">
+                                <i class="fas fa-chart-line text-gray-400 text-4xl mb-4"></i>
+                                <p class="text-gray-500">No quiz results for this date.</p>
+                            </div>
+                        `;
+                    }
+                    
+                    updateDateLabel();
+                } else if (dateData.length === 0) {
+                    dailyLeaderboard.innerHTML = `
+                        <div class="text-center py-8">
+                            <i class="fas fa-chart-line text-gray-400 text-4xl mb-4"></i>
+                            <p class="text-gray-500">No leaderboard data available yet.</p>
+                            <p class="text-sm text-gray-400 mt-2">Check back after quizzes have been completed.</p>
+                        </div>
+                    `;
+                }
+            }
+            
+            prevBtn.addEventListener('click', function() {
+                if (currentDateIndex > 0) {
+                    currentDateIndex--;
+                    updateLeaderboard();
+                }
+            });
+            
+            nextBtn.addEventListener('click', function() {
+                if (currentDateIndex < dateData.length - 1) {
+                    currentDateIndex++;
+                    updateLeaderboard();
+                }
+            });
+            
+            // End Quiz button functionality
+            document.querySelectorAll('.end-quiz-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const course = this.dataset.course;
+                    const semester = this.dataset.semester;
+                    
+                    if (confirm(`Are you sure you want to end the quiz for ${course} Semester ${semester}?`)) {
+                        fetch('/admin/end_quiz', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                course: course,
+                                semester: semester
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                alert(data.message);
+                                location.reload();
+                            } else {
+                                alert('Error: ' + data.error);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('An error occurred while ending the quiz.');
+                        });
+                    }
+                });
+            });
+            
+            // View Results button functionality
+            document.querySelectorAll('.view-results-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const course = this.dataset.course;
+                    const semester = this.dataset.semester;
+                    window.location.href = `/admin/results?course=${course}&semester=${semester}`;
+                });
+            });
+            
+            // Admin notifications functionality
+            const adminNotificationsBtn = document.getElementById('admin-notifications-btn');
+            const adminNotificationsDropdown = document.getElementById('admin-notifications-dropdown');
+            const adminNotificationCount = document.getElementById('admin-notification-count');
+            const adminNotificationsList = document.getElementById('admin-notifications-list');
+            const markAllReadBtn = document.getElementById('mark-all-read');
+            
+            function loadAdminNotifications() {
+                fetch('/api/admin_notifications')
+                    .then(response => response.json())
+                    .then(data => {
+                        const notifications = data.notifications;
+                        const unreadCount = notifications.filter(n => !n.read).length;
+                        
+                        // Update notification count
+                        if (unreadCount > 0) {
+                            adminNotificationCount.textContent = unreadCount;
+                            adminNotificationCount.classList.remove('hidden');
+                        } else {
+                            adminNotificationCount.classList.add('hidden');
+                        }
+                        
+                        // Update notifications list
+                        if (notifications.length > 0) {
+                            adminNotificationsList.innerHTML = notifications.map(notification => `
+                                <div class="p-3 border-b border-gray-100 ${notification.read ? '' : 'bg-blue-50'}">
+                                    <div class="flex justify-between items-start mb-1">
+                                        <span class="text-sm font-medium ${notification.read ? 'text-gray-700' : 'text-blue-700'}">
+                                            ${notification.title}
+                                        </span>
+                                        <span class="text-xs text-gray-500">
+                                            ${new Date(notification.timestamp).toLocaleTimeString()}
+                                        </span>
+                                    </div>
+                                    <p class="text-sm text-gray-600">${notification.message}</p>
+                                    <div class="text-xs text-gray-400 mt-1">
+                                        ${new Date(notification.timestamp).toLocaleDateString()}
+                                        ${notification.course ? ` • ${notification.course} Sem ${notification.semester}` : ''}
+                                    </div>
+                                </div>
+                            `).join('');
+                        } else {
+                            adminNotificationsList.innerHTML = `
+                                <div class="p-4 text-center text-gray-500">
+                                    <i class="fas fa-bell-slash text-2xl mb-2"></i>
+                                    <p>No notifications</p>
+                                </div>
+                            `;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading notifications:', error);
+                    });
+            }
+            
+            // Load notifications initially
+            loadAdminNotifications();
+            
+            // Toggle notifications dropdown
+            adminNotificationsBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                adminNotificationsDropdown.classList.toggle('hidden');
+            });
+            
+            // Mark all as read
+            markAllReadBtn.addEventListener('click', function() {
+                fetch('/api/admin_notifications/read', {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        loadAdminNotifications();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error marking notifications as read:', error);
+                });
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!adminNotificationsDropdown.contains(e.target) && !adminNotificationsBtn.contains(e.target)) {
+                    adminNotificationsDropdown.classList.add('hidden');
+                }
+            });
+            
+            // Poll for new notifications every 30 seconds
+            setInterval(loadAdminNotifications, 30000);
         });
-
-        // Load notifications initially
-        loadAdminNotifications();
-
-        // Toggle notifications dropdown
-        adminNotificationsBtn.addEventListener("click", function (e) {
-          e.stopPropagation();
-          adminNotificationsDropdown.classList.toggle("hidden");
-        });
-
-        // Close dropdown when clicking outside
-        document.addEventListener("click", function (e) {
-          if (
-            !adminNotificationsDropdown.contains(e.target) &&
-            !adminNotificationsBtn.contains(e.target)
-          ) {
-            adminNotificationsDropdown.classList.add("hidden");
-          }
-        });
-
-        // Poll for new notifications every 30 seconds
-        setInterval(loadAdminNotifications, 30000);
-      });
 
       // Toggle user dropdown
       document
