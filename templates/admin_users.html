@@ -1,5 +1,3 @@
-## admin_users.html
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -178,88 +176,161 @@
         </div>
     </header>
 
-    <nav id="dropdown-menu" class="hidden md:hidden bg-gradient-to-b from-blue-800 to-blue-600 text-white shadow-lg mt-16 fixed left-0 right-0 z-40">
-        <ul class="space-y-2 px-4 py-4">
-            <li class="nav-item">
-                <a href="/admin" class="flex items-center p-3 rounded-lg hover:bg-blue-700">
-                    <i class="fas fa-tachometer-alt w-6 text-center"></i>
-                    <span class="ml-3">Dashboard</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="/admin/questions" class="flex items-center p-3 rounded-lg hover:bg-blue-700">
-                    <i class="fas fa-question-circle w-6 text-center"></i>
-                    <span class="ml-3">Questions</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="/admin/results" class="flex items-center p-3 rounded-lg hover:bg-blue-700">
-                    <i class="fas fa-chart-bar w-6 text-center"></i>
-                    <span class="ml-3">Results</span>
-                </a>
-            </li>
-            <li class="nav-item active">
-                <a href="/admin/users" class="flex items-center p-3 rounded-lg hover:bg-blue-700">
-                    <i class="fas fa-users w-6 text-center"></i>
-                    <span class="ml-3">User Management</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="flex items-center p-3 rounded-lg hover:bg-blue-700">
-                    <i class="fas fa-cog w-6 text-center"></i>
-                    <span class="ml-3">Settings</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="/logout" class="flex items-center p-3 rounded-lg hover:bg-blue-700">
-                    <i class="fas fa-sign-out-alt w-6 text-center"></i>
-                    <span class="ml-3">Logout</span>
-                </a>
-            </li>
-        </ul>
+    <nav
+      id="dropdown-menu"
+      class="hidden md:hidden bg-gradient-to-b from-blue-800 to-blue-600 text-white shadow-lg mt-20 fixed left-0 right-0 z-40"
+    >
+      <ul class="space-y-2 px-4 py-4">
+        <li class="nav-item active">
+          <a
+            href="/admin"
+            class="flex items-center p-3 rounded-lg hover:bg-blue-700"
+          >
+            <i class="fas fa-tachometer-alt w-6 text-center"></i>
+            <span class="ml-3">Dashboard</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a
+            href="/admin/questions/management"
+            class="flex items-center p-3 text-white rounded-lg"
+          >
+            <i class="fas fa-book w-6 text-center"></i>
+            <span class="ml-3 menu-text">Question Management</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a
+            href="/admin/quizzes"
+            class="flex items-center p-3 text-white rounded-lg"
+          >
+            <i class="fas fa-rocket w-6 text-center"></i>
+            <span class="ml-3 menu-text">Quiz Management</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a
+            href="/admin/leaderboard"
+            class="flex items-center p-3 text-white rounded-lg"
+          >
+            <i class="fas fa-trophy w-6 text-center"></i>
+            <span class="ml-3 menu-text">Leaderboard</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a
+            href="/admin/results"
+            class="flex items-center p-3 rounded-lg hover:bg-blue-700"
+          >
+            <i class="fas fa-chart-bar w-6 text-center"></i>
+            <span class="ml-3">Results</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a
+            href="/admin/users"
+            class="flex items-center p-3 rounded-lg hover:bg-blue-700"
+          >
+            <i class="fas fa-users w-6 text-center"></i>
+            <span class="ml-3">User Management</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a
+            href="#"
+            class="flex items-center p-3 rounded-lg hover:bg-blue-700"
+          >
+            <i class="fas fa-cog w-6 text-center"></i>
+            <span class="ml-3">Settings</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a
+            href="/logout"
+            class="flex items-center p-3 rounded-lg hover:bg-blue-700"
+          >
+            <i class="fas fa-sign-out-alt w-6 text-center"></i>
+            <span class="ml-3">Logout</span>
+          </a>
+        </li>
+      </ul>
     </nav>
 
-    <div class="sidebar h-[calc(100vh-60px)]">
-        <div class="py-6">
-            <ul class="space-y-2 px-4">
-                <li class="nav-item">
-                    <a href="/admin" class="flex items-center p-3 text-white rounded-lg">
-                        <i class="fas fa-tachometer-alt w-6 text-center"></i>
-                        <span class="ml-3 menu-text">Dashboard</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="/admin/questions" class="flex items-center p-3 text-white rounded-lg">
-                        <i class="fas fa-question-circle w-6 text-center"></i>
-                        <span class="ml-3 menu-text">Questions</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="/admin/results" class="flex items-center p-3 text-white rounded-lg">
-                        <i class="fas fa-chart-bar w-6 text-center"></i>
-                        <span class="ml-3 menu-text">Results</span>
-                    </a>
-                </li>
-                <li class="nav-item active">
-                    <a href="/admin/users" class="flex items-center p-3 text-white rounded-lg">
-                        <i class="fas fa-users w-6 text-center"></i>
-                        <span class="ml-3 menu-text">User Management</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="flex items-center p-3 text-white rounded-lg">
-                        <i class="fas fa-cog w-6 text-center"></i>
-                        <span class="ml-3 menu-text">Settings</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="/logout" class="flex items-center p-3 text-white rounded-lg">
-                        <i class="fas fa-sign-out-alt w-6 text-center"></i>
-                        <span class="ml-3 menu-text">Logout</span>
-                    </a>
-                </li>
-            </ul>
-        </div>
+    <!-- Sidebar Navigation (moved below header) -->
+    <div class="sidebar h-[calc(100vh-80px)] mt-0">
+      <div class="py-6">
+        <ul class="space-y-2 px-4">
+          <li class="nav-item active">
+            <a
+              href="/admin"
+              class="flex items-center p-3 text-white rounded-lg"
+            >
+              <i class="fas fa-tachometer-alt w-6 text-center"></i>
+              <span class="ml-3 menu-text">Dashboard</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a
+              href="/admin/questions/management"
+              class="flex items-center p-3 text-white rounded-lg"
+            >
+              <i class="fas fa-book w-6 text-center"></i>
+              <span class="ml-3 menu-text">Question Management</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a
+              href="/admin/quizzes"
+              class="flex items-center p-3 text-white rounded-lg"
+            >
+              <i class="fas fa-rocket w-6 text-center"></i>
+              <span class="ml-3 menu-text">Quiz Management</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a
+              href="/admin/leaderboard"
+              class="flex items-center p-3 text-white rounded-lg"
+            >
+              <i class="fas fa-trophy w-6 text-center"></i>
+              <span class="ml-3 menu-text">Leaderboard</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a
+              href="/admin/results"
+              class="flex items-center p-3 text-white rounded-lg"
+            >
+              <i class="fas fa-chart-bar w-6 text-center"></i>
+              <span class="ml-3 menu-text">Results</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a
+              href="/admin/users"
+              class="flex items-center p-3 text-white rounded-lg"
+            >
+              <i class="fas fa-users w-6 text-center"></i>
+              <span class="ml-3 menu-text">User Management</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="flex items-center p-3 text-white rounded-lg">
+              <i class="fas fa-cog w-6 text-center"></i>
+              <span class="ml-3 menu-text">Settings</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a
+              href="/logout"
+              class="flex items-center p-3 text-white rounded-lg"
+            >
+              <i class="fas fa-sign-out-alt w-6 text-center"></i>
+              <span class="ml-3 menu-text">Logout</span>
+            </a>
+          </li>
+        </ul>
+      </div>
     </div>
 
     <div class="main-content min-h-[calc(100vh-60px)]">

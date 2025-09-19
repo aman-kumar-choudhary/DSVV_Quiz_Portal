@@ -78,7 +78,7 @@
         }
 
         header .logo-container img {
-            height: 70px; /* Adjusted logo size to fit wider header */
+            height: 70px;
         }
         
         @media (max-width: 768px) {
@@ -102,6 +102,15 @@
         
         #hamburger-toggle {
             display: none;
+        }
+
+        .bulk-actions {
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 10;
+            padding: 1rem;
+            border-bottom: 1px solid #e5e7eb;
         }
     </style>
 </head>
@@ -143,47 +152,7 @@
         </div>
     </header>
 
-    <nav id="dropdown-menu" class="hidden md:hidden bg-gradient-to-b from-blue-800 to-blue-600 text-white shadow-lg mt-16 fixed left-0 right-0 z-40">
-        <ul class="space-y-2 px-4 py-4">
-            <li class="nav-item active">
-                <a href="/admin" class="flex items-center p-3 rounded-lg hover:bg-blue-700">
-                    <i class="fas fa-tachometer-alt w-6 text-center"></i>
-                    <span class="ml-3">Dashboard</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="/admin/questions" class="flex items-center p-3 rounded-lg hover:bg-blue-700">
-                    <i class="fas fa-question-circle w-6 text-center"></i>
-                    <span class="ml-3">Questions</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="/admin/results" class="flex items-center p-3 rounded-lg hover:bg-blue-700">
-                    <i class="fas fa-chart-bar w-6 text-center"></i>
-                    <span class="ml-3">Results</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="/admin/users" class="flex items-center p-3 rounded-lg hover:bg-blue-700">
-                    <i class="fas fa-users w-6 text-center"></i>
-                    <span class="ml-3">User Management</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="flex items-center p-3 rounded-lg hover:bg-blue-700">
-                    <i class="fas fa-cog w-6 text-center"></i>
-                    <span class="ml-3">Settings</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="/logout" class="flex items-center p-3 rounded-lg hover:bg-blue-700">
-                    <i class="fas fa-sign-out-alt w-6 text-center"></i>
-                    <span class="ml-3">Logout</span>
-                </a>
-            </li>
-        </ul>
-    </nav>
-
+    <!-- Sidebar Navigation -->
     <div class="sidebar h-[calc(100vh-60px)]">
         <div class="py-6">
             <ul class="space-y-2 px-4">
@@ -194,9 +163,21 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="/admin/questions" class="flex items-center p-3 text-white rounded-lg">
-                        <i class="fas fa-question-circle w-6 text-center"></i>
-                        <span class="ml-3 menu-text">Questions</span>
+                    <a href="/admin/questions/management" class="flex items-center p-3 text-white rounded-lg">
+                        <i class="fas fa-book w-6 text-center"></i>
+                        <span class="ml-3 menu-text">Question Management</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/admin/quizzes" class="flex items-center p-3 text-white rounded-lg">
+                        <i class="fas fa-rocket w-6 text-center"></i>
+                        <span class="ml-3 menu-text">Quiz Management</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/admin/leaderboard" class="flex items-center p-3 text-white rounded-lg">
+                        <i class="fas fa-trophy w-6 text-center"></i>
+                        <span class="ml-3 menu-text">Leaderboard</span>
                     </a>
                 </li>
                 <li class="nav-item active">
@@ -347,15 +328,26 @@
                 <h2 class="text-xl font-semibold mb-4 flex items-center text-green-700">
                     <i class="fas fa-list mr-2"></i> Detailed Results
                 </h2>
-                <div class="flex justify-end mb-4">
+                
+                <!-- Bulk Actions -->
+                <div class="bulk-actions mb-4 flex items-center space-x-4">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="select-all" class="mr-2">
+                        <label for="select-all" class="text-sm text-gray-700">Select All</label>
+                    </div>
+                    <button onclick="bulkPublishResults()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                        <i class="fas fa-check-circle mr-1"></i> Publish Selected
+                    </button>
                     <button onclick="exportResults()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">
-                        Export Results
+                        <i class="fas fa-download mr-1"></i> Export Results
                     </button>
                 </div>
+
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Select</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scholar ID</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
@@ -371,6 +363,11 @@
                         <tbody class="bg-white divide-y divide-gray-200">
                             {% for result in results %}
                             <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    {% if not result.published %}
+                                    <input type="checkbox" name="result-checkbox" value="{{ result.workspace_id }}" class="result-checkbox">
+                                    {% endif %}
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">{{ result.scholar_id }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">{{ result.user_name }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">{{ result.course }}</td>
@@ -379,12 +376,18 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">{{ (result.score/result.total*100) | round(2) }}%</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">{{ (result.completion_time / 60) | round(2) }} mins</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">{{ result.timestamp.strftime('%Y-%m-%d %H:%M') if result.timestamp else 'N/A' }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm">{{ 'Published' if result.published else 'Pending' }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    <span class="px-2 py-1 rounded-full text-xs {% if result.published %}bg-green-100 text-green-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                        {{ 'Published' if result.published else 'Pending' }}
+                                    </span>
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
                                     {% if not result.published %}
-                                    <button onclick="publishResult('{{ result.workspace_id }}')" class="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded">Publish</button>
+                                    <button onclick="publishResult('{{ result.workspace_id }}')" class="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs">
+                                        Publish
+                                    </button>
                                     {% else %}
-                                    Published
+                                    <span class="text-green-600 text-xs">Published</span>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -404,61 +407,126 @@
     </div>
 
     <script>
-        // Toggle mobile menu
-        document.getElementById('hamburger-toggle').addEventListener('click', function() {
-            const menu = document.getElementById('dropdown-menu');
-            menu.classList.toggle('hidden');
+    // Toggle mobile menu - only if element exists
+    const hamburgerToggle = document.getElementById('hamburger-toggle');
+    const dropdownMenu = document.getElementById('dropdown-menu');
+    
+    if (hamburgerToggle && dropdownMenu) {
+        hamburgerToggle.addEventListener('click', function() {
+            dropdownMenu.classList.toggle('hidden');
         });
+    }
 
-        // Toggle user dropdown
-        document.getElementById('user-menu-button').addEventListener('click', function() {
-            document.getElementById('user-dropdown').classList.toggle('hidden');
+    // Toggle user dropdown - only if elements exist
+    const userMenuButton = document.getElementById('user-menu-button');
+    const userDropdown = document.getElementById('user-dropdown');
+    
+    if (userMenuButton && userDropdown) {
+        userMenuButton.addEventListener('click', function() {
+            userDropdown.classList.toggle('hidden');
         });
+    }
 
-        // Close dropdowns when clicking outside
-        document.addEventListener('click', function(event) {
-            const userMenu = document.getElementById('user-menu-button');
-            const dropdown = document.getElementById('user-dropdown');
-            if (!userMenu.contains(event.target) && !dropdown.contains(event.target)) {
-                dropdown.classList.add('hidden');
-            }
-            const toggle = document.getElementById('hamburger-toggle');
-            const menu = document.getElementById('dropdown-menu');
-            if (!toggle.contains(event.target) && !menu.contains(event.target)) {
-                menu.classList.add('hidden');
-            }
-        });
-
-        // Publish result
-        function publishResult(workspace_id) {
-            if (confirm('Are you sure you want to publish this result?')) {
-                fetch('/publish_results', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({workspace_id})
-                }).then(response => response.json())
-                  .then(data => {
-                      if (data.success) {
-                          alert(data.message);
-                          location.reload();
-                      } else {
-                          alert(data.error || 'Failed to publish');
-                      }
-                  }).catch(error => {
-                      alert('Error: ' + error);
-                  });
-            }
+    // Close dropdowns when clicking outside - only if elements exist
+    document.addEventListener('click', function(event) {
+        // Close user dropdown
+        if (userMenuButton && userDropdown && !userMenuButton.contains(event.target) && !userDropdown.contains(event.target)) {
+            userDropdown.classList.add('hidden');
         }
-
-        // Export results
-        function exportResults() {
-            const course = '{{ selected_course }}' === 'All' ? '' : '{{ selected_course }}';
-            const semester = '{{ selected_semester }}' === 'All' ? '' : '{{ selected_semester }}';
-            const params = new URLSearchParams();
-            if (course) params.append('course', course);
-            if (semester) params.append('semester', semester);
-            window.location.href = '/export_results?' + params.toString();
+        
+        // Close mobile menu
+        if (hamburgerToggle && dropdownMenu && !hamburgerToggle.contains(event.target) && !dropdownMenu.contains(event.target)) {
+            dropdownMenu.classList.add('hidden');
         }
-    </script>
+    });
+
+    // Select all functionality - only if element exists
+    const selectAll = document.getElementById('select-all');
+    if (selectAll) {
+        selectAll.addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('.result-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+        });
+    }
+
+    // Publish single result
+    function publishResult(workspace_id) {
+        if (confirm('Are you sure you want to publish this result?')) {
+            fetch('/publish_results', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({workspace_id})
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      alert(data.message);
+                      location.reload();
+                  } else {
+                      alert(data.error || 'Failed to publish');
+                  }
+              }).catch(error => {
+                  alert('Error: ' + error);
+              });
+        }
+    }
+
+    // Bulk publish results
+function bulkPublishResults() {
+    const selectedCheckboxes = document.querySelectorAll('.result-checkbox:checked');
+    const workspaceIds = Array.from(selectedCheckboxes).map(checkbox => checkbox.value);
+    
+    if (workspaceIds.length === 0) {
+        alert('Please select at least one result to publish.');
+        return;
+    }
+    
+    if (confirm(`Are you sure you want to publish ${workspaceIds.length} results?`)) {
+        console.log('Sending bulk publish request with IDs:', workspaceIds);
+        
+        fetch('/api/bulk_publish_results', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({workspace_ids: workspaceIds})
+        })
+        .then(response => {
+            console.log('Response status:', response.status, response.statusText);
+            if (!response.ok) {
+                // Get more details about the error
+                return response.text().then(text => {
+                    throw new Error(`Server returned ${response.status}: ${response.statusText}. Response: ${text}`);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert(data.error || 'Failed to publish results');
+            }
+        })
+        .catch(error => {
+            console.error('Error details:', error);
+            alert('Error: ' + error.message);
+        });
+    }
+}
+    // Export results
+    function exportResults() {
+        const course = '{{ selected_course }}' === 'All' ? '' : '{{ selected_course }}';
+        const semester = '{{ selected_semester }}' === 'All' ? '' : '{{ selected_semester }}';
+        const params = new URLSearchParams();
+        if (course) params.append('course', course);
+        if (semester) params.append('semester', semester);
+        window.location.href = '/export_results?' + params.toString();
+    }
+</script>
+    
 </body>
 </html>

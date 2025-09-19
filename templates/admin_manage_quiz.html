@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Manage Quiz - DSVV Quiz System</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Poppins", sans-serif;
+      }
+      body {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+      }
+      .question-item,
+      .student-item {
+        transition: all 0.2s ease;
+      }
+      .question-item:hover,
+      .student-item:hover {
+        background: #f8fafc;
+      }
+      .filter-tag {
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .filter-tag:hover {
+        transform: scale(1.05);
+      }
+      .filter-tag.selected {
+        background: #3b82f6;
+        color: white;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen">
+    <!-- Header and Navigation -->
+    <!-- Add your header/navigation code here -->
+
+    <!-- Add this hidden div to store quiz data -->
+    <div
+      id="quiz-data"
+      data-school="{{ quiz.school }}"
+      data-department="{{ quiz.department }}"
+      data-course="{{ quiz.course }}"
+      data-semester="{{ quiz.semester }}"
+      style="display: none"
+    ></div>
+
+    <div class="main-content min-h-screen p-6 mt-0">
+      <div
+        class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6"
+      >
+        <h1 class="text-3xl font-bold text-gray-800 flex items-center">
+          <i class="fas fa-cog text-blue-600 mr-3"></i> Manage Quiz: {{
+          quiz.title }}
+        </h1>
+        <nav class="flex space-x-2 text-sm text-gray-500">
+          <a href="/admin" class="hover:text-blue-600">Dashboard</a>
+          <span>/</span>
+          <a href="/admin/quizzes" class="hover:text-blue-600">Quizzes</a>
+          <span>/</span>
+          <span class="text-blue-600">Manage</span>
+        </nav>
+      </div>
+
+      <!-- Quiz Info -->
+      <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+        <h2 class="text-xl font-semibold mb-4 text-gray-800">
+          Quiz Information
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <p><strong>Name:</strong> {{ quiz.title }}</p>
+            <p>
+              <strong>Description:</strong> {{ quiz.description if
+              quiz.description else 'No description' }}
+            </p>
+            <p><strong>Course:</strong> {{ quiz.course|title }}</p>
+          </div>
+          <div>
+            <p><strong>Semester:</strong> {{ quiz.semester|title }}</p>
+            <p><strong>Duration:</strong> {{ quiz.duration }} minutes</p>
+            <p>
+              <strong>Status:</strong>
+              <span
+                class="{% if quiz.status == 'active' %}text-green-600{% elif quiz.status == 'draft' %}text-yellow-600{% else %}text-gray-600{% endif %}"
+              >
+                {{ quiz.status|title if quiz.status else 'Inactive' }}
+              </span>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Questions Selection -->
+        <div class="bg-white rounded-xl shadow-md p-6">
+          <h2 class="text-xl font-semibold mb-4 text-gray-800">
+            Select Questions
+          </h2>
+
+          <!-- Filter by Tags -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2"
+              >Filter by Tags</label
+            >
+            <div class="flex flex-wrap gap-2" id="tag-filters">
+              {% for tag in tags %}
+              <span
+                class="filter-tag bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm"
+                data-tag="{{ tag }}"
+              >
+                {{ tag }}
+              </span>
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- Questions List -->
+          <div class="max-h-96 overflow-y-auto">
+            <table class="min-w-full">
+              <thead>
+                <tr>
+                  <th class="px-4 py-2 text-left">
+                    <input
+                      type="checkbox"
+                      id="select-all-questions"
+                      class="mr-2"
+                    />
+                    <label for="select-all-questions">Select All</label>
+                  </th>
+                  <th class="px-4 py-2 text-left">Question</th>
+                  <th class="px-4 py-2 text-left">Difficulty</th>
+                </tr>
+              </thead>
+              <tbody id="questions-table-body">
+                {% for question in questions %}
+                <tr class="question-item">
+                  <td class="px-4 py-2">
+                    <input
+                      type="checkbox"
+                      name="question"
+                      value="{{ question.question_id }}"
+                      class="question-checkbox"
+                      data-tags="{{ question.tags|join(',') if question.tags else '' }}"
+                    />
+                  </td>
+                  <td class="px-4 py-2">
+                    <div class="text-sm font-medium">
+                      {{ question.text[:100] if question.text else 'No question
+                      text' }}{% if question.text and question.text|length > 100
+                      %}...{% endif %}
+                    </div>
+                    <div class="text-xs text-gray-500">
+                      {% if question.tags %} {% for tag in question.tags %}
+                      <span class="bg-blue-100 text-blue-800 px-1 rounded"
+                        >{{ tag }}</span
+                      >
+                      {% endfor %} {% endif %}
+                    </div>
+                  </td>
+                  <td class="px-4 py-2">
+                    <span
+                      class="bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs"
+                    >
+                      {{ question.difficulty if question.difficulty else 'Not
+                      set' }}
+                    </span>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <button
+            onclick="addSelectedQuestions()"
+            class="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+          >
+            <i class="fas fa-plus mr-2"></i>Add Selected Questions
+          </button>
+        </div>
+
+        <!-- Students Selection -->
+        <div class="bg-white rounded-xl shadow-md p-6">
+          <h2 class="text-xl font-semibold mb-4 text-gray-800">
+            Select Participants
+          </h2>
+
+          <!-- Students List -->
+          <div class="max-h-96 overflow-y-auto mb-4">
+            <table class="min-w-full">
+              <thead>
+                <tr>
+                  <th class="px-4 py-2 text-left">
+                    <input
+                      type="checkbox"
+                      id="select-all-students"
+                      class="mr-2"
+                    />
+                    <label for="select-all-students">Select All</label>
+                  </th>
+                  <th class="px-4 py-2 text-left">Student</th>
+                  <th class="px-4 py-2 text-left">Course</th>
+                </tr>
+              </thead>
+              <tbody id="students-table-body">
+                {% for student in students %}
+                <tr class="student-item">
+                  <td class="px-4 py-2">
+                    <input
+                      type="checkbox"
+                      name="student"
+                      value="{{ student.scholar_id }}"
+                      class="student-checkbox"
+                    />
+                  </td>
+                  <td class="px-4 py-2">
+                    <div class="text-sm font-medium">{{ student.name }}</div>
+                    <div class="text-xs text-gray-500">
+                      {{ student.scholar_id }}
+                    </div>
+                  </td>
+                  <td class="px-4 py-2 text-sm">
+                    {{ student.course }} Semester {{ student.semester }}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <button
+            onclick="addSelectedStudents()"
+            class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
+          >
+            <i class="fas fa-user-plus mr-2"></i>Add Selected Students
+          </button>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="mt-6 bg-white rounded-xl shadow-md p-6">
+        <h2 class="text-xl font-semibold mb-4 text-gray-800">Quiz Actions</h2>
+        <div class="flex space-x-4">
+          {% if quiz.status == 'active' %}
+          <button
+            onclick="updateQuizStatus('stop')"
+            class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg"
+          >
+            <i class="fas fa-stop mr-2"></i>Stop Quiz
+          </button>
+          {% else %}
+          <button
+            onclick="updateQuizStatus('start')"
+            class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg"
+          >
+            <i class="fas fa-play mr-2"></i>Start Quiz
+          </button>
+          {% endif %}
+
+          <button
+            onclick="extendQuizTime()"
+            class="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-3 rounded-lg"
+          >
+            <i class="fas fa-clock mr-2"></i>Extend Time
+          </button>
+
+          <button
+            onclick="previewQuiz()"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg"
+          >
+            <i class="fas fa-eye mr-2"></i>Preview Quiz
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Select all checkboxes functionality
+      document
+        .getElementById("select-all-questions")
+        .addEventListener("change", function () {
+          const checkboxes = document.querySelectorAll(".question-checkbox");
+          checkboxes.forEach((checkbox) => {
+            checkbox.checked = this.checked;
+          });
+        });
+
+      document
+        .getElementById("select-all-students")
+        .addEventListener("change", function () {
+          const checkboxes = document.querySelectorAll(".student-checkbox");
+          checkboxes.forEach((checkbox) => {
+            checkbox.checked = this.checked;
+          });
+        });
+
+      // Tag filtering with multiple selection
+      document.querySelectorAll(".filter-tag").forEach((tag) => {
+        tag.addEventListener("click", function () {
+          this.classList.toggle("selected");
+          filterQuestions();
+        });
+      });
+
+      function filterQuestions() {
+        const selectedTags = Array.from(
+          document.querySelectorAll(".filter-tag.selected")
+        ).map((tag) => tag.dataset.tag);
+
+        const questions = document.querySelectorAll(".question-item");
+
+        questions.forEach((question) => {
+          const checkbox = question.querySelector(".question-checkbox");
+          const questionTags = checkbox.dataset.tags
+            ? checkbox.dataset.tags.split(",")
+            : [];
+
+          // Show question if no tags selected OR if question has at least one selected tag
+          if (
+            selectedTags.length === 0 ||
+            selectedTags.some((tag) => questionTags.includes(tag))
+          ) {
+            question.style.display = "";
+          } else {
+            question.style.display = "none";
+          }
+        });
+      }
+
+      // Add selected questions to quiz
+      async function addSelectedQuestions() {
+        const selectedQuestions = Array.from(
+          document.querySelectorAll(".question-checkbox:checked")
+        ).map((checkbox) => checkbox.value);
+
+        if (selectedQuestions.length === 0) {
+          alert("Please select at least one question");
+          return;
+        }
+
+        try {
+          const response = await fetch(
+            `/api/quizzes/{{ quiz.quiz_id }}/questions`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ question_ids: selectedQuestions }),
+            }
+          );
+
+          const data = await response.json();
+          if (data.success) {
+            alert(`Added ${selectedQuestions.length} questions to quiz`);
+            // Reload or update UI as needed
+          } else {
+            alert("Error: " + (data.error || "Failed to add questions"));
+          }
+        } catch (error) {
+          alert("Error: " + error.message);
+        }
+      }
+
+      // Add selected students to quiz
+      async function addSelectedStudents() {
+        const selectedStudents = Array.from(
+          document.querySelectorAll(".student-checkbox:checked")
+        ).map((checkbox) => checkbox.value);
+
+        if (selectedStudents.length === 0) {
+          alert("Please select at least one student");
+          return;
+        }
+
+        try {
+          const response = await fetch(
+            `/api/quizzes/{{ quiz.quiz_id }}/participants`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ scholar_ids: selectedStudents }),
+            }
+          );
+
+          const data = await response.json();
+          if (data.success) {
+            alert(`Added ${selectedStudents.length} participants to quiz`);
+            // Reload or update UI as needed
+          } else {
+            alert("Error: " + (data.error || "Failed to add participants"));
+          }
+        } catch (error) {
+          alert("Error: " + error.message);
+        }
+      }
+
+      // Update quiz status
+      async function updateQuizStatus(action) {
+        try {
+          const response = await fetch(
+            `/api/quizzes/{{ quiz.quiz_id }}/status`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ action: action }),
+            }
+          );
+
+          const data = await response.json();
+          if (data.success) {
+            alert(data.message);
+            location.reload();
+          } else {
+            alert("Error: " + (data.error || "Failed to update quiz status"));
+          }
+        } catch (error) {
+          alert("Error: " + error.message);
+        }
+      }
+
+      // Extend quiz time
+      function extendQuizTime() {
+        const extraMinutes = prompt("Enter extra minutes to add:");
+        if (extraMinutes && !isNaN(extraMinutes)) {
+          updateQuizStatus("extend", parseInt(extraMinutes));
+        }
+      }
+
+      // Preview quiz
+      function previewQuiz() {
+        alert("Quiz preview functionality will be implemented soon");
+        // This would open a modal or new page showing the quiz questions
+      }
+
+      // Initialize page
+      document.addEventListener("DOMContentLoaded", function () {
+        // Make sure all checkboxes work properly
+        const questionCheckboxes =
+          document.querySelectorAll(".question-checkbox");
+        questionCheckboxes.forEach((checkbox) => {
+          checkbox.addEventListener("change", function () {
+            // Update select-all checkbox state
+            const allSelected = Array.from(questionCheckboxes).every(
+              (cb) => cb.checked
+            );
+            document.getElementById("select-all-questions").checked =
+              allSelected;
+          });
+        });
+
+        const studentCheckboxes =
+          document.querySelectorAll(".student-checkbox");
+        studentCheckboxes.forEach((checkbox) => {
+          checkbox.addEventListener("change", function () {
+            // Update select-all checkbox state
+            const allSelected = Array.from(studentCheckboxes).every(
+              (cb) => cb.checked
+            );
+            document.getElementById("select-all-students").checked =
+              allSelected;
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

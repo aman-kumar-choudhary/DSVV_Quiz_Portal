@@ -1,298 +1,542 @@
-{% extends "base.html" %}
-
-{% block title %}Student Dashboard - DSVV Quiz System{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Student Dashboard - DSVV Quiz
+System{% endblock %} {% block content %}
 <div class="max-w-6xl mx-auto">
-    <div class="text-center mb-10">
-        <h1 class="text-4xl md:text-5xl font-bold mb-4 text-gray-800">Welcome to <span class="text-blue-600">Your Quiz Dashboard</span></h1>
-        <p class="text-lg md:text-xl text-gray-700 mb-6">
-            Test your knowledge, challenge yourself, and climb the leaderboard!
-        </p>
-        
-        {% if error %}
-        <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-r-lg">
-            <div class="flex">
-                <div class="flex-shrink-0">
-                    <svg class="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                    </svg>
-                </div>
-                <div class="ml-3">
-                    <p class="text-sm text-red-700">{{ error }}</p>
-                    {% if "No questions available" in error %}
-                    <p class="mt-1 text-sm text-blue-600">Please contact the admin to add questions for your course.</p>
-                    {% endif %}
-                </div>
-            </div>
+  <div class="text-center mb-10">
+    <h1 class="text-4xl md:text-5xl font-bold mb-4 text-gray-800">
+      Welcome to <span class="text-blue-600">Your Quiz Dashboard</span>
+    </h1>
+    <p class="text-lg md:text-xl text-gray-700 mb-6">
+      Test your knowledge, challenge yourself, and climb the leaderboard!
+    </p>
+
+    {% if error %}
+    <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-r-lg">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg
+            class="h-5 w-5 text-red-500"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+              clip-rule="evenodd"
+            />
+          </svg>
         </div>
-        {% endif %}
+        <div class="ml-3">
+          <p class="text-sm text-red-700">{{ error }}</p>
+          {% if "No questions available" in error %}
+          <p class="mt-1 text-sm text-blue-600">
+            Please contact the admin to add questions for your course.
+          </p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+
+    <div class="mb-6 text-center">
+      {% if user.quiz_active %}
+      <span class="bg-green-100 text-green-800 px-4 py-2 rounded-full text-sm">
+        <i class="fas fa-check-circle mr-2"></i>Quiz Available
+      </span>
+      {% else %}
+      <span class="bg-gray-100 text-gray-800 px-4 py-2 rounded-full text-sm">
+        <i class="fas fa-clock mr-2"></i>No Active Quiz
+      </span>
+      {% endif %}
+    </div>
+  </div>
+  </div>
+
+  <!-- Student Notifications -->
+  <div class="bg-white p-6 rounded-xl shadow-md mb-8">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-2xl font-bold text-gray-800 flex items-center">
+        <i class="fas fa-bell text-blue-500 mr-3"></i> Notifications
+      </h2>
+      <button
+        id="mark-notifications-read"
+        class="text-blue-600 text-sm hover:underline"
+      >
+        Mark all as read
+      </button>
     </div>
 
-    <!-- Course-specific Leaderboard -->
-    <div class="bg-white p-6 rounded-xl shadow-md mb-8">
-        <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-            <i class="fas fa-trophy text-yellow-500 mr-3"></i> 
-            {{ user.course }} - Semester {{ user.semester }} Leaderboard
-        </h2>
-        
-        <div class="relative">
-            <div class="flex justify-between items-center mb-4">
-                <h3 id="course-slider-date-label" class="text-lg font-semibold text-gray-700">Today's Top Performers</h3>
-                <div class="flex space-x-2">
-                    <button id="course-prev-day" class="bg-gray-200 hover:bg-gray-300 rounded-full p-2">
-                        <i class="fas fa-chevron-left"></i>
-                    </button>
-                    <button id="course-next-day" class="bg-gray-200 hover:bg-gray-300 rounded-full p-2">
-                        <i class="fas fa-chevron-right"></i>
-                    </button>
-                </div>
-            </div>
-            
-            <div id="course-leaderboard" class="overflow-x-auto">
-                <!-- Course leaderboard will be loaded here by JavaScript -->
-                <div class="text-center py-8">
-                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                    <p class="mt-4 text-gray-600">Loading leaderboard data...</p>
-                </div>
-            </div>
+    <div id="notifications-list" class="space-y-3 max-h-64 overflow-y-auto">
+      <div class="text-center py-8">
+        <div
+          class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"
+        ></div>
+        <p class="mt-4 text-gray-600">Loading notifications...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Course-specific Leaderboard -->
+  <div class="bg-white p-6 rounded-xl shadow-md mb-8">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+      <i class="fas fa-trophy text-yellow-500 mr-3"></i>
+      {{ user.course }} - Semester {{ user.semester }} Leaderboard
+    </h2>
+
+    <div class="relative">
+      <div class="flex justify-between items-center mb-4">
+        <h3
+          id="course-slider-date-label"
+          class="text-lg font-semibold text-gray-700"
+        >
+          Today's Top Performers
+        </h3>
+        <div class="flex space-x-2">
+          <button
+            id="course-prev-day"
+            class="bg-gray-200 hover:bg-gray-300 rounded-full p-2"
+          >
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <button
+            id="course-next-day"
+            class="bg-gray-200 hover:bg-gray-300 rounded-full p-2"
+          >
+            <i class="fas fa-chevron-right"></i>
+          </button>
         </div>
+      </div>
+
+      <div id="course-leaderboard" class="overflow-x-auto">
+        <!-- Course leaderboard will be loaded here by JavaScript -->
+        <div class="text-center py-8">
+          <div
+            class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"
+          ></div>
+          <p class="mt-4 text-gray-600">Loading leaderboard data...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quiz Selection Card -->
+  <div class="bg-white p-8 rounded-xl shadow-lg mb-10 card-hover">
+    <h2 class="text-2xl font-bold mb-6 text-center text-blue-800">
+      Ready to Test Your Knowledge?
+    </h2>
+
+    <div class="mb-6 text-center">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-16 w-16 mx-auto text-yellow-500 mb-4"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M9.663 17 h4.673M12 3v1m6.364 1.636l-.707.707 M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0 v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+        />
+      </svg>
+      <p class="text-gray-700 mb-4">
+        "The expert in anything was once a beginner." - Helen Hayes
+      </p>
     </div>
 
-    <!-- Quiz Selection Card -->
-    <div class="bg-white p-8 rounded-xl shadow-lg mb-10 card-hover">
-        <h2 class="text-2xl font-bold mb-6 text-center text-blue-800">Ready to Test Your Knowledge?</h2>
-        
-        <div class="mb-6 text-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-yellow-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17 h4.673M12 3v1m6.364 1.636l-.707.707 M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0 v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-            </svg>
-            <p class="text-gray-700 mb-4">
-                "The expert in anything was once a beginner." - Helen Hayes
-            </p>
+    <form method="POST" class="space-y-6">
+      <!-- Display fields (readonly) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label
+            for="course_display"
+            class="block text-sm font-medium text-gray-700 mb-2"
+            >Your Course</label
+          >
+          <input
+            type="text"
+            id="course_display"
+            value="{{ user.course }}"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm bg-gray-100 cursor-not-allowed"
+            readonly
+          />
+          <p class="text-xs text-gray-500 mt-1">Your registered course</p>
         </div>
-        
-        <form method="POST" class="space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label for="course" class="block text-sm font-medium text-gray-700 mb-2">Your Course</label>
-                    <select name="course" id="course" class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                        <option value="MCA-DS" {% if user.course == 'MCA-DS' %}selected{% endif %}>MCA-DS</option>
-                        <option value="BSC IT" {% if user.course == 'BSC IT' %}selected{% endif %}>BSC IT</option>
-                        <option value="BCA" {% if user.course == 'BCA' %}selected{% endif %}>BCA</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="semester" class="block text-sm font-medium text-gray-700 mb-2">Your Semester</label>
-                    <select name="semester" id="semester" class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                        <option value="1" {% if user.semester == '1' %}selected{% endif %}>Semester I</option>
-                        <option value="2" {% if user.semester == '2' %}selected{% endif %}>Semester II</option>
-                        <option value="3" {% if user.semester == '3' %}selected{% endif %}>Semester III</option>
-                        <option value="4" {% if user.semester == '4' %}selected{% endif %}>Semester IV</option>
-                        <option value="5" {% if user.semester == '5' %}selected{% endif %}>Semester V</option>
-                        <option value="6" {% if user.semester == '6' %}selected{% endif %}>Semester VI</option>
-                    </select>
-                </div>
-            </div>
+        <div>
+          <label
+            for="semester_display"
+            class="block text-sm font-medium text-gray-700 mb-2"
+            >Your Semester</label
+          >
+          <input
+            type="text"
+            id="semester_display"
+            value="{{ user.semester }}"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm bg-gray-100 cursor-not-allowed"
+            readonly
+          />
+          <p class="text-xs text-gray-500 mt-1">Your registered semester</p>
+        </div>
+      </div>
 
-             <div class="text-center">
-        <button type="submit" class="btn-hover bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white font-bold py-3 px-8 rounded-lg text-lg shadow-lg transition-all duration-300 inline-flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            View Instructions & Start Quiz
+      <!-- Hidden fields for form submission -->
+      <input type="hidden" name="course" value="{{ user.course }}" />
+      <input type="hidden" name="semester" value="{{ user.semester }}" />
+
+      <div class="text-center">
+        <button
+          type="submit"
+          class="btn-hover bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white font-bold py-3 px-8 rounded-lg text-lg shadow-lg transition-all duration-300 inline-flex items-center"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5 mr-2"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+            />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          View Instructions & Start Quiz
         </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Motivational Section -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+    <div class="bg-blue-50 p-6 rounded-xl border border-blue-200 text-center">
+      <div class="text-blue-600 mb-4">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-10 w-10 mx-auto"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+      </div>
+      <h3 class="text-xl font-semibold mb-2 text-blue-800">
+        Immediate Feedback
+      </h3>
+      <p class="text-gray-600">
+        Get instant results and learn from your mistakes right away.
+      </p>
     </div>
 
-            
-        </form>
+    <div
+      class="bg-yellow-50 p-6 rounded-xl border border-yellow-200 text-center"
+    >
+      <div class="text-yellow-600 mb-4">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-10 w-10 mx-auto"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+          />
+        </svg>
+      </div>
+      <h3 class="text-xl font-semibold mb-2 text-yellow-800">
+        Comprehensive Coverage
+      </h3>
+      <p class="text-gray-600">
+        Questions covering all topics in your syllabus.
+      </p>
     </div>
 
-    <!-- Motivational Section -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-        <div class="bg-blue-50 p-6 rounded-xl border border-blue-200 text-center">
-            <div class="text-blue-600 mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-            </div>
-            <h3 class="text-xl font-semibold mb-2 text-blue-800">Immediate Feedback</h3>
-            <p class="text-gray-600">Get instant results and learn from your mistakes right away.</p>
-        </div>
-        
-        <div class="bg-yellow-50 p-6 rounded-xl border border-yellow-200 text-center">
-            <div class="text-yellow-600 mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-            </div>
-            <h3 class="text-xl font-semibold mb-2 text-yellow-800">Comprehensive Coverage</h3>
-            <p class="text-gray-600">Questions covering all topics in your syllabus.</p>
-        </div>
-        
-        <div class="bg-green-50 p-6 rounded-xl border border-green-200 text-center">
-            <div class="text-green-600 mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-            </div>
-            <h3 class="text-xl font-semibold mb-2 text-green-800">Track Progress</h3>
-            <p class="text-gray-600">Monitor your improvement over time.</p>
-        </div>
+    <div class="bg-green-50 p-6 rounded-xl border border-green-200 text-center">
+      <div class="text-green-600 mb-4">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-10 w-10 mx-auto"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+          />
+        </svg>
+      </div>
+      <h3 class="text-xl font-semibold mb-2 text-green-800">Track Progress</h3>
+      <p class="text-gray-600">Monitor your improvement over time.</p>
     </div>
+  </div>
 
-    <!-- Motivational Quote -->
-    <div class="bg-gray-800 text-white rounded-xl p-8 text-center">
-        <blockquote class="text-xl italic mb-4">
-            "Success is no accident. It is hard work, perseverance, learning, studying, sacrifice and most of all, love of what you are doing."
-        </blockquote>
-        <p class="font-semibold text-yellow-300">— Pelé</p>
-    </div>
+  <!-- Motivational Quote -->
+  <div class="bg-gray-800 text-white rounded-xl p-8 text-center">
+    <blockquote class="text-xl italic mb-4">
+      "Success is no accident. It is hard work, perseverance, learning,
+      studying, sacrifice and most of all, love of what you are doing."
+    </blockquote>
+    <p class="font-semibold text-yellow-300">— Pelé</p>
+  </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
+{% endblock %} {% block extra_js %}
 <script>
-// JavaScript for course-specific leaderboard slider
-document.addEventListener('DOMContentLoaded', function() {
-    const dateLabel = document.getElementById('course-slider-date-label');
-    const courseLeaderboard = document.getElementById('course-leaderboard');
-    const prevBtn = document.getElementById('course-prev-day');
-    const nextBtn = document.getElementById('course-next-day');
-    
+  // JavaScript for course-specific leaderboard slider
+  document.addEventListener("DOMContentLoaded", function () {
+    const dateLabel = document.getElementById("course-slider-date-label");
+    const courseLeaderboard = document.getElementById("course-leaderboard");
+    const prevBtn = document.getElementById("course-prev-day");
+    const nextBtn = document.getElementById("course-next-day");
+
     let currentDateIndex = 0;
     let dateData = [];
-    
+
     // Fetch course-specific leaderboard data
     fetch(`/api/course_leaderboard/{{ user.course }}/{{ user.semester }}`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            dateData = data.dates;
-            updateLeaderboard();
-        })
-        .catch(error => {
-            console.error('Error loading course leaderboard:', error);
-            courseLeaderboard.innerHTML = `
-                <div class="text-center py-8">
-                    <i class="fas fa-exclamation-triangle text-red-500 text-4xl mb-4"></i>
-                    <p class="text-gray-500">Error loading leaderboard data.</p>
-                    <p class="text-sm text-gray-400 mt-2">Please try refreshing the page.</p>
-                </div>
-            `;
-        });
-    
-    function updateDateLabel() {
-        if (dateData.length > 0 && dateData[currentDateIndex]) {
-            const date = new Date(dateData[currentDateIndex].date);
-            const today = new Date();
-            const yesterday = new Date(today);
-            yesterday.setDate(yesterday.getDate() - 1);
-            
-            let dateText;
-            if (date.toDateString() === today.toDateString()) {
-                dateText = "Today's Top Performers";
-            } else if (date.toDateString() === yesterday.toDateString()) {
-                dateText = "Yesterday's Top Performers";
-            } else {
-                // Format date as DD/MM/YY
-                const day = String(date.getDate()).padStart(2, '0');
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const year = String(date.getFullYear()).slice(-2);
-                dateText = `Top Performers on ${day}/${month}/${year}`;
-            }
-            
-            dateLabel.textContent = dateText;
-            
-            // Update button states
-            prevBtn.disabled = currentDateIndex === 0;
-            nextBtn.disabled = currentDateIndex === dateData.length - 1;
-            
-            // Update button styles based on state
-            if (prevBtn.disabled) {
-                prevBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                prevBtn.classList.remove('hover:bg-gray-300');
-            } else {
-                prevBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                prevBtn.classList.add('hover:bg-gray-300');
-            }
-            
-            if (nextBtn.disabled) {
-                nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                nextBtn.classList.remove('hover:bg-gray-300');
-            } else {
-                nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                nextBtn.classList.add('hover:bg-gray-300');
-            }
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
         }
-    }
-    
-    function updateLeaderboard() {
-        if (dateData.length > 0 && dateData[currentDateIndex]) {
-            const leaders = dateData[currentDateIndex].leaders;
-            
-            if (leaders.length > 0) {
-                courseLeaderboard.innerHTML = `
-                    <table class="w-full border-collapse">
-                        <thead>
-                            <tr class="bg-gray-100 text-left">
-                                <th class="py-3 px-4 font-medium text-gray-700">Rank</th>
-                                <th class="py-3 px-4 font-medium text-gray-700">Student</th>
-                                <th class="py-3 px-4 font-medium text-gray-700">Score</th>
-                                <th class="py-3 px-4 font-medium text-gray-700">Percentage</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${leaders.map((student, index) => `
-                                <tr class="border-b border-gray-200 hover:bg-gray-50 ${index < 3 ? 'leaderboard-row' : ''}">
-                                    <td class="py-3 px-4 font-bold">${index + 1}</td>
-                                    <td class="py-3 px-4">${student.user_name}</td>
-                                    <td class="py-3 px-4 font-bold">${student.score}/${student.total}</td>
-                                    <td class="py-3 px-4 font-bold text-blue-600">${student.percentage ? student.percentage.toFixed(2) : 0}%</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `;
-            } else {
-                courseLeaderboard.innerHTML = `
+        return response.json();
+      })
+      .then((data) => {
+        dateData = data.dates;
+        updateLeaderboard();
+      })
+      .catch((error) => {
+        console.error("Error loading course leaderboard:", error);
+        courseLeaderboard.innerHTML = `
                     <div class="text-center py-8">
-                        <i class="fas fa-chart-line text-gray-400 text-4xl mb-4"></i>
-                        <p class="text-gray-500">No quiz results for this date.</p>
+                        <i class="fas fa-exclamation-triangle text-red-500 text-4xl mb-4"></i>
+                        <p class="text-gray-500">Error loading leaderboard data.</p>
+                        <p class="text-sm text-gray-400 mt-2">Please try refreshing the page.</p>
                     </div>
                 `;
-            }
-            
-            updateDateLabel();
-        } else if (dateData.length === 0) {
-            courseLeaderboard.innerHTML = `
-                <div class="text-center py-8">
-                    <i class="fas fa-chart-line text-gray-400 text-4xl mb-4"></i>
-                    <p class="text-gray-500">No leaderboard data available yet.</p>
-                    <p class="text-sm text-gray-400 mt-2">Check back after quizzes have been completed.</p>
-                </div>
-            `;
+      });
+
+    function updateDateLabel() {
+      if (dateData.length > 0 && dateData[currentDateIndex]) {
+        const date = new Date(dateData[currentDateIndex].date);
+        const today = new Date();
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        let dateText;
+        if (date.toDateString() === today.toDateString()) {
+          dateText = "Today's Top Performers";
+        } else if (date.toDateString() === yesterday.toDateString()) {
+          dateText = "Yesterday's Top Performers";
+        } else {
+          // Format date as DD/MM/YY
+          const day = String(date.getDate()).padStart(2, "0");
+          const month = String(date.getMonth() + 1).padStart(2, "0");
+          const year = String(date.getFullYear()).slice(-2);
+          dateText = `Top Performers on ${day}/${month}/${year}`;
         }
+
+        dateLabel.textContent = dateText;
+
+        // Update button states
+        prevBtn.disabled = currentDateIndex === 0;
+        nextBtn.disabled = currentDateIndex === dateData.length - 1;
+
+        // Update button styles based on state
+        if (prevBtn.disabled) {
+          prevBtn.classList.add("opacity-50", "cursor-not-allowed");
+          prevBtn.classList.remove("hover:bg-gray-300");
+        } else {
+          prevBtn.classList.remove("opacity-50", "cursor-not-allowed");
+          prevBtn.classList.add("hover:bg-gray-300");
+        }
+
+        if (nextBtn.disabled) {
+          nextBtn.classList.add("opacity-50", "cursor-not-allowed");
+          nextBtn.classList.remove("hover:bg-gray-300");
+        } else {
+          nextBtn.classList.remove("opacity-50", "cursor-not-allowed");
+          nextBtn.classList.add("hover:bg-gray-300");
+        }
+      }
     }
-    
-    prevBtn.addEventListener('click', function() {
-        if (currentDateIndex > 0) {
-            currentDateIndex--;
-            updateLeaderboard();
+
+    function updateLeaderboard() {
+      if (dateData.length > 0 && dateData[currentDateIndex]) {
+        const leaders = dateData[currentDateIndex].leaders;
+
+        if (leaders.length > 0) {
+          courseLeaderboard.innerHTML = `
+                        <table class="w-full border-collapse">
+                            <thead>
+                                <tr class="bg-gray-100 text-left">
+                                    <th class="py-3 px-4 font-medium text-gray-700">Rank</th>
+                                    <th class="py-3 px-4 font-medium text-gray-700">Student</th>
+                                    <th class="py-3 px-4 font-medium text-gray-700">Score</th>
+                                    <th class="py-3 px-4 font-medium text-gray-700">Percentage</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${leaders
+                                  .map(
+                                    (student, index) => `
+                                    <tr class="border-b border-gray-200 hover:bg-gray-50 ${
+                                      index < 3 ? "leaderboard-row" : ""
+                                    }">
+                                        <td class="py-3 px-4 font-bold">${
+                                          index + 1
+                                        }</td>
+                                        <td class="py-3 px-4">${
+                                          student.user_name
+                                        }</td>
+                                        <td class="py-3 px-4 font-bold">${
+                                          student.score
+                                        }/${student.total}</td>
+                                        <td class="py-3 px-4 font-bold text-blue-600">${
+                                          student.percentage
+                                            ? student.percentage.toFixed(2)
+                                            : 0
+                                        }%</td>
+                                    </tr>
+                                `
+                                  )
+                                  .join("")}
+                            </tbody>
+                        </table>
+                    `;
+        } else {
+          courseLeaderboard.innerHTML = `
+                        <div class="text-center py-8">
+                            <i class="fas fa-chart-line text-gray-400 text-4xl mb-4"></i>
+                            <p class="text-gray-500">No quiz results for this date.</p>
+                        </div>
+                    `;
         }
+
+        updateDateLabel();
+      } else if (dateData.length === 0) {
+        courseLeaderboard.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fas fa-chart-line text-gray-400 text-4xl mb-4"></i>
+                        <p class="text-gray-500">No leaderboard data available yet.</p>
+                        <p class="text-sm text-gray-400 mt-2">Check back after quizzes have been completed.</p>
+                    </div>
+                `;
+      }
+    }
+
+    prevBtn.addEventListener("click", function () {
+      if (currentDateIndex > 0) {
+        currentDateIndex--;
+        updateLeaderboard();
+      }
     });
-    
-    nextBtn.addEventListener('click', function() {
-        if (currentDateIndex < dateData.length - 1) {
-            currentDateIndex++;
-            updateLeaderboard();
-        }
+
+    nextBtn.addEventListener("click", function () {
+      if (currentDateIndex < dateData.length - 1) {
+        currentDateIndex++;
+        updateLeaderboard();
+      }
     });
-});
+
+    // Load student notifications
+    function loadNotifications() {
+      fetch("/api/notifications")
+        .then((response) => response.json())
+        .then((data) => {
+          const notifications = data.notifications;
+          const notificationsList =
+            document.getElementById("notifications-list");
+
+          if (notifications.length > 0) {
+            notificationsList.innerHTML = notifications
+              .map(
+                (notification) => `
+                            <div class="p-3 border border-gray-200 rounded-lg ${
+                              notification.read ? "bg-white" : "bg-blue-50"
+                            }">
+                                <div class="flex justify-between items-start mb-1">
+                                    <span class="text-sm font-medium ${
+                                      notification.read
+                                        ? "text-gray-700"
+                                        : "text-blue-700"
+                                    }">
+                                        ${notification.title}
+                                    </span>
+                                    <span class="text-xs text-gray-500">
+                                        ${new Date(
+                                          notification.timestamp
+                                        ).toLocaleTimeString()}
+                                    </span>
+                                </div>
+                                <p class="text-sm text-gray-600">${
+                                  notification.message
+                                }</p>
+                                <div class="text-xs text-gray-400 mt-1">
+                                    ${new Date(
+                                      notification.timestamp
+                                    ).toLocaleDateString()}
+                                </div>
+                            </div>
+                        `
+              )
+              .join("");
+          } else {
+            notificationsList.innerHTML = `
+                            <div class="text-center py-8">
+                                <i class="fas fa-bell-slash text-gray-400 text-4xl mb-4"></i>
+                                <p class="text-gray-500">No notifications</p>
+                            </div>
+                        `;
+          }
+        })
+        .catch((error) => {
+          console.error("Error loading notifications:", error);
+        });
+    }
+
+    // Load notifications initially
+    loadNotifications();
+
+    // Mark all notifications as read
+    document
+      .getElementById("mark-notifications-read")
+      .addEventListener("click", function () {
+        fetch("/api/notifications/read", {
+          method: "POST",
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              loadNotifications();
+            }
+          })
+          .catch((error) => {
+            console.error("Error marking notifications as read:", error);
+          });
+      });
+
+    // Poll for new notifications every 30 seconds
+    setInterval(loadNotifications, 30000);
+  });
 </script>
 {% endblock %}

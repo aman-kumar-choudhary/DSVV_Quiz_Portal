@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Question Management - DSVV Quiz System</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Poppins", sans-serif;
+      }
+      body {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+      }
+      .sidebar {
+        width: 250px;
+        background: linear-gradient(180deg, #1e40af 0%, #3b82f6 100%);
+      }
+      .main-content {
+        margin-left: 250px;
+        margin-top: 60px;
+      }
+      .nav-item {
+        transition: all 0.2s ease;
+        border-left: 4px solid transparent;
+      }
+      .nav-item:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-left: 4px solid #93c5fd;
+      }
+      .nav-item.active {
+        background: rgba(255, 255, 255, 0.15);
+        border-left: 4px solid #ffffff;
+      }
+      header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 2000;
+        height: 60px;
+      }
+      .logo-container {
+        background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+        border-bottom-right-radius: 20px;
+      }
+      .card-hover {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+      .card-hover:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+      }
+      .stats-card {
+        border-left: 4px solid;
+        transition: all 0.3s ease;
+      }
+      .stats-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+      }
+    </style>
+  </head>
+  <body class="flex flex-col min-h-screen">
+    <!-- Header and navigation code would be here (similar to other admin pages) -->
+
+    <div class="main-content min-h-screen p-6 mt-0">
+      <div
+        class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6"
+      >
+        <h1 class="text-3xl font-bold text-gray-800 flex items-center">
+          <i class="fas fa-book text-blue-600 mr-3"></i> Question Management
+        </h1>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div
+          class="stats-card bg-white p-6 rounded-xl shadow-md border-l-4 border-blue-500 card-hover"
+        >
+          <a href="/admin/questions/upload" class="block">
+            <div class="flex items-center">
+              <div class="p-3 bg-blue-100 rounded-full mr-4">
+                <i class="fas fa-upload text-blue-600 text-xl"></i>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500">Upload Questions</p>
+                <p class="text-2xl font-bold text-gray-800">Bulk Upload</p>
+                <p class="text-xs text-gray-400 mt-1">JSON or CSV format</p>
+              </div>
+            </div>
+          </a>
+        </div>
+
+        <div
+          class="stats-card bg-white p-6 rounded-xl shadow-md border-l-4 border-yellow-500 card-hover"
+        >
+          <a href="/admin/questions/review" class="block">
+            <div class="flex items-center">
+              <div class="p-3 bg-yellow-100 rounded-full mr-4">
+                <i class="fas fa-tasks text-yellow-600 text-xl"></i>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500">Pending Review</p>
+                <p class="text-2xl font-bold text-gray-800">
+                  {{ pending_count }}
+                </p>
+                <p class="text-xs text-gray-400 mt-1">
+                  Questions awaiting approval
+                </p>
+              </div>
+            </div>
+          </a>
+        </div>
+
+        <div
+          class="stats-card bg-white p-6 rounded-xl shadow-md border-l-4 border-green-500 card-hover"
+        >
+          <a href="/admin/questions/bank" class="block">
+            <div class="flex items-center">
+              <div class="p-3 bg-green-100 rounded-full mr-4">
+                <i class="fas fa-database text-green-600 text-xl"></i>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500">Question Bank</p>
+                <p class="text-2xl font-bold text-gray-800">{{ bank_count }}</p>
+                <p class="text-xs text-gray-400 mt-1">Approved questions</p>
+              </div>
+            </div>
+          </a>
+        </div>
+      </div>
+
+      <div class="bg-white p-6 rounded-xl shadow-md mb-8">
+        <h2 class="text-xl font-semibold mb-4 flex items-center text-blue-700">
+          <i class="fas fa-info-circle mr-2"></i> Quick Actions
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <a
+            href="/admin/questions/upload"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg text-center transition-colors"
+          >
+            <i class="fas fa-upload text-2xl mb-2"></i>
+            <p class="font-semibold">Upload Questions</p>
+            <p class="text-sm opacity-80">Bulk upload JSON/CSV files</p>
+          </a>
+          <a
+            href="/admin/questions/review"
+            class="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-4 rounded-lg text-center transition-colors"
+          >
+            <i class="fas fa-tasks text-2xl mb-2"></i>
+            <p class="font-semibold">Review Questions</p>
+            <p class="text-sm opacity-80">Approve or reject submissions</p>
+          </a>
+          <a
+            href="/admin/questions/bank"
+            class="bg-green-600 hover:bg-green-700 text-white px-6 py-4 rounded-lg text-center transition-colors"
+          >
+            <i class="fas fa-database text-2xl mb-2"></i>
+            <p class="font-semibold">Question Bank</p>
+            <p class="text-sm opacity-80">Manage approved questions</p>
+          </a>
+          <a
+            href="/admin/quizzes"
+            class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-4 rounded-lg text-center transition-colors"
+          >
+            <i class="fas fa-rocket text-2xl mb-2"></i>
+            <p class="font-semibold">Create Quiz</p>
+            <p class="text-sm opacity-80">Start a new quiz</p>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Navigation and interaction scripts would be here
+    </script>
+  </body>
+</html>
