@@ -2469,10 +2469,6 @@ def update_quiz_status(quiz_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-<<<<<<< HEAD
-# ==================== NEW LEADERBOARD ROUTES ====================
-=======
->>>>>>> 773938d (New updation)
 
 @app.route('/admin/leaderboard')
 def admin_leaderboard():
