@@ -1732,26 +1732,12 @@ def start_quiz():
                 "question_id": {"$in": question_ids}
             }, {'_id': 0}))
             
-            # Shuffle questions to prevent cheating
+            # Shuffle questions to prevent cheating, but keep options in original order
             random.shuffle(questions)
             
-            # Also shuffle options for each question
-            for question in questions:
-                options = question['options']
-                correct_answer = question['correct_answer']
-                
-                # Store the original correct answer index
-                correct_index = options.index(correct_answer) if correct_answer in options else -1
-                
-                # Shuffle the options
-                random.shuffle(options)
-                
-                # Update the correct answer to the new position
-                if correct_index >= 0:
-                    question['correct_answer'] = options[correct_index]
-                else:
-                    # If correct answer not found in options, use the first option
-                    question['correct_answer'] = options[0]
+            # DO NOT shuffle options - keep them in their original order
+            # This ensures the correct answer remains correctly associated with its option
+            
         else:
             # Fallback to old system
             questions = list(questions_collection.find({
@@ -1759,7 +1745,7 @@ def start_quiz():
                 "semester": semester,
                 "active": True
             }, {'_id': 0}))
-            random.shuffle(questions)
+            random.shuffle(questions)  # Only shuffle questions, not options
         
         if not questions:
             return jsonify({"error": "No active questions available"}), 400
@@ -1780,6 +1766,14 @@ def start_quiz():
         session['quiz_duration'] = duration
         
         print(f"Quiz started with {len(questions)} questions, duration: {duration} seconds ({duration//60} minutes)")
+        
+        # Debug: Print first question to verify options and correct answer match
+        if questions:
+            first_question = questions[0]
+            print(f"First question: {first_question['text']}")
+            print(f"Options: {first_question['options']}")
+            print(f"Correct answer: {first_question['correct_answer']}")
+            print(f"Correct answer in options: {first_question['correct_answer'] in first_question['options']}")
         
         return jsonify({"success": True, "redirect": url_for('quiz')})
         
