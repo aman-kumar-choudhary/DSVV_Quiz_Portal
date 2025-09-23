@@ -115,11 +115,8 @@
             opacity: 1;
         }
         header .logo-container img {
-            height: 70px; /* Adjusted logo size to fit wider header */
+            height: 70px;
         }
-        
-        
-        
         
         .logo-container {
             background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
@@ -135,6 +132,19 @@
             font-size: 0.75rem;
             padding: 0.25rem 0.5rem;
             border-radius: 0.25rem;
+        }
+
+        /* New styles for cascading dropdowns */
+        .form-select {
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .input-focus:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
         }
     </style>
 </head>
@@ -176,161 +186,60 @@
         </div>
     </header>
 
-    <nav
-      id="dropdown-menu"
-      class="hidden md:hidden bg-gradient-to-b from-blue-800 to-blue-600 text-white shadow-lg mt-20 fixed left-0 right-0 z-40"
-    >
-      <ul class="space-y-2 px-4 py-4">
-        <li class="nav-item active">
-          <a
-            href="/admin"
-            class="flex items-center p-3 rounded-lg hover:bg-blue-700"
-          >
-            <i class="fas fa-tachometer-alt w-6 text-center"></i>
-            <span class="ml-3">Dashboard</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a
-            href="/admin/questions/management"
-            class="flex items-center p-3 text-white rounded-lg"
-          >
-            <i class="fas fa-book w-6 text-center"></i>
-            <span class="ml-3 menu-text">Question Management</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a
-            href="/admin/quizzes"
-            class="flex items-center p-3 text-white rounded-lg"
-          >
-            <i class="fas fa-rocket w-6 text-center"></i>
-            <span class="ml-3 menu-text">Quiz Management</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a
-            href="/admin/leaderboard"
-            class="flex items-center p-3 text-white rounded-lg"
-          >
-            <i class="fas fa-trophy w-6 text-center"></i>
-            <span class="ml-3 menu-text">Leaderboard</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a
-            href="/admin/results"
-            class="flex items-center p-3 rounded-lg hover:bg-blue-700"
-          >
-            <i class="fas fa-chart-bar w-6 text-center"></i>
-            <span class="ml-3">Results</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a
-            href="/admin/users"
-            class="flex items-center p-3 rounded-lg hover:bg-blue-700"
-          >
-            <i class="fas fa-users w-6 text-center"></i>
-            <span class="ml-3">User Management</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a
-            href="#"
-            class="flex items-center p-3 rounded-lg hover:bg-blue-700"
-          >
-            <i class="fas fa-cog w-6 text-center"></i>
-            <span class="ml-3">Settings</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a
-            href="/logout"
-            class="flex items-center p-3 rounded-lg hover:bg-blue-700"
-          >
-            <i class="fas fa-sign-out-alt w-6 text-center"></i>
-            <span class="ml-3">Logout</span>
-          </a>
-        </li>
-      </ul>
-    </nav>
-
-    <!-- Sidebar Navigation (moved below header) -->
-    <div class="sidebar h-[calc(100vh-80px)] mt-0">
-      <div class="py-6">
-        <ul class="space-y-2 px-4">
-          <li class="nav-item active">
-            <a
-              href="/admin"
-              class="flex items-center p-3 text-white rounded-lg"
-            >
-              <i class="fas fa-tachometer-alt w-6 text-center"></i>
-              <span class="ml-3 menu-text">Dashboard</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a
-              href="/admin/questions/management"
-              class="flex items-center p-3 text-white rounded-lg"
-            >
-              <i class="fas fa-book w-6 text-center"></i>
-              <span class="ml-3 menu-text">Question Management</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a
-              href="/admin/quizzes"
-              class="flex items-center p-3 text-white rounded-lg"
-            >
-              <i class="fas fa-rocket w-6 text-center"></i>
-              <span class="ml-3 menu-text">Quiz Management</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a
-              href="/admin/leaderboard"
-              class="flex items-center p-3 text-white rounded-lg"
-            >
-              <i class="fas fa-trophy w-6 text-center"></i>
-              <span class="ml-3 menu-text">Leaderboard</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a
-              href="/admin/results"
-              class="flex items-center p-3 text-white rounded-lg"
-            >
-              <i class="fas fa-chart-bar w-6 text-center"></i>
-              <span class="ml-3 menu-text">Results</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a
-              href="/admin/users"
-              class="flex items-center p-3 text-white rounded-lg"
-            >
-              <i class="fas fa-users w-6 text-center"></i>
-              <span class="ml-3 menu-text">User Management</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a href="#" class="flex items-center p-3 text-white rounded-lg">
-              <i class="fas fa-cog w-6 text-center"></i>
-              <span class="ml-3 menu-text">Settings</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a
-              href="/logout"
-              class="flex items-center p-3 text-white rounded-lg"
-            >
-              <i class="fas fa-sign-out-alt w-6 text-center"></i>
-              <span class="ml-3 menu-text">Logout</span>
-            </a>
-          </li>
-        </ul>
-      </div>
+    <!-- Sidebar Navigation -->
+    <div class="sidebar h-[calc(100vh-60px)]">
+        <div class="py-6">
+            <ul class="space-y-2 px-4">
+                <li class="nav-item">
+                    <a href="/admin" class="flex items-center p-3 text-white rounded-lg">
+                        <i class="fas fa-tachometer-alt w-6 text-center"></i>
+                        <span class="ml-3 menu-text">Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/admin/questions/management" class="flex items-center p-3 text-white rounded-lg">
+                        <i class="fas fa-book w-6 text-center"></i>
+                        <span class="ml-3 menu-text">Question Management</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/admin/quizzes" class="flex items-center p-3 text-white rounded-lg">
+                        <i class="fas fa-rocket w-6 text-center"></i>
+                        <span class="ml-3 menu-text">Quiz Management</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/admin/leaderboard" class="flex items-center p-3 text-white rounded-lg">
+                        <i class="fas fa-trophy w-6 text-center"></i>
+                        <span class="ml-3 menu-text">Leaderboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/admin/results" class="flex items-center p-3 text-white rounded-lg">
+                        <i class="fas fa-chart-bar w-6 text-center"></i>
+                        <span class="ml-3 menu-text">Results</span>
+                    </a>
+                </li>
+                <li class="nav-item active">
+                    <a href="/admin/users" class="flex items-center p-3 text-white rounded-lg">
+                        <i class="fas fa-users w-6 text-center"></i>
+                        <span class="ml-3 menu-text">User Management</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="flex items-center p-3 text-white rounded-lg">
+                        <i class="fas fa-cog w-6 text-center"></i>
+                        <span class="ml-3 menu-text">Settings</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/logout" class="flex items-center p-3 text-white rounded-lg">
+                        <i class="fas fa-sign-out-alt w-6 text-center"></i>
+                        <span class="ml-3 menu-text">Logout</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
     </div>
 
     <div class="main-content min-h-[calc(100vh-60px)]">
@@ -351,30 +260,53 @@
                 <h2 class="text-xl font-semibold mb-4 flex items-center text-blue-700">
                     <i class="fas fa-filter mr-2"></i> Filter Users
                 </h2>
-                <form method="GET" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <!-- School Filter -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Course</label>
-                        <select name="course" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
-                            <option value="" {% if selected_course == '' %}selected{% endif %}>All Courses</option>
-                            <option value="MCA-DS" {% if selected_course == 'MCA-DS' %}selected{% endif %}>MCA-DS</option>
-                            <option value="BSC IT" {% if selected_course == 'BSC IT' %}selected{% endif %}>BSC IT</option>
-                            <option value="BCA" {% if selected_course == 'BCA' %}selected{% endif %}>BCA</option>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">School</label>
+                        <select name="school" id="school-filter" class="form-select input-focus w-full p-2 border border-gray-300 rounded-lg" onchange="updateDepartmentOptions()">
+                            <option value="">All Schools</option>
+                            {% for school in schools %}
+                            <option value="{{ school }}" {% if selected_school == school %}selected{% endif %}>{{ school }}</option>
+                            {% endfor %}
                         </select>
                     </div>
+
+                    <!-- Department Filter -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Semester</label>
-                        <select name="semester" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
-                            <option value="" {% if selected_semester == '' %}selected{% endif %}>All Semesters</option>
-                            <option value="1" {% if selected_semester == '1' %}selected{% endif %}>1</option>
-                            <option value="2" {% if selected_semester == '2' %}selected{% endif %}>2</option>
-                            <option value="3" {% if selected_semester == '3' %}selected{% endif %}>3</option>
-                            <option value="4" {% if selected_semester == '4' %}selected{% endif %}>4</option>
-                            <option value="5" {% if selected_semester == '5' %}selected{% endif %}>5</option>
-                            <option value="6" {% if selected_semester == '6' %}selected{% endif %}>6</option>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                        <select name="department" id="department-filter" class="form-select input-focus w-full p-2 border border-gray-300 rounded-lg" onchange="updateCourseOptions()">
+                            <option value="">All Departments</option>
+                            {% for department in departments %}
+                            <option value="{{ department }}" {% if selected_department == department %}selected{% endif %}>{{ department }}</option>
+                            {% endfor %}
                         </select>
                     </div>
-                    <div class="flex items-end">
-                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+
+                    <!-- Course Filter -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Course</label>
+                        <select name="course" id="course-filter" class="form-select input-focus w-full p-2 border border-gray-300 rounded-lg">
+                            <option value="">All Courses</option>
+                            {% for course in courses %}
+                            <option value="{{ course }}" {% if selected_course == course %}selected{% endif %}>{{ course }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Semester Filter -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Semester</label>
+                        <select name="semester" class="form-select input-focus w-full p-2 border border-gray-300 rounded-lg">
+                            <option value="">All Semesters</option>
+                            {% for semester in semesters %}
+                            <option value="{{ semester }}" {% if selected_semester == semester %}selected{% endif %}>{{ semester }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="flex items-end md:col-span-4">
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
                             Apply Filters
                         </button>
                     </div>
@@ -470,29 +402,38 @@
                     <input type="text" id="edit-name" class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
                 </div>
                 <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="edit-email" class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">School</label>
+                    <select id="edit-school" class="form-select input-focus w-full p-2 border border-gray-300 rounded-md" onchange="updateEditDepartmentOptions()">
+                        <option value="">Select School</option>
+                        {% for school in schools %}
+                        <option value="{{ school }}">{{ school }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                    <select id="edit-department" class="form-select input-focus w-full p-2 border border-gray-300 rounded-md" onchange="updateEditCourseOptions()">
+                        <option value="">Select Department</option>
+                    </select>
+                </div>
+                <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Course</label>
-                    <select id="edit-course" class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                    <select id="edit-course" class="form-select input-focus w-full p-2 border border-gray-300 rounded-md">
                         <option value="">Select Course</option>
-                        <option value="MCA-DS">MCA-DS</option>
-                        <option value="BSC IT">BSC IT</option>
-                        <option value="BCA">BCA</option>
                     </select>
                 </div>
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Semester</label>
                     <select id="edit-semester" class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
                         <option value="">Select Semester</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                        <option value="6">6</option>
+                        {% for i in range(1, 9) %}
+                        <option value="{{ i }}">Semester {{ i }}</option>
+                        {% endfor %}
                     </select>
-                </div>
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input type="email" id="edit-email" class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
                 </div>
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
@@ -515,9 +456,9 @@
 
     <!-- Marks Modal -->
     <div id="marks-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl">
             <div class="px-6 py-4 border-b flex justify-between items-center">
-                <h2 class="text-xl font-semibold text-gray-800">Student Results</h2>
+                <h2 class="text-xl font-semibold text-gray-800">Student Results - <span id="student-name"></span></h2>
                 <button onclick="closeMarksModal()" class="text-gray-400 hover:text-gray-600">
                     <i class="fas fa-times"></i>
                 </button>
@@ -531,29 +472,200 @@
     </div>
 
     <script>
-        // Toggle mobile menu
-        document.getElementById('hamburger-toggle').addEventListener('click', function() {
-            const menu = document.getElementById('dropdown-menu');
-            menu.classList.toggle('hidden');
-        });
+        // School and department data (same as signup.html)
+        const schoolDepartments = {
+            "School of Technology, Communication and Management": [
+                "Department of Computer Sciences",
+                "Department of Tourism Management",
+                "Department of Journalism & Mass Communication",
+                "Department of Animation and Visual Effects",
+            ],
+            "School of Biological Sciences and Sustainability": [
+                "Department of Rural Studies and Sustainability",
+            ],
+            "School of Indology": [
+                "Department of Sanskrit and Vedic Studies",
+                "Department of Hindi",
+                "Department of Indian Classical Music",
+                "Department of History and Indian Culture",
+            ],
+            "School of Humanities, Social Sciences and Foundation Courses": [
+                "Department of English",
+                "Department of Education",
+                "Department of Psychology",
+                "Department of Life Management",
+                "Department of Scientific Spirituality",
+                "Department of Oriental Studies, Religious Studies & Philosophy",
+                "Department of Yogic Sciences and Human Consciousness",
+            ],
+        };
 
-        // Toggle user dropdown
-        document.getElementById('user-menu-button').addEventListener('click', function() {
-            document.getElementById('user-dropdown').classList.toggle('hidden');
-        });
+        const departmentCourses = {
+            "Department of Computer Sciences": [
+                "B.Sc. Information Technology (Honors)",
+                "Bachelor of Computer Application (Honors)",
+                "Master of Computer Application (Data Science)",
+            ],
+            "Department of Tourism Management": [
+                "B.B.A Tourism & Travel Management (Honors)",
+                "M.B.A. Tourism & Travel Management",
+            ],
+            "Department of Journalism & Mass Communication": [
+                "B.A. Journalism and Mass Communication (Honors)",
+                "M. A. Journalism and Mass Communication",
+                "M. A. Spiritual Journalism",
+            ],
+            "Department of Animation and Visual Effects": [
+                "B.Voc. (Bachelor of Vocation) in 3D Animation and VFX (Honors)",
+            ],
+            "Department of Rural Studies and Sustainability": [
+                "Bachelor of Rural Studies (Honors)",
+            ],
+            "Department of English": ["B.A. English (Honors)"],
+            "Department of Education": ["B.Ed. (Bachelor of Education)"],
+            "Department of Psychology": [
+                "B.A. Psychology (Honors)",
+                "M.A. Counselling Psychology",
+                "M.Sc. Counselling Psychology",
+            ],
+            "Department of Life Management": [
+                "Life Management - Compulsory Program for PG and UG",
+            ],
+            "Department of Scientific Spirituality": [
+                "M.Sc. Herbal Medicine and Natural Product Chemistry",
+                "M.Sc. Molecular Physiology and Traditional Health Sciences",
+                "M.Sc. Indigenous Approaches for Child Development & Generational Dynamics",
+                "M.Sc. Indian Knowledge Systems",
+                "M.A. Indian Knowledge Systems",
+            ],
+            "Department of Oriental Studies, Religious Studies & Philosophy": [
+                "M.A. Hindu Studies",
+                "M.A. Philosophy",
+            ],
+            "Department of Yogic Sciences and Human Consciousness": [
+                "B.Sc. Yogic Science (Honors)",
+                "M.Sc. Yoga Therapy",
+                "M.A. Human Consciousness & Yogic Science",
+                "M.Sc. Human Consciousness & Yogic Science",
+                "P. G. Diploma Human Consciousness, Yoga & Alternative Therapy",
+                "Certificate In Yoga And Alternative Therapy",
+            ],
+            "Department of Sanskrit and Vedic Studies": [
+                "B.A. Sanskrit (Honors)",
+                "M.A. Sanskrit",
+            ],
+            "Department of Hindi": ["B.A. Hindi (Honors)", "M.A. Hindi"],
+            "Department of Indian Classical Music": [
+                "B.A. Music (Vocal) (Honors)",
+                "M.A. Music (Vocal)",
+                "B.A. Music Instrumental Mridang/Tabla (Honors)",
+                "M.A. Music (Tabla, Pakhaawaj)",
+            ],
+            "Department of History and Indian Culture": [
+                "B.A. History (Honors)",
+                "M. A. History and Indian Culture",
+            ],
+        };
 
-        // Close dropdowns when clicking outside
-        document.addEventListener('click', function(event) {
-            const userMenu = document.getElementById('user-menu-button');
-            const dropdown = document.getElementById('user-dropdown');
-            if (!userMenu.contains(event.target) && !dropdown.contains(event.target)) {
-                dropdown.classList.add('hidden');
-            }
+        // Filter dropdown functionality
+        function updateDepartmentOptions() {
+            const schoolSelect = document.getElementById('school-filter');
+            const departmentSelect = document.getElementById('department-filter');
+            const selectedSchool = schoolSelect.value;
             
-            const toggle = document.getElementById('hamburger-toggle');
-            const menu = document.getElementById('dropdown-menu');
-            if (!toggle.contains(event.target) && !menu.contains(event.target)) {
-                menu.classList.add('hidden');
+            // Reset and disable dependent dropdowns
+            departmentSelect.innerHTML = '<option value="">All Departments</option>';
+            document.getElementById('course-filter').innerHTML = '<option value="">All Courses</option>';
+            
+            if (selectedSchool) {
+                // Populate departments based on selected school
+                const departments = schoolDepartments[selectedSchool] || [];
+                departments.forEach(dept => {
+                    const option = document.createElement('option');
+                    option.value = dept;
+                    option.textContent = dept;
+                    departmentSelect.appendChild(option);
+                });
+            }
+        }
+
+        function updateCourseOptions() {
+            const departmentSelect = document.getElementById('department-filter');
+            const courseSelect = document.getElementById('course-filter');
+            const selectedDepartment = departmentSelect.value;
+            
+            // Reset course dropdown
+            courseSelect.innerHTML = '<option value="">All Courses</option>';
+            
+            if (selectedDepartment) {
+                // Populate courses based on selected department
+                const courses = departmentCourses[selectedDepartment] || [];
+                courses.forEach(course => {
+                    const option = document.createElement('option');
+                    option.value = course;
+                    option.textContent = course;
+                    courseSelect.appendChild(option);
+                });
+            }
+        }
+
+        // Edit modal dropdown functionality
+        function updateEditDepartmentOptions() {
+            const schoolSelect = document.getElementById('edit-school');
+            const departmentSelect = document.getElementById('edit-department');
+            const selectedSchool = schoolSelect.value;
+            
+            // Reset department dropdown
+            departmentSelect.innerHTML = '<option value="">Select Department</option>';
+            document.getElementById('edit-course').innerHTML = '<option value="">Select Course</option>';
+            
+            if (selectedSchool) {
+                // Populate departments based on selected school
+                const departments = schoolDepartments[selectedSchool] || [];
+                departments.forEach(dept => {
+                    const option = document.createElement('option');
+                    option.value = dept;
+                    option.textContent = dept;
+                    departmentSelect.appendChild(option);
+                });
+            }
+        }
+
+        function updateEditCourseOptions() {
+            const departmentSelect = document.getElementById('edit-department');
+            const courseSelect = document.getElementById('edit-course');
+            const selectedDepartment = departmentSelect.value;
+            
+            // Reset course dropdown
+            courseSelect.innerHTML = '<option value="">Select Course</option>';
+            
+            if (selectedDepartment) {
+                // Populate courses based on selected department
+                const courses = departmentCourses[selectedDepartment] || [];
+                courses.forEach(course => {
+                    const option = document.createElement('option');
+                    option.value = course;
+                    option.textContent = course;
+                    courseSelect.appendChild(option);
+                });
+            }
+        }
+
+        // Initialize dropdowns on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDepartmentOptions();
+            updateCourseOptions();
+            
+            // Set initial values if filters are already applied
+            const schoolFilter = document.getElementById('school-filter');
+            const departmentFilter = document.getElementById('department-filter');
+            const courseFilter = document.getElementById('course-filter');
+            
+            if (schoolFilter.value) {
+                updateDepartmentOptions();
+                if (departmentFilter.value) {
+                    updateCourseOptions();
+                }
             }
         });
 
@@ -561,10 +673,49 @@
         function editUser(scholar_id, name, course, semester, email, blocked) {
             document.getElementById('edit-scholar_id').value = scholar_id;
             document.getElementById('edit-name').value = name;
-            document.getElementById('edit-course').value = course;
-            document.getElementById('edit-semester').value = semester;
             document.getElementById('edit-email').value = email;
+            document.getElementById('edit-semester').value = semester;
             document.getElementById('edit-blocked').value = blocked.toString();
+            
+            // Set school, department, and course if available
+            // This would need to be populated from the student data
+            // For now, we'll just set the values if they exist
+            if (course) {
+                // Find which department this course belongs to
+                let foundDept = '';
+                let foundSchool = '';
+                
+                for (const [dept, courses] of Object.entries(departmentCourses)) {
+                    if (courses.includes(course)) {
+                        foundDept = dept;
+                        break;
+                    }
+                }
+                
+                // Find which school this department belongs to
+                for (const [school, depts] of Object.entries(schoolDepartments)) {
+                    if (depts.includes(foundDept)) {
+                        foundSchool = school;
+                        break;
+                    }
+                }
+                
+                if (foundSchool) {
+                    document.getElementById('edit-school').value = foundSchool;
+                    updateEditDepartmentOptions();
+                    
+                    setTimeout(() => {
+                        if (foundDept) {
+                            document.getElementById('edit-department').value = foundDept;
+                            updateEditCourseOptions();
+                            
+                            setTimeout(() => {
+                                document.getElementById('edit-course').value = course;
+                            }, 100);
+                        }
+                    }, 100);
+                }
+            }
             
             // Show modal with animation
             const modal = document.getElementById('edit-modal');
@@ -579,9 +730,11 @@
             const data = {
                 scholar_id: document.getElementById('edit-scholar_id').value,
                 name: document.getElementById('edit-name').value,
+                email: document.getElementById('edit-email').value,
+                school: document.getElementById('edit-school').value,
+                department: document.getElementById('edit-department').value,
                 course: document.getElementById('edit-course').value,
                 semester: document.getElementById('edit-semester').value,
-                email: document.getElementById('edit-email').value,
                 blocked: document.getElementById('edit-blocked').value === 'true'
             };
             
@@ -613,6 +766,8 @@
 
         // View student marks
         function viewMarks(scholar_id) {
+            document.getElementById('student-name').textContent = 'Loading...';
+            
             fetch(`/api/user_results/${scholar_id}`)
                 .then(response => response.json())
                 .then(data => {
@@ -620,6 +775,10 @@
                     content.innerHTML = '';
                     
                     if (data.results && data.results.length > 0) {
+                        // Get student name from first result
+                        const studentName = data.results[0]?.user_name || 'Unknown';
+                        document.getElementById('student-name').textContent = studentName;
+                        
                         let html = `
                             <div class="overflow-x-auto">
                                 <table class="min-w-full divide-y divide-gray-200">
@@ -629,7 +788,9 @@
                                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Semester</th>
                                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Score</th>
                                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Percentage</th>
                                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                                         </tr>
                                     </thead>
                                     <tbody class="bg-white divide-y divide-gray-200">
@@ -637,13 +798,21 @@
                         
                         data.results.forEach(result => {
                             const date = new Date(result.timestamp);
+                            const percentage = ((result.score / result.total) * 100).toFixed(2);
+                            
                             html += `
                                 <tr>
                                     <td class="px-4 py-2 whitespace-nowrap">${result.course || 'N/A'}</td>
                                     <td class="px-4 py-2 whitespace-nowrap">${result.semester || 'N/A'}</td>
                                     <td class="px-4 py-2 whitespace-nowrap">${result.score}</td>
                                     <td class="px-4 py-2 whitespace-nowrap">${result.total}</td>
+                                    <td class="px-4 py-2 whitespace-nowrap font-bold ${percentage >= 60 ? 'text-green-600' : 'text-red-600'}">${percentage}%</td>
                                     <td class="px-4 py-2 whitespace-nowrap">${date.toLocaleDateString()}</td>
+                                    <td class="px-4 py-2 whitespace-nowrap">
+                                        <span class="px-2 py-1 rounded-full text-xs ${result.published ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                            ${result.published ? 'Published' : 'Pending'}
+                                        </span>
+                                    </td>
                                 </tr>
                             `;
                         });
@@ -656,6 +825,7 @@
                         
                         content.innerHTML = html;
                     } else {
+                        document.getElementById('student-name').textContent = 'No Results';
                         content.innerHTML = '<p class="text-center py-4 text-gray-500">No results found for this student.</p>';
                     }
                     
@@ -667,6 +837,7 @@
                     }, 10);
                 })
                 .catch(error => {
+                    document.getElementById('student-name').textContent = 'Error';
                     const content = document.getElementById('marks-content');
                     content.innerHTML = `<p class="text-center py-4 text-red-500">Error loading results: ${error}</p>`;
                     

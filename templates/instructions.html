@@ -23,19 +23,27 @@ System{% endblock %} {% block content %}
         <p class="font-semibold text-blue-800">Semester {{ user.semester }}</p>
       </div>
       <!-- In instructions.html, ensure duration is displayed correctly -->
+      <!-- In the Quiz Details section -->
       <div>
         <p class="text-sm text-gray-600">Duration</p>
         <p class="font-semibold text-blue-800">
-          {% if session.quiz_duration %} {{ (session.quiz_duration // 60) }}
-          minutes {% else %} Loading... {% endif %}
+          {% if user.quiz_duration %} {{ user.quiz_duration }} minutes {% else
+          %} Loading... {% endif %}
         </p>
       </div>
       <div>
         <p class="text-sm text-gray-600">Total Questions</p>
         <p class="font-semibold text-blue-800">
-          {{ session.total_questions }} questions
+          {% if user.total_questions %} {{ user.total_questions }} questions {%
+          else %} Loading... {% endif %}
         </p>
       </div>
+
+      <!-- In the Time Limit instruction -->
+      <p class="text-gray-600">
+        The quiz has a time limit of {{ user.quiz_duration }} minutes. Once you
+        start, the timer cannot be paused.
+      </p>
     </div>
   </div>
 

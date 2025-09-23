@@ -499,5 +499,23 @@ System{% endblock %} {% block content %}
     // Poll for new notifications every 30 seconds
     setInterval(loadNotifications, 30000);
 });
+
+// Prevent back-forward cache
+window.onpageshow = function(event) {
+    if (event.persisted) {a
+        window.location.reload();
+    }
+};
+
+// Clear session storage on page unload
+window.onbeforeunload = function() {
+    sessionStorage.removeItem('reload');
+};
+
+// Check if page was restored from bfcache
+if (performance.navigation.type === 2) {
+    // Page was restored from back/forward cache
+    window.location.reload();
+}
 </script>
 {% endblock %}

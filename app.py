@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for, session, abort, send_file, flash
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session, abort, send_file, flash, make_response
 from pymongo import MongoClient
 from dotenv import load_dotenv
 import os
@@ -13,6 +13,7 @@ import re
 from bson import ObjectId
 from bson.json_util import dumps, loads
 from werkzeug.utils import secure_filename
+from functools import wraps
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -56,6 +57,70 @@ ADMIN_CREDENTIALS = {"username": "admin.computer", "password": bcrypt.generate_p
 
 # Question difficulty tags
 QUESTION_TAGS = ['beginner', 'easy', 'intermediate', 'advanced', 'expert']
+
+def login_required(role="any"):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if 'username' not in session and 'scholar_id' not in session:
+                return redirect(url_for('login'))
+            
+            if role != "any":
+                user_role = session.get('role')
+                if user_role != role:
+                    abort(403)
+            
+            # Check if user is blocked
+            if session.get('role') == 'student':
+                user = users_collection.find_one({'scholar_id': session['scholar_id']})
+                if user and user.get('blocked', False):
+                    session.clear()
+                    return redirect(url_for('login'))
+            
+            # Set cache control headers to prevent back button issues
+            response = make_response(f(*args, **kwargs))
+            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = '0'
+            response.headers['X-Accel-Expires'] = '0'  # For nginx
+            return response
+        return decorated_function
+    return decorator
+
+def no_cache(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        response = f(*args, **kwargs)
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        return response
+    return decorated_function
+
+def validate_input(input_data, expected_fields):
+    """
+    Validate input data against expected fields
+    """
+    for field in expected_fields:
+        if field not in input_data:
+            return False, f"Missing field: {field}"
+    
+    # Additional validation can be added here
+    return True, "Valid"
+
+def sanitize_input(input_data):
+    """
+    Sanitize input data to prevent XSS attacks
+    """
+    if isinstance(input_data, dict):
+        return {k: sanitize_input(v) for k, v in input_data.items()}
+    elif isinstance(input_data, list):
+        return [sanitize_input(item) for item in input_data]
+    elif isinstance(input_data, str):
+        # Basic XSS prevention
+        return input_data.replace('<', '&lt;').replace('>', '&gt;')
+    else:
+        return input_data
 
 def create_indexes():
     users_collection.create_index("scholar_id", unique=True)
@@ -135,6 +200,27 @@ def create_admin_notification(title, message, notification_type="info", scholar_
     }
     admin_notifications_collection.insert_one(notification)
     return notification
+
+
+def get_all_courses():
+    """Get all unique courses from the database"""
+    courses = users_collection.distinct("course")
+    return sorted([course for course in courses if course])
+
+def get_all_semesters():
+    """Get all unique semesters from the database"""
+    semesters = users_collection.distinct("semester")
+    return sorted([semester for semester in semesters if semester])
+
+def get_all_departments():
+    """Get all unique departments from the database"""
+    departments = users_collection.distinct("department")
+    return sorted([dept for dept in departments if dept])
+
+def get_all_schools():
+    """Get all unique schools from the database"""
+    schools = users_collection.distinct("school")
+    return sorted([school for school in schools if school])
 
 def get_admin_notifications(limit=20):
     notifications = list(admin_notifications_collection.find().sort("timestamp", -1).limit(limit))
@@ -275,54 +361,60 @@ def log_activity(activity_type, description, scholar_id=None, course=None, semes
 
 add_created_at_to_users()
 
-@app.route('/')
-def index():
-    is_logged_in = bool(session.get('scholar_id') or session.get('username'))
-    user = None
-    if is_logged_in and session.get('role') == 'student':
-        user = users_collection.find_one({'scholar_id': session['scholar_id']}, {'_id': 0})
-        if user:
-            user_stats = get_user_stats(session['scholar_id'])
-            user.update(user_stats)
-    return render_template('index.html', is_logged_in=is_logged_in, user=user)
+def check_student_enrollment(scholar_id, quiz_id, course, semester):
+    """Check if a student is enrolled in a quiz with proper hierarchical filtering"""
+    # Check if student is specifically enrolled
+    quiz = quizzes_collection.find_one({"quiz_id": quiz_id})
+    if not quiz:
+        return False
+    
+    participants = quiz.get('participants', [])
+    
+    # If student is specifically listed, allow access
+    if scholar_id in participants:
+        return True
+    
+    # If 'all' is in participants, check if student matches the hierarchical filters
+    if 'all' in participants:
+        return check_student_matches_filters(course, semester, quiz)
+    
+    return False
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        role = request.form.get('role')
-        identifier = request.form['identifier']
-        password = request.form['password']
-        user = users_collection.find_one({"scholar_id": identifier})
-        if user and bcrypt.check_password_hash(user['password'], password):
-            session['role'] = 'student'
-            session['scholar_id'] = identifier
-            session['workspace'] = str(uuid.uuid4())
-            user_sessions_collection.insert_one({
-                "scholar_id": identifier,
-                "workspace_id": session['workspace'],
-                "start_time": datetime.now()
-            })
-            return redirect(url_for('student_dashboard'))
-        flash("Invalid student credentials", "error")
-        return render_template('login.html')
-    return render_template('login.html')
+def check_student_matches_filters(student_course, student_semester, quiz):
+    """Check if a student matches the quiz's hierarchical filters"""
+    # Check school filter
+    if quiz['school'] != 'all':
+        # Get all departments in the school
+        departments_in_school = schoolDepartments.get(quiz['school'], [])
+        
+        # Check if student's course belongs to any department in this school
+        course_matches_school = False
+        for dept in departments_in_school:
+            if student_course in departmentCourses.get(dept, []):
+                course_matches_school = True
+                break
+        
+        if not course_matches_school:
+            return False
+    
+    # Check department filter
+    if quiz['department'] != 'all':
+        # Check if student's course belongs to this department
+        if student_course not in departmentCourses.get(quiz['department'], []):
+            return False
+    
+    # Check course filter
+    if quiz['course'] != 'all' and student_course != quiz['course']:
+        return False
+    
+    # Check semester filter
+    if quiz['semester'] != 'all' and str(student_semester) != quiz['semester']:
+        return False
+    
+    return True
 
-@app.route('/admin-login', methods=['GET', 'POST'])
-def admin_login():
-    if request.method == 'POST':
-        role = request.form.get('role')
-        identifier = request.form['identifier']
-        password = request.form['password']
-        if role == 'admin':
-            if identifier == ADMIN_CREDENTIALS["username"] and bcrypt.check_password_hash(ADMIN_CREDENTIALS["password"], password):
-                session['role'] = 'admin'
-                session['username'] = identifier
-                return redirect(url_for('admin'))
-        flash('Invalid admin credentials', 'error')
-        return render_template('admin_login.html')
-    return render_template('admin_login.html')
-
-school_departments = {
+# School to Department mapping
+schoolDepartments = {
     "School of Technology, Communication and Management": [
         "Department of Computer Sciences",
         "Department of Tourism Management",
@@ -349,7 +441,8 @@ school_departments = {
     ],
 }
 
-department_courses = {
+# Department to Course mapping
+departmentCourses = {
     "Department of Computer Sciences": [
         "B.Sc. Information Technology (Honors)",
         "Bachelor of Computer Application (Honors)",
@@ -416,6 +509,156 @@ department_courses = {
     ],
 }
 
+@app.after_request
+def after_request(response):
+    # Prevent back-button caching of sensitive pages
+    if request.path.startswith('/admin') or request.path.startswith('/student') or request.path == '/quiz':
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
+
+@app.route('/')
+def index():
+    is_logged_in = bool(session.get('scholar_id') or session.get('username'))
+    user = None
+    if is_logged_in and session.get('role') == 'student':
+        user = users_collection.find_one({'scholar_id': session['scholar_id']}, {'_id': 0})
+        if user:
+            user_stats = get_user_stats(session['scholar_id'])
+            user.update(user_stats)
+    return render_template('index.html', is_logged_in=is_logged_in, user=user)
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        role = request.form.get('role')
+        identifier = request.form['identifier']
+        password = request.form['password']
+        user = users_collection.find_one({"scholar_id": identifier})
+        if user and bcrypt.check_password_hash(user['password'], password):
+            session['role'] = 'student'
+            session['scholar_id'] = identifier
+            session['workspace'] = str(uuid.uuid4())
+            user_sessions_collection.insert_one({
+                "scholar_id": identifier,
+                "workspace_id": session['workspace'],
+                "start_time": datetime.now()
+            })
+            return redirect(url_for('student_dashboard'))
+        flash("Invalid student credentials", "error")
+        return render_template('login.html')
+    return render_template('login.html')
+
+@app.route('/admin-login', methods=['GET', 'POST'])
+def admin_login():
+    if request.method == 'POST':
+        role = request.form.get('role')
+        identifier = request.form['identifier']
+        password = request.form['password']
+        if role == 'admin':
+            if identifier == ADMIN_CREDENTIALS["username"] and bcrypt.check_password_hash(ADMIN_CREDENTIALS["password"], password):
+                session['role'] = 'admin'
+                session['username'] = identifier
+                return redirect(url_for('admin'))
+        flash('Invalid admin credentials', 'error')
+        return render_template('admin_login.html')
+    return render_template('admin_login.html')
+
+# school_departments = {
+#     "School of Technology, Communication and Management": [
+#         "Department of Computer Sciences",
+#         "Department of Tourism Management",
+#         "Department of Journalism & Mass Communication",
+#         "Department of Animation and Visual Effects",
+#     ],
+#     "School of Biological Sciences and Sustainability": [
+#         "Department of Rural Studies and Sustainability",
+#     ],
+#     "School of Indology": [
+#         "Department of Sanskrit and Vedic Studies",
+#         "Department of Hindi",
+#         "Department of Indian Classical Music",
+#         "Department of History and Indian Culture",
+#     ],
+#     "School of Humanities, Social Sciences and Foundation Courses": [
+#         "Department of English",
+#         "Department of Education",
+#         "Department of Psychology",
+#         "Department of Life Management",
+#         "Department of Scientific Spirituality",
+#         "Department of Oriental Studies, Religious Studies & Philosophy",
+#         "Department of Yogic Sciences and Human Consciousness",
+#     ],
+# }
+
+# department_courses = {
+#     "Department of Computer Sciences": [
+#         "B.Sc. Information Technology (Honors)",
+#         "Bachelor of Computer Application (Honors)",
+#         "Master of Computer Application (Data Science)",
+#     ],
+#     "Department of Tourism Management": [
+#         "B.B.A Tourism & Travel Management (Honors)",
+#         "M.B.A. Tourism & Travel Management",
+#     ],
+#     "Department of Journalism & Mass Communication": [
+#         "B.A. Journalism and Mass Communication (Honors)",
+#         "M. A. Journalism and Mass Communication",
+#         "M. A. Spiritual Journalism",
+#     ],
+#     "Department of Animation and Visual Effects": [
+#         "B.Voc. (Bachelor of Vocation) in 3D Animation and VFX (Honors)",
+#     ],
+#     "Department of Rural Studies and Sustainability": [
+#         "Bachelor of Rural Studies (Honors)",
+#     ],
+#     "Department of English": ["B.A. English (Honors)"],
+#     "Department of Education": ["B.Ed. (Bachelor of Education)"],
+#     "Department of Psychology": [
+#         "B.A. Psychology (Honors)",
+#         "M.A. Counselling Psychology",
+#         "M.Sc. Counselling Psychology",
+#     ],
+#     "Department of Life Management": [
+#         "Life Management - Compulsory Program for PG and UG",
+#     ],
+#     "Department of Scientific Spirituality": [
+#         "M.Sc. Herbal Medicine and Natural Product Chemistry",
+#         "M.Sc. Molecular Physiology and Traditional Health Sciences",
+#         "M.Sc. Indigenous Approaches for Child Development & Generational Dynamics",
+#         "M.Sc. Indian Knowledge Systems",
+#         "M.A. Indian Knowledge Systems",
+#     ],
+#     "Department of Oriental Studies, Religious Studies & Philosophy": [
+#         "M.A. Hindu Studies",
+#         "M.A. Philosophy",
+#     ],
+#     "Department of Yogic Sciences and Human Consciousness": [
+#         "B.Sc. Yogic Science (Honors)",
+#         "M.Sc. Yoga Therapy",
+#         "M.A. Human Consciousness & Yogic Science",
+#         "M.Sc. Human Consciousness & Yogic Science",
+#         "P. G. Diploma Human Consciousness, Yoga & Alternative Therapy",
+#         "Certificate In Yoga And Alternative Therapy",
+#     ],
+#     "Department of Sanskrit and Vedic Studies": [
+#         "B.A. Sanskrit (Honors)",
+#         "M.A. Sanskrit",
+#     ],
+#     "Department of Hindi": ["B.A. Hindi (Honors)", "M.A. Hindi"],
+#     "Department of Indian Classical Music": [
+#         "B.A. Music (Vocal) (Honors)",
+#         "M.A. Music (Vocal)",
+#         "B.A. Music Instrumental Mridang/Tabla (Honors)",
+#         "M.A. Music (Tabla, Pakhaawaj)",
+#     ],
+#     "Department of History and Indian Culture": [
+#         "B.A. History (Honors)",
+#         "M. A. History and Indian Culture",
+#     ],
+# }
+
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
@@ -447,26 +690,26 @@ def signup():
             if missing_fields:
                 flash(f"Missing required fields: {', '.join(missing_fields)}", "error")
                 return render_template('signup.html', 
-                                    school_departments=school_departments,
-                                    department_courses=department_courses)
+                                    school_departments=schoolDepartments,
+                                    department_courses=departmentCourses )
             
             if password != retype_password:
                 flash("Passwords do not match", "error")
                 return render_template('signup.html', 
-                                    school_departments=school_departments,
-                                    department_courses=department_courses)
+                                    school_departments=schoolDepartments,
+                                    department_courses=departmentCourses )
             
             if users_collection.find_one({"scholar_id": scholar_id}):
                 flash("Scholar ID already exists", "error")
                 return render_template('signup.html', 
-                                    school_departments=school_departments,
-                                    department_courses=department_courses)
+                                    school_departments=schoolDepartments,
+                                    department_courses=departmentCourses )
             
             if users_collection.find_one({"email": email}):
                 flash("Email already registered", "error")
                 return render_template('signup.html', 
-                                    school_departments=school_departments,
-                                    department_courses=department_courses)
+                                    school_departments=schoolDepartments,
+                                    department_courses=departmentCourses )
             
             hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
             users_collection.insert_one({
@@ -520,39 +763,33 @@ def signup():
             print(f"Error in signup: {str(e)}")
             flash("An error occurred during registration. Please try again.", "error")
             return render_template('signup.html', 
-                         school_departments=school_departments,
-                         department_courses=department_courses)
+                         school_departments=schoolDepartments,
+                         department_courses=departmentCourses )
     
     # For GET request, pass the school and department data to the template
     return render_template('signup.html', 
-                         school_departments=school_departments,
-                         department_courses=department_courses)
+                         school_departments=schoolDepartments,
+                         department_courses=departmentCourses )
 
 @app.route('/quiz')
+@login_required(role='student')
 def quiz():
-    if 'scholar_id' not in session or session['role'] != 'student':
-        return redirect(url_for('login'))
-    
     if 'questions' not in session:
         return redirect(url_for('student_dashboard'))
     
     return render_template('quiz.html')
 
 @app.route('/api/get_questions', methods=['GET'])
+@login_required(role='student')
 def get_questions():
-    if 'scholar_id' not in session or session['role'] != 'student':
-        return jsonify({"error": "Unauthorized"}), 401
-    
     if 'questions' not in session:
         return jsonify({"error": "No questions available"}), 400
     
     return jsonify(session['questions'])
 
 @app.route('/api/students/filter', methods=['POST'])
+@login_required(role='admin')
 def filter_students():
-    if 'username' not in session or session['role'] != 'admin':
-        return jsonify({"error": "Unauthorized"}), 401
-    
     try:
         filters = request.json
         query = {}
@@ -569,10 +806,8 @@ def filter_students():
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/submit_answer', methods=['POST'])
+@login_required(role='student')
 def submit_answer():
-    if 'scholar_id' not in session or session['role'] != 'student':
-        return jsonify({"error": "Unauthorized"}), 401
-    
     answer_data = request.json
     answer = answer_data.get('answer')
     question_index = answer_data.get('question_index')
@@ -602,30 +837,30 @@ def submit_answer():
         return jsonify({"error": "Invalid question index"}), 400
 
 @app.route('/api/notifications')
+@login_required()
 def get_notifications_api():
-    if 'scholar_id' not in session:
-        return jsonify({"error": "Unauthorized"}), 401
-    
-    notifications = get_notifications(session['scholar_id'], 10)
+    if session.get('role') == 'student':
+        notifications = get_notifications(session['scholar_id'], 10)
+    else:
+        notifications = get_admin_notifications(10)
     return jsonify({"notifications": notifications})
 
 @app.route('/api/notifications/read', methods=['POST'])
+@login_required()
 def mark_notifications_read():
-    if 'scholar_id' not in session:
-        return jsonify({"error": "Unauthorized"}), 401
-    
-    notifications_collection.update_many(
-        {"scholar_id": session['scholar_id'], "read": False},
-        {"$set": {"read": True}}
-    )
+    if session.get('role') == 'student':
+        notifications_collection.update_many(
+            {"scholar_id": session['scholar_id'], "read": False},
+            {"$set": {"read": True}}
+        )
+    else:
+        mark_admin_notifications_read()
     
     return jsonify({"success": True, "message": "Notifications marked as read"})
 
 @app.route('/api/next_question', methods=['POST'])
+@login_required(role='student')
 def next_question():
-    if 'scholar_id' not in session or session['role'] != 'student':
-        return jsonify({"error": "Unauthorized"}), 401
-    
     session['current_question'] += 1
     current_index = session['current_question']
     questions = session['questions']
@@ -652,11 +887,9 @@ def next_question():
     return jsonify(questions[current_index])
 
 @app.route('/api/finish_quiz', methods=['POST'])
+@login_required(role='student')
 def finish_quiz():
     try:
-        if 'scholar_id' not in session or session['role'] != 'student':
-            return jsonify({"error": "Unauthorized"}), 401
-        
         if 'questions' not in session:
             return jsonify({"error": "No questions available"}), 400
         
@@ -735,10 +968,8 @@ def finish_quiz():
         }), 500
 
 @app.route('/check_time', methods=['GET'])
+@login_required(role='student')
 def check_time():
-    if 'scholar_id' not in session or session['role'] != 'student':
-        return jsonify({"error": "Unauthorized"}), 401
-    
     if 'quiz_start_time' not in session:
         return jsonify({"error": "Quiz not started"}), 400
     
@@ -756,30 +987,25 @@ def check_time():
 
 
 @app.route('/api/admin_notifications')
+@login_required(role='admin')
 def get_admin_notifications_api():
-    if 'username' not in session or session['role'] != 'admin':
-        return jsonify({"error": "Unauthorized"}), 401
-    
     notifications = get_admin_notifications(50)
     return jsonify({"notifications": notifications})
 
 @app.route('/api/admin_notifications/read', methods=['POST'])
+@login_required(role='admin')
 def mark_admin_notifications_read_api():
-    if 'username' not in session or session['role'] != 'admin':
-        return jsonify({"error": "Unauthorized"}), 401
-    
     mark_admin_notifications_read()
     return jsonify({"success": True, "message": "All notifications marked as read"})
 
 @app.route('/api/admin_notifications/clear', methods=['POST'])
+@login_required(role='admin')
 def clear_admin_notifications_api():
-    if 'username' not in session or session['role'] != 'admin':
-        return jsonify({"error": "Unauthorized"}), 401
-    
     admin_notifications_collection.delete_many({})
     return jsonify({"success": True, "message": "All notifications cleared"})
 
 @app.route('/api/quiz_stats')
+@login_required(role='admin')
 def quiz_stats():
     active_quizzes = questions_collection.distinct("course", {"active": True})
     
@@ -810,10 +1036,8 @@ def quiz_stats():
     })
 
 @app.route('/admin/end_quiz', methods=['POST'])
+@login_required(role='admin')
 def end_quiz():
-    if 'username' not in session or session['role'] != 'admin':
-        return jsonify({"error": "Unauthorized"}), 401
-    
     course = request.json.get('course')
     semester = request.json.get('semester')
     
@@ -856,10 +1080,8 @@ def end_quiz():
     })
 
 @app.route('/admin/start_quiz', methods=['POST'])
+@login_required(role='admin')
 def start_quiz_admin():
-    if 'username' not in session or session['role'] != 'admin':
-        return jsonify({"error": "Unauthorized"}), 401
-    
     course = request.json.get('course')
     semester = request.json.get('semester')
     
@@ -902,10 +1124,8 @@ def start_quiz_admin():
     })
 
 @app.route('/feedback', methods=['GET', 'POST'])
+@login_required(role='student')
 def feedback():
-    if 'scholar_id' not in session or session['role'] != 'student':
-        return redirect(url_for('login'))
-    
     user = users_collection.find_one({'scholar_id': session['scholar_id']}, {'_id': 0})
     
     if request.method == 'POST':
@@ -955,10 +1175,8 @@ def feedback():
     return render_template('feedback.html', user=user)
 
 @app.route('/api/update_profile', methods=['POST'])
+@login_required()
 def update_profile():
-    if 'scholar_id' not in session:
-        return jsonify({"error": "Unauthorized"}), 401
-    
     name = request.json.get('name')
     email = request.json.get('email')
     
@@ -1047,10 +1265,8 @@ def reset_password(token):
     return render_template('reset_password.html', token=token)
 
 @app.route('/view_score')
+@login_required()
 def view_score():
-    if 'scholar_id' not in session and 'username' not in session:
-        return redirect(url_for('login'))
-    
     if session.get('role') == 'student':
         user = users_collection.find_one({'scholar_id': session['scholar_id']}, {'_id': 0})
         
@@ -1074,10 +1290,8 @@ def view_score():
     return redirect(url_for('index'))
 
 @app.route('/admin')
+@login_required(role='admin')
 def admin():
-    if 'username' not in session or session['role'] != 'admin':
-        return redirect(url_for('login'))
-    
     # Get accurate stats
     total_students = users_collection.count_documents({})
     total_questions = question_bank_collection.count_documents({})
@@ -1103,7 +1317,7 @@ def admin():
             "title": quiz.get('title', 'Untitled Quiz'),
             "course": quiz.get('course', 'N/A'),
             "semester": quiz.get('semester', 'N/A'),
-            "duration": quiz.get('duration', 0) // 60,  # Convert seconds to minutes
+            "duration": quiz.get('duration', 0),  # Convert seconds to minutes
             "started_at": quiz.get('started_at', datetime.now())
         })
     
@@ -1158,9 +1372,6 @@ def admin():
 
 @app.route('/api/daily_leaderboard')
 def daily_leaderboard_api():
-    # if 'username' not in session or session['role'] != 'admin':
-    #     return jsonify({"error": "Unauthorized"}), 401
-    
     try:
         # Get dates with quiz results
         pipeline = [
@@ -1236,18 +1447,22 @@ def daily_leaderboard_api():
         return jsonify({"error": "Internal server error"}), 500
 
 @app.route('/admin/results')
+@login_required(role='admin')
 def admin_results():
-    if 'username' not in session or session['role'] != 'admin':
-        return redirect(url_for('login'))
-    
-    course_filter = request.args.get('course', '')
-    semester_filter = request.args.get('semester', '')
+    school = request.args.get('school', '')
+    department = request.args.get('department', '')
+    course = request.args.get('course', '')
+    semester = request.args.get('semester', '')
     
     query = {}
-    if course_filter and course_filter != 'All':
-        query['course'] = course_filter
-    if semester_filter and semester_filter != 'All':
-        query['semester'] = semester_filter
+    if school and school != 'All':
+        query['school'] = school
+    if department and department != 'All':
+        query['department'] = department
+    if course and course != 'All':
+        query['course'] = course
+    if semester and semester != 'All':
+        query['semester'] = semester
     
     results = list(results_collection.find(query, {'_id': 0}).sort('timestamp', -1))
     
@@ -1256,9 +1471,9 @@ def admin_results():
         result['user_name'] = user['name'] if user else 'Unknown'
     
     top_students = []
-    if course_filter and course_filter != 'All':
+    if course and course != 'All':
         pipeline = [
-            {"$match": {"course": course_filter, "published": True}},
+            {"$match": {"course": course, "published": True}},
             {"$sort": {"score": -1, "completion_time": 1, "timestamp": 1}},
             {"$limit": 5},
             {"$lookup": {
@@ -1271,6 +1486,8 @@ def admin_results():
             {"$project": {
                 "scholar_id": 1,
                 "user_name": "$user_info.name",
+                "school": "$user_info.school",
+                "department": "$user_info.department",
                 "course": 1,
                 "semester": 1,
                 "score": 1,
@@ -1281,8 +1498,8 @@ def admin_results():
             }}
         ]
         
-        if semester_filter and semester_filter != 'All':
-            pipeline[0]["$match"]["semester"] = semester_filter
+        if semester and semester != 'All':
+            pipeline[0]["$match"]["semester"] = semester
         
         top_students = list(results_collection.aggregate(pipeline))
     
@@ -1298,15 +1515,20 @@ def admin_results():
     return render_template('admin_results.html', 
                          results=results, 
                          stats=stats, 
-                         selected_course=course_filter, 
-                         selected_semester=semester_filter,
+                         schools=get_all_schools(),
+                         departments=get_all_departments(),
+                         courses=get_all_courses(),
+                         semesters=get_all_semesters(),
+                         selected_school=school,
+                         selected_department=department,
+                         selected_course=course, 
+                         selected_semester=semester,
                          top_students=top_students)
 
+
 @app.route('/student_dashboard', methods=['GET', 'POST'])
+@login_required(role='student')
 def student_dashboard():
-    if 'scholar_id' not in session or session['role'] != 'student':
-        return redirect(url_for('login'))
-    
     user = users_collection.find_one({'scholar_id': session['scholar_id']}, {'_id': 0})
     if not user:
         session.clear()
@@ -1334,90 +1556,29 @@ def student_dashboard():
                 flash("Invalid course or semester selection. Please select your registered course and semester.", "error")
                 return render_template('student_dashboard.html', user=user)
             
-            # Debug output
-            print(f"Student {session['scholar_id']} attempting quiz for {submitted_course} Semester {submitted_semester}")
-            
-            if not is_quiz_active(submitted_course, submitted_semester):
-                print("Quiz not active according to is_quiz_active()")
-                flash("No active quiz for your course and semester at the moment.", "error")
-                return render_template('student_dashboard.html', user=user)
-            
             # Find active quiz using the helper function (handles "all" values)
             active_quiz = find_active_quiz(submitted_course, submitted_semester)
-            print(f"Found active quiz: {active_quiz is not None}")
             
-            if active_quiz:
-                participants = active_quiz.get('participants', [])
-                print(f"Quiz participants: {participants}")
-                print(f"Student ID: {session['scholar_id']}")
-                print(f"'all' in participants: {'all' in participants}")
-                print(f"Student in participants: {session['scholar_id'] in participants}")
-                
-                # Allow if 'all' is in participants OR student is specifically listed
-                if 'all' not in participants and session['scholar_id'] not in participants:
-                    print("Student not enrolled in quiz")
-                    flash("You are not enrolled in this quiz. Please contact your instructor.", "error")
-                    return render_template('student_dashboard.html', user=user)
-            else:
-                print("No active quiz found despite is_quiz_active() returning True")
+            if not active_quiz:
                 flash("No active quiz for your course and semester at the moment.", "error")
                 return render_template('student_dashboard.html', user=user)
             
-            session['course'] = submitted_course
-            session['semester'] = submitted_semester
+            # Check if student is enrolled in the quiz with proper hierarchical filtering
+            is_enrolled = check_student_enrollment(
+                session['scholar_id'], 
+                active_quiz['quiz_id'],
+                user['course'],
+                user['semester']
+            )
             
-            # Get quiz settings from the quiz document
-            if active_quiz:
-                duration = active_quiz.get('duration', 600)  # Duration in seconds
-            else:
-                # Fallback to old system
-                quiz_settings = quiz_settings_collection.find_one({
-                "course": submitted_course,
-                "semester": submitted_semester
-                })
-                duration = quiz_settings['duration'] if quiz_settings and 'duration' in quiz_settings else 600
-
-            session['quiz_duration'] = duration
-            
-            # Get questions from the active quiz's question list
-            if active_quiz and 'questions' in active_quiz and active_quiz['questions']:
-                # Get questions from the question bank using the IDs stored in the quiz
-                question_ids = active_quiz['questions']
-                questions = list(question_bank_collection.find({
-                    "question_id": {"$in": question_ids}
-                }, {'_id': 0}))
-            else:
-                # Fallback to old system
-                questions = list(questions_collection.find({
-                    "course": submitted_course,
-                    "semester": submitted_semester,
-                    "active": True
-                }, {'_id': 0}))
-            
-            if not questions:
-                flash("No questions available for this quiz. Please contact your instructor.", "error")
+            if not is_enrolled:
+                flash("You are not enrolled in this quiz. Please contact your instructor.", "error")
                 return render_template('student_dashboard.html', user=user)
             
-            session['quiz_duration'] = duration
-            session['total_questions'] = len(questions)
-            session['quiz_id'] = active_quiz['quiz_id'] if active_quiz else None
-            
-            create_admin_notification(
-                "Quiz Started by Student",
-                f"{user['name']} ({session['scholar_id']}) has started the {submitted_course} Semester {submitted_semester} quiz",
-                "info",
-                session['scholar_id'],
-                submitted_course,
-                submitted_semester
-            )
-            
-            log_activity(
-                "quiz_started_by_student",
-                f"{user['name']} started {submitted_course} Semester {submitted_semester} quiz",
-                session['scholar_id'],
-                submitted_course,
-                submitted_semester
-            )
+            # ✅ ADD THIS: Store quiz info in session and redirect to instructions
+            session['quiz_id'] = active_quiz['quiz_id']
+            session['course'] = submitted_course
+            session['semester'] = submitted_semester
             
             return redirect(url_for('instructions'))
             
@@ -1430,11 +1591,10 @@ def student_dashboard():
     
     return render_template('student_dashboard.html', user=user)
 
+
 @app.route('/api/course_leaderboard/<course>/<semester>')
+@login_required()
 def course_leaderboard(course, semester):
-    if 'scholar_id' not in session:
-        return jsonify({"error": "Unauthorized"}), 401
-    
     try:
         # Get dates with quiz results for this specific course/semester
         pipeline = [
@@ -1516,28 +1676,41 @@ def course_leaderboard(course, semester):
         return jsonify({"error": "Internal server error"}), 500
 
 @app.route('/instructions')
+@login_required(role='student')
 def instructions():
-    if 'scholar_id' not in session or session['role'] != 'student':
-        return redirect(url_for('login'))
-    
     user = users_collection.find_one({'scholar_id': session['scholar_id']}, {'_id': 0})
     if not user:
         session.clear()
         return redirect(url_for('login'))
     
+    # Check if quiz_id is in session (meaning they came from dashboard)
+    if 'quiz_id' not in session:
+        flash("Please start the quiz from your dashboard.", "error")
+        return redirect(url_for('student_dashboard'))
+    
     user_stats = get_user_stats(session['scholar_id'])
     user.update(user_stats)
     
-    if 'course' not in session or 'semester' not in session:
+    # Get quiz details from database
+    quiz = quizzes_collection.find_one({'quiz_id': session['quiz_id']})
+    if not quiz:
+        flash("Quiz not found. Please try again.", "error")
         return redirect(url_for('student_dashboard'))
+    
+    # Store quiz info in session for the template
+    session['quiz_duration'] = quiz.get('duration', 60)  # Default to 60 minutes if not set
+    session['total_questions'] = len(quiz.get('questions', []))
+    
+    # Also add quiz info to user object for template
+    user['quiz'] = quiz
+    user['quiz_duration'] = session['quiz_duration']
+    user['total_questions'] = session['total_questions']
     
     return render_template('instructions.html', user=user)
 
 @app.route('/start_quiz', methods=['POST'])
+@login_required(role='student')
 def start_quiz():
-    if 'scholar_id' not in session or session['role'] != 'student':
-        return jsonify({"error": "Unauthorized"}), 401
-    
     if 'course' not in session or 'semester' not in session:
         return jsonify({"error": "Course and semester not selected"}), 400
     
@@ -1558,6 +1731,27 @@ def start_quiz():
             questions = list(question_bank_collection.find({
                 "question_id": {"$in": question_ids}
             }, {'_id': 0}))
+            
+            # Shuffle questions to prevent cheating
+            random.shuffle(questions)
+            
+            # Also shuffle options for each question
+            for question in questions:
+                options = question['options']
+                correct_answer = question['correct_answer']
+                
+                # Store the original correct answer index
+                correct_index = options.index(correct_answer) if correct_answer in options else -1
+                
+                # Shuffle the options
+                random.shuffle(options)
+                
+                # Update the correct answer to the new position
+                if correct_index >= 0:
+                    question['correct_answer'] = options[correct_index]
+                else:
+                    # If correct answer not found in options, use the first option
+                    question['correct_answer'] = options[0]
         else:
             # Fallback to old system
             questions = list(questions_collection.find({
@@ -1565,11 +1759,11 @@ def start_quiz():
                 "semester": semester,
                 "active": True
             }, {'_id': 0}))
+            random.shuffle(questions)
         
         if not questions:
             return jsonify({"error": "No active questions available"}), 400
         
-        random.shuffle(questions)
         session['questions'] = questions
         session['current_question'] = 0
         session['answers'] = {}
@@ -1595,40 +1789,11 @@ def start_quiz():
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
-# @app.route('/admin/set_quiz_time', methods=['POST'])
-# def set_quiz_time():
-#     if 'username' not in session or session['role'] != 'admin':
-#         return jsonify({"error": "Unauthorized"}), 401
-    
-#     course = request.json.get('course')
-#     semester = request.json.get('semester')
-#     duration = request.json.get('duration')
-    
-#     if not all([course, semester, duration]):
-#         return jsonify({"error": "Course, semester, and duration are required"}), 400
-    
-#     duration_seconds = int(duration) * 60
-    
-#     quiz_settings_collection.update_one(
-#         {"course": course, "semester": semester},
-#         {"$set": {"duration": duration_seconds}},
-#         upsert=True
-#     )
-    
-#     log_activity(
-#         "quiz_time_set",
-#         f"Set quiz time to {duration} minutes for {course} Semester {semester}",
-#         course=course,
-#         semester=semester
-#     )
-    
-#     return jsonify({"success": True, "message": f"Quiz duration set to {duration} minutes for {course} Semester {semester}"})
+
 
 @app.route('/publish_results', methods=['POST'])
+@login_required(role='admin')
 def publish_results():
-    if 'username' not in session or session['role'] != 'admin':
-        return jsonify({"error": "Unauthorized"}), 401
-    
     workspace_id = request.json.get('workspace_id')
     if not workspace_id:
         return jsonify({"error": "Workspace ID is required"}), 400
@@ -1670,10 +1835,8 @@ def publish_results():
     return jsonify({"error": "Result not found"}), 404
 
 @app.route('/api/bulk_publish_results', methods=['POST'])
+@login_required(role='admin')
 def bulk_publish_results():
-    if 'username' not in session or session['role'] != 'admin':
-        return jsonify({"error": "Unauthorized"}), 401
-    
     try:
         data = request.json
         workspace_ids = data.get('workspace_ids', [])
@@ -1740,10 +1903,8 @@ def bulk_publish_results():
         return jsonify({"error": f"Internal server error: {str(e)}"}), 500
 
 @app.route('/api/debug_answers', methods=['GET'])
+@login_required(role='student')
 def debug_answers():
-    if 'scholar_id' not in session or session['role'] != 'student':
-        return jsonify({"error": "Unauthorized"}), 401
-    
     if 'questions' not in session:
         return jsonify({"error": "No questions available"}), 400
     
@@ -1771,10 +1932,8 @@ def debug_answers():
     })
 
 @app.route('/api/clear_quiz_data', methods=['POST'])
+@login_required(role='student')
 def clear_quiz_data():
-    if 'scholar_id' not in session or session['role'] != 'student':
-        return jsonify({"error": "Unauthorized"}), 401
-    
     session.pop('questions', None)
     session.pop('answers', None)
     session.pop('current_question', None)
@@ -1786,10 +1945,8 @@ def clear_quiz_data():
     return jsonify({"success": True})
 
 @app.route('/export_results', methods=['GET'])
+@login_required(role='admin')
 def export_results():
-    if 'username' not in session or session['role'] != 'admin':
-        return jsonify({"error": "Unauthorized"}), 401
-    
     course = request.args.get('course', '')
     semester = request.args.get('semester', '')
     query = {}
@@ -1826,18 +1983,22 @@ def forbidden(error):
     return render_template('403.html'), 403
 
 @app.route('/admin/users')
+@login_required(role='admin')
 def admin_users():
-    if 'username' not in session or session['role'] != 'admin':
-        return redirect(url_for('login'))
-    
-    course_filter = request.args.get('course', '')
-    semester_filter = request.args.get('semester', '')
+    school = request.args.get('school', '')
+    department = request.args.get('department', '')
+    course = request.args.get('course', '')
+    semester = request.args.get('semester', '')
     
     query = {}
-    if course_filter and course_filter != 'All':
-        query['course'] = course_filter
-    if semester_filter and semester_filter != 'All':
-        query['semester'] = semester_filter
+    if school and school != 'All':
+        query['school'] = school
+    if department and department != 'All':
+        query['department'] = department
+    if course and course != 'All':
+        query['course'] = course
+    if semester and semester != 'All':
+        query['semester'] = semester
     
     students = list(users_collection.find(query, {'_id': 0, 'password': 0}).sort('scholar_id', 1))
     
@@ -1848,14 +2009,18 @@ def admin_users():
     return render_template('admin_users.html', 
                            students=students, 
                            stats=stats, 
-                           selected_course=course_filter, 
-                           selected_semester=semester_filter)
+                           schools=get_all_schools(),
+                           departments=get_all_departments(),
+                           courses=get_all_courses(),
+                           semesters=get_all_semesters(),
+                           selected_school=school,
+                           selected_department=department,
+                           selected_course=course, 
+                           selected_semester=semester)
 
 @app.route('/api/edit_user', methods=['POST'])
+@login_required(role='admin')
 def edit_user():
-    if 'username' not in session or session['role'] != 'admin':
-        return jsonify({"error": "Unauthorized"}), 401
-    
     data = request.json
     scholar_id = data.get('scholar_id')
     updates = {
@@ -1883,10 +2048,8 @@ def edit_user():
     return jsonify({"error": "No changes made or user not found"}), 404
 
 @app.route('/api/delete_user', methods=['POST'])
+@login_required(role='admin')
 def delete_user():
-    if 'username' not in session or session['role'] != 'admin':
-        return jsonify({"error": "Unauthorized"}), 401
-    
     scholar_id = request.json.get('scholar_id')
     if not scholar_id:
         return jsonify({"error": "Scholar ID is required"}), 400
@@ -1906,10 +2069,8 @@ def delete_user():
     return jsonify({"success": True, "message": "User and related data deleted successfully"})
 
 @app.route('/api/block_user', methods=['POST'])
+@login_required(role='admin')
 def block_user():
-    if 'username' not in session or session['role'] != 'admin':
-        return jsonify({"error": "Unauthorized"}), 401
-    
     data = request.json
     scholar_id = data.get('scholar_id')
     block = data.get('block', True)
@@ -1919,48 +2080,51 @@ def block_user():
     
     users_collection.update_one({"scholar_id": scholar_id}, {"$set": {"blocked": block}})
     
+    # Force logout the user if they're currently logged in
+    user_sessions_collection.delete_many({"scholar_id": scholar_id})
+    
     if block:
         create_notification(scholar_id, "Account Blocked", "You have been blocked from participating in quizzes. Contact the admin for more details.", "warning")
-        
-        log_activity(
-            "user_blocked",
-            f"Blocked user {scholar_id}",
-            scholar_id=scholar_id
-        )
+        log_activity("user_blocked", f"Blocked user {scholar_id}", scholar_id=scholar_id)
     else:
         create_notification(scholar_id, "Account Unblocked", "Your account has been unblocked. You can now participate in quizzes.", "success")
-        
-        log_activity(
-            "user_unblocked",
-            f"Unblocked user {scholar_id}",
-            scholar_id=scholar_id
-        )
+        log_activity("user_unblocked", f"Unblocked user {scholar_id}", scholar_id=scholar_id)
     
     return jsonify({"success": True, "message": f"User {'blocked' if block else 'unblocked'} successfully"})
 
 @app.route('/api/user_results/<scholar_id>')
+@login_required(role='admin')
 def user_results(scholar_id):
-    if 'username' not in session or session['role'] != 'admin':
-        return jsonify({"error": "Unauthorized"}), 401
-    
-    results = list(results_collection.find({"scholar_id": scholar_id}, {'_id': 0}.sort('timestamp', -1)))
-    return jsonify({"results": results})
+    try:
+        results = list(results_collection.find(
+            {"scholar_id": scholar_id, "published": True}, 
+            {'_id': 0}
+        ).sort('timestamp', -1))
+        return jsonify({"results": results})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/recent_activities')
+@login_required(role='admin')
 def api_recent_activities():
-    if 'username' not in session or session['role'] != 'admin':
-        return jsonify({"error": "Unauthorized"}), 401
-    
     activities = list(activities_collection.find({}, {'_id': 0}).sort('timestamp', -1).limit(20))
     return jsonify({"activities": activities})
+
+@app.route('/api/check_blocked')
+@login_required()
+def check_blocked():
+    if session.get('role') == 'student':
+        user = users_collection.find_one({'scholar_id': session['scholar_id']})
+        if user and user.get('blocked', False):
+            session.clear()
+            return jsonify({"blocked": True})
+    return jsonify({"blocked": False})
 
 # ==================== NEW QUESTION MANAGEMENT ROUTES ====================
 
 @app.route('/admin/questions/management')
+@login_required(role='admin')
 def admin_questions_management():
-    if 'username' not in session or session['role'] != 'admin':
-        return redirect(url_for('login'))
-    
     # Get counts from the database
     pending_count = question_review_collection.count_documents({})
     bank_count = question_bank_collection.count_documents({})
@@ -1970,10 +2134,8 @@ def admin_questions_management():
                          bank_count=bank_count)
 
 @app.route('/admin/questions/upload', methods=['GET', 'POST'])
+@login_required(role='admin')
 def admin_question_upload():
-    if 'username' not in session or session['role'] != 'admin':
-        return redirect(url_for('login'))
-    
     if request.method == 'POST':
         try:
             if 'json_file' in request.files and request.files['json_file'].filename != '':
@@ -2047,18 +2209,14 @@ def admin_question_upload():
     return render_template('admin_question_upload.html')
 
 @app.route('/admin/questions/review')
+@login_required(role='admin')
 def admin_question_review():
-    if 'username' not in session or session['role'] != 'admin':
-        return redirect(url_for('login'))
-    
     questions = list(question_review_collection.find({}))
     return render_template('admin_question_review.html', questions=questions, tags=QUESTION_TAGS)
 
 @app.route('/api/questions/review/update', methods=['POST'])
+@login_required(role='admin')
 def update_review_question():
-    if 'username' not in session or session['role'] != 'admin':
-        return jsonify({"error": "Unauthorized"}), 401
-    
     data = request.json
     question_id = data.get('question_id')
     action = data.get('action')
@@ -2105,10 +2263,8 @@ def update_review_question():
     return jsonify({"error": "Invalid action"}), 400
 
 @app.route('/admin/questions/bank')
+@login_required(role='admin')
 def admin_question_bank():
-    if 'username' not in session or session['role'] != 'admin':
-        return redirect(url_for('login'))
-    
     tag_filter = request.args.get('tag', '')
     difficulty_filter = request.args.get('difficulty', '')
     
@@ -2122,10 +2278,8 @@ def admin_question_bank():
     return render_template('admin_question_bank.html', questions=questions, tags=QUESTION_TAGS)
 
 @app.route('/api/questions/bank/update', methods=['POST'])
+@login_required(role='admin')
 def update_question_bank():
-    if 'username' not in session or session['role'] != 'admin':
-        return jsonify({"error": "Unauthorized"}), 401
-    
     data = request.json
     question_id = data.get('question_id')
     action = data.get('action')
@@ -2158,19 +2312,15 @@ def update_question_bank():
 # ==================== NEW QUIZ MANAGEMENT ROUTES ====================
 
 @app.route('/admin/quizzes')
+@login_required(role='admin')
 def admin_quizzes():
-    if 'username' not in session or session['role'] != 'admin':
-        return redirect(url_for('login'))
-    
     quizzes = list(quizzes_collection.find({}).sort('created_at', -1))
     return render_template('admin_quizzes.html', quizzes=quizzes)
 
 # Add this route for listing quizzes
 @app.route('/admin/quizzes/list')
+@login_required(role='admin')
 def list_quizzes():
-    if 'username' not in session or session['role'] != 'admin':
-        return jsonify({"error": "Unauthorized"}), 401
-    
     quizzes = list(quizzes_collection.find({}))
     # Convert ObjectId to string for JSON serialization
     for quiz in quizzes:
@@ -2179,10 +2329,8 @@ def list_quizzes():
     return jsonify({"quizzes": quizzes})
 
 @app.route('/admin/quizzes/create', methods=['POST'])
+@login_required(role='admin')
 def admin_create_quiz():
-    if 'username' not in session or session['role'] != 'admin':
-        return jsonify({"error": "Unauthorized"}), 401
-    
     try:
         data = request.get_json()
         
@@ -2200,12 +2348,12 @@ def admin_create_quiz():
             "department": data['department'],
             "course": data['course'],
             "semester": data['semester'],
-            "duration": int(data['duration'])*60,
+            "duration": int(data['duration']),
             "pass_percentage": int(data['pass_percentage']),
             "status": "draft",
             "created_at": datetime.now(),
             "questions": [],
-            "participants": ["all"]  # Default to all students
+            "participants": []  # Start with empty participants
         }
         
         quizzes_collection.insert_one(quiz)
@@ -2216,10 +2364,8 @@ def admin_create_quiz():
         return jsonify({"error": str(e)}), 500
 
 @app.route('/admin/quizzes/manage/<quiz_id>')
+@login_required(role='admin')
 def manage_quiz(quiz_id):
-    if 'username' not in session or session['role'] != 'admin':
-        return redirect(url_for('login'))
-    
     quiz = quizzes_collection.find_one({"quiz_id": quiz_id})
     if not quiz:
         return redirect(url_for('admin_quizzes'))
@@ -2242,15 +2388,8 @@ def manage_quiz(quiz_id):
         if 'difficulty' not in question:
             question['difficulty'] = 'Not set'
     
-    # Get students based on course/semester filter
-    course_filter = quiz.get('course', 'all')
-    semester_filter = quiz.get('semester', 'all')
-    
-    query = {}
-    if course_filter != 'all':
-        query['course'] = course_filter
-    if semester_filter != 'all':
-        query['semester'] = semester_filter
+    # Get students based on the hierarchical filtering
+    query = build_student_query(quiz)
     
     students = list(users_collection.find(query, {'_id': 0, 'scholar_id': 1, 'name': 1, 'course': 1, 'semester': 1}))
     
@@ -2260,11 +2399,75 @@ def manage_quiz(quiz_id):
                          students=students,
                          tags=QUESTION_TAGS)
 
-@app.route('/api/quizzes/<quiz_id>', methods=['DELETE'])
-def delete_quiz(quiz_id):
-    if 'username' not in session or session['role'] != 'admin':
-        return jsonify({"error": "Unauthorized"}), 401
+def build_student_query(quiz):
+    """
+    Build a query to filter students based on the quiz's school, department, course, and semester
+    following the hierarchical structure: School -> Department -> Course -> Semester
+    """
+    query = {}
     
+    # Handle school filter
+    if quiz.get('school') != 'all':
+        # If school is specified, get all departments in that school
+        school_name = quiz.get('school')
+        departments_in_school = schoolDepartments.get(school_name, [])
+        
+        # If department is also specified and it's in this school, use it
+        if quiz.get('department') != 'all' and quiz.get('department') in departments_in_school:
+            departments_to_filter = [quiz.get('department')]
+        else:
+            departments_to_filter = departments_in_school
+        
+        # Get all courses in the selected departments
+        courses_to_filter = []
+        for dept in departments_to_filter:
+            courses_to_filter.extend(departmentCourses.get(dept, []))
+        
+        # If course is specified and it's in the filtered courses, use it
+        if quiz.get('course') != 'all' and quiz.get('course') in courses_to_filter:
+            query['course'] = quiz.get('course')
+        else:
+            query['course'] = {'$in': courses_to_filter}
+        
+        # Handle semester filter
+        if quiz.get('semester') != 'all':
+            query['semester'] = quiz.get('semester')
+    
+    else:
+        # School is 'all', check if department is specified
+        if quiz.get('department') != 'all':
+            # Department is specified, get all courses in that department
+            dept_name = quiz.get('department')
+            courses_to_filter = departmentCourses.get(dept_name, [])
+            
+            # If course is specified and it's in this department, use it
+            if quiz.get('course') != 'all' and quiz.get('course') in courses_to_filter:
+                query['course'] = quiz.get('course')
+            else:
+                query['course'] = {'$in': courses_to_filter}
+            
+            # Handle semester filter
+            if quiz.get('semester') != 'all':
+                query['semester'] = quiz.get('semester')
+        
+        else:
+            # Both school and department are 'all', check if course is specified
+            if quiz.get('course') != 'all':
+                query['course'] = quiz.get('course')
+                
+                # Handle semester filter
+                if quiz.get('semester') != 'all':
+                    query['semester'] = quiz.get('semester')
+            else:
+                # Course is also 'all', only filter by semester if specified
+                if quiz.get('semester') != 'all':
+                    query['semester'] = quiz.get('semester')
+    
+    return query
+
+@app.route('/api/quizzes/<quiz_id>', methods=['DELETE'])
+@login_required(role='admin')
+def delete_quiz(quiz_id):
     try:
         # FIXED: Use the correct collection name (quizzes_collection instead of quiz_collection)
         result = quizzes_collection.delete_one({"quiz_id": quiz_id})
@@ -2279,10 +2482,8 @@ def delete_quiz(quiz_id):
         return jsonify({"error": str(e)}), 400
 
 @app.route('/api/quizzes/<quiz_id>/questions', methods=['POST'])
+@login_required(role='admin')
 def add_questions_to_quiz(quiz_id):
-    if 'username' not in session or session['role'] != 'admin':
-        return jsonify({"error": "Unauthorized"}), 401
-    
     try:
         data = request.json
         question_ids = data.get('question_ids', [])
@@ -2298,10 +2499,8 @@ def add_questions_to_quiz(quiz_id):
         return jsonify({"error": str(e)}), 400
 
 @app.route('/api/quizzes/<quiz_id>/participants', methods=['POST'])
+@login_required(role='admin')
 def add_participants_to_quiz(quiz_id):
-    if 'username' not in session or session['role'] != 'admin':
-        return jsonify({"error": "Unauthorized"}), 401
-    
     try:
         data = request.json
         scholar_ids = data.get('scholar_ids', [])
@@ -2328,11 +2527,37 @@ def add_participants_to_quiz(quiz_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-@app.route('/api/quizzes/<quiz_id>/status', methods=['POST'])
-def update_quiz_status(quiz_id):
-    if 'username' not in session or session['role'] != 'admin':
-        return jsonify({"error": "Unauthorized"}), 401
+
+@app.route('/api/quizzes/<quiz_id>/participants/all', methods=['POST', 'DELETE'])
+@login_required(role='admin')
+def handle_all_participants(quiz_id):
+    try:
+        quiz = quizzes_collection.find_one({"quiz_id": quiz_id})
+        if not quiz:
+            return jsonify({"error": "Quiz not found"}), 404
+        
+        if request.method == 'POST':
+            # Add 'all' to participants
+            quizzes_collection.update_one(
+                {"quiz_id": quiz_id},
+                {"$addToSet": {"participants": "all"}}
+            )
+            return jsonify({"success": True, "message": "All students enrolled"})
+        
+        elif request.method == 'DELETE':
+            # Remove 'all' from participants
+            quizzes_collection.update_one(
+                {"quiz_id": quiz_id},
+                {"$pull": {"participants": "all"}}
+            )
+            return jsonify({"success": True, "message": "All enrollment removed"})
     
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/quizzes/<quiz_id>/status', methods=['POST'])
+@login_required(role='admin')
+def update_quiz_status(quiz_id):
     try:
         data = request.json
         action = data.get('action')
@@ -2471,23 +2696,38 @@ def update_quiz_status(quiz_id):
 
 
 @app.route('/admin/leaderboard')
+@login_required(role='admin')
 def admin_leaderboard():
-    if 'username' not in session or session['role'] != 'admin':
-        return redirect(url_for('login'))
-    
+    school = request.args.get('school', '')
+    department = request.args.get('department', '')
     course = request.args.get('course', '')
     semester = request.args.get('semester', '')
     quiz_id = request.args.get('quiz_id', '')
     limit = int(request.args.get('limit', 10))
     
+    # Build query based on filters
+    query = {"published": True}
+    if school and school != 'all':
+        query["school"] = school
+    if department and department != 'all':
+        query["department"] = department
+    if course and course != 'all':
+        query["course"] = course
+    if semester and semester != 'all':
+        query["semester"] = semester
+    if quiz_id:
+        query["quiz_id"] = quiz_id
+    
     pipeline = [
-        {"$match": {"published": True}},
+        {"$match": query},
         {"$sort": {"score": -1, "completion_time": 1, "timestamp": 1}},
         {"$group": {
             "_id": "$scholar_id",
             "max_score": {"$max": "$score"},
             "total_questions": {"$first": "$total"},
             "user_name": {"$first": "$user_name"},
+            "school": {"$first": "$school"},
+            "department": {"$first": "$department"},
             "course": {"$first": "$course"},
             "semester": {"$first": "$semester"},
             "timestamp": {"$max": "$timestamp"},
@@ -2500,6 +2740,8 @@ def admin_leaderboard():
             "user_name": 1,
             "score": "$max_score",
             "total": "$total_questions",
+            "school": 1,
+            "department": 1,
             "course": 1,
             "semester": 1,
             "percentage": {"$multiply": [{"$divide": ["$max_score", "$total_questions"]}, 100]},
@@ -2507,14 +2749,6 @@ def admin_leaderboard():
             "completion_time": 1
         }}
     ]
-    
-    match_stage = pipeline[0]["$match"]
-    if course and course != 'all':
-        match_stage["course"] = course
-    if semester and semester != 'all':
-        match_stage["semester"] = semester
-    if quiz_id:
-        match_stage["quiz_id"] = quiz_id
     
     leaderboard = list(results_collection.aggregate(pipeline))
     
@@ -2526,9 +2760,13 @@ def admin_leaderboard():
     
     return render_template('admin_leaderboard.html',
                          leaderboard=leaderboard,
-                         courses=['MCA-DS', 'BSC IT', 'BCA', 'all'],
-                         semesters=['1', '2', '3', '4', '5', '6', 'all'],
+                         schools=get_all_schools(),
+                         departments=get_all_departments(),
+                         courses=get_all_courses(),
+                         semesters=get_all_semesters(),
                          quizzes=quizzes,
+                         selected_school=school,
+                         selected_department=department,
                          selected_course=course,
                          selected_semester=semester,
                          selected_quiz=quiz_id)

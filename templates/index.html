@@ -1,491 +1,719 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Welcome to DSVV Quiz App</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: {
-                            50: '#eff6ff',
-                            100: '#dbeafe',
-                            200: '#bfdbfe',
-                            300: '#93c5fd',
-                            400: '#60a5fa',
-                            500: '#3b82f6',
-                            600: '#2563eb',
-                            700: '#1d4ed8',
-                            800: '#1e40af',
-                            900: '#1e3a8a',
-                        }
-                    }
-                }
-            }
-        }
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: {
+                50: "#eff6ff",
+                100: "#dbeafe",
+                200: "#bfdbfe",
+                300: "#93c5fd",
+                400: "#60a5fa",
+                500: "#3b82f6",
+                600: "#2563eb",
+                700: "#1d4ed8",
+                800: "#1e40af",
+                900: "#1e3a8a",
+              },
+            },
+          },
+        },
+      };
     </script>
     <style>
-        body {
-            font-family: 'Poppins', sans-serif;
+      body {
+        font-family: "Poppins", sans-serif;
+      }
+      .btn-glow {
+        transition: all 0.3s ease-in-out;
+      }
+      .btn-glow:hover {
+        box-shadow: 0 0 15px rgba(255, 255, 0, 0.7);
+        transform: translateY(-2px);
+      }
+      @keyframes fadeInUp {
+        0% {
+          opacity: 0;
+          transform: translateY(20px);
         }
-        .btn-glow {
-            transition: all 0.3s ease-in-out;
+        100% {
+          opacity: 1;
+          transform: translateY(0);
         }
-        .btn-glow:hover {
-            box-shadow: 0 0 15px rgba(255, 255, 0, 0.7);
-            transform: translateY(-2px);
+      }
+      .fade-in {
+        animation: fadeInUp 0.8s ease forwards;
+      }
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0);
         }
-        @keyframes fadeInUp {
-            0% { opacity: 0; transform: translateY(20px); }
-            100% { opacity: 1; transform: translateY(0); }
+        50% {
+          transform: translateY(-10px);
         }
-        .fade-in {
-            animation: fadeInUp 0.8s ease forwards;
+      }
+      .float {
+        animation: float 3s ease-in-out infinite;
+      }
+      .content-container {
+        position: relative;
+        z-index: 1;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
         }
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
+        to {
+          opacity: 1;
+          transform: translateY(0);
         }
-        .float {
-            animation: float 3s ease-in-out infinite;
-        }
-        .content-container {
-            position: relative;
-            z-index: 1;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in {
-            animation: fadeIn 0.5s ease-out forwards;
-        }
-        .card-hover:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-        }
-        .leaderboard-row:nth-child(1) { background-color: #fef3c7; } /* Gold */
-        .leaderboard-row:nth-child(2) { background-color: #dee5f4; } /* Silver */
-        .leaderboard-row:nth-child(3) { background-color: #fed7aa; } /* Bronze */
-        .rating-btn {
-            transition: all 0.3s ease;
-        }
-        .rating-btn:hover {
-            transform: scale(1.1);
-        }
-        .rating-btn.selected {
-            transform: scale(1.15);
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
-        }
+      }
+      .animate-fade-in {
+        animation: fadeIn 0.5s ease-out forwards;
+      }
+      .card-hover:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+      }
+      .leaderboard-row:nth-child(1) {
+        background-color: #fef3c7;
+      } /* Gold */
+      .leaderboard-row:nth-child(2) {
+        background-color: #dee5f4;
+      } /* Silver */
+      .leaderboard-row:nth-child(3) {
+        background-color: #fed7aa;
+      } /* Bronze */
+      .rating-btn {
+        transition: all 0.3s ease;
+      }
+      .rating-btn:hover {
+        transform: scale(1.1);
+      }
+      .rating-btn.selected {
+        transform: scale(1.15);
+        box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+      }
     </style>
-</head>
-<body class="bg-gradient-to-r from-gray-100 via-gray-200 to-gray-300">
+  </head>
+  <body class="bg-gradient-to-r from-gray-100 via-gray-200 to-gray-300">
     <div class="min-h-screen flex flex-col content-container">
-        <!-- Navigation Bar -->
-        <nav class="bg-gradient-to-r from-blue-700 to-blue-800 shadow-lg p-4">
-            <div class="container mx-auto flex justify-between items-center">
-                <!-- Logo -->
-                <div class="flex items-center">
-                    <img src="/static/images/dsvvlogo.png" alt="DSVV Logo" class="h-24 mr-4">
-                    
-                </div>
+      <!-- Navigation Bar -->
+      <nav class="bg-gradient-to-r from-blue-700 to-blue-800 shadow-lg p-4">
+        <div class="container mx-auto flex justify-between items-center">
+          <!-- Logo -->
+          <div class="flex items-center">
+            <img
+              src="/static/images/dsvvlogo.png"
+              alt="DSVV Logo"
+              class="h-24 mr-4"
+            />
+          </div>
 
-                <!-- Mobile menu button -->
-                <div class="md:hidden">
-                    <button id="mobile-menu-button" class="text-white focus:outline-none">
-                        <i class="fas fa-bars text-2xl"></i>
-                    </button>
-                </div>
+          <!-- Mobile menu button -->
+          <div class="md:hidden">
+            <button
+              id="mobile-menu-button"
+              class="text-white focus:outline-none"
+            >
+              <i class="fas fa-bars text-2xl"></i>
+            </button>
+          </div>
 
-                <!-- Desktop menu -->
-                <div class="hidden md:flex items-center space-x-4">
-                    <!-- <a href="/" class="text-white hover:bg-blue-600 px-3 py-2 rounded">Home</a>
+          <!-- Desktop menu -->
+          <div class="hidden md:flex items-center space-x-4">
+            <!-- <a href="/" class="text-white hover:bg-blue-600 px-3 py-2 rounded">Home</a>
                     <a href="/view_score" class="text-white hover:bg-blue-600 px-3 py-2 rounded">Results</a>
                     <a href="/student_dashboard" class="text-white hover:bg-blue-600 px-3 py-2 rounded">Quiz</a> -->
-                    
-                    <!-- User dropdown -->
-                    <div class="relative">
-                        <button id="user-menu-button" class="flex items-center text-white focus:outline-none">
-                            <span class="mr-2">Guest</span>
-                            <i class="fas fa-chevron-down"></i>
-                        </button>
-                        <div id="user-menu" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 hidden z-50">
-                            <a href="/login" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Login</a>
-                            <a href="/signup" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Sign Up</a>
-                        </div>
-                    </div>
-                </div>
+
+            <!-- User dropdown -->
+            <div class="relative">
+              <button
+                id="user-menu-button"
+                class="flex items-center text-white focus:outline-none"
+              >
+                <span class="mr-2">Guest</span>
+                <i class="fas fa-chevron-down"></i>
+              </button>
+              <div
+                id="user-menu"
+                class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 hidden z-50"
+              >
+                <a
+                  href="/login"
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >Login</a
+                >
+                <a
+                  href="/signup"
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >Sign Up</a
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mobile menu -->
+        <div id="mobile-menu" class="hidden md:hidden mt-4">
+          <div class="px-2 pt-2 pb-3 space-y-1">
+            <a
+              href="/"
+              class="block text-white hover:bg-blue-600 px-3 py-2 rounded"
+              >Home</a
+            >
+            <a
+              href="/view_score"
+              class="block text-white hover:bg-blue-600 px-3 py-2 rounded"
+              >Results</a
+            >
+            <a
+              href="/student_dashboard"
+              class="block text-white hover:bg-blue-600 px-3 py-2 rounded"
+              >Quiz</a
+            >
+
+            <div class="border-t border-blue-500 pt-2">
+              <a
+                href="/login"
+                class="block text-white hover:bg-blue-600 px-3 py-2 rounded"
+                >Login</a
+              >
+              <a
+                href="/signup"
+                class="block text-white hover:bg-blue-600 px-3 py-2 rounded"
+                >Sign Up</a
+              >
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Main Content -->
+      <main class="container mx-auto px-4 py-8 flex-grow">
+        <div class="text-center fade-in">
+          <h1 class="text-4xl md:text-5xl font-bold mb-4 text-gray-800">
+            Welcome to <span class="text-blue-600">DSVV Quiz Portal</span>
+          </h1>
+          <p class="text-lg md:text-xl text-gray-700 mb-8 max-w-3xl mx-auto">
+            Department of Computer Science presents an interactive platform to
+            test your technical knowledge
+          </p>
+        </div>
+
+        <!-- University Info Section -->
+        <div
+          class="bg-white rounded-xl shadow-lg p-6 mb-10 mt-8 fade-in"
+          style="animation-delay: 0.2s"
+        >
+          <div class="flex flex-col md:flex-row items-center">
+            <div class="md:w-1/3 mb-6 md:mb-0 flex justify-center">
+              <img
+                src="/static/images/dsvvquiz.webp"
+                alt="DSVV Logo"
+                class="h-46 float"
+              />
+            </div>
+            <div class="md:w-2/3 md:pl-8">
+              <h2 class="text-2xl font-bold text-blue-800 mb-4">
+                Dev Sanskriti Vishwavidyalaya
+              </h2>
+              <p class="text-gray-700 mb-4">
+                A unique university established in 2002 by Shriram Sharma
+                Acharya, blending modern education with ancient Indian wisdom.
+                The Department of Computer Science offers cutting-edge programs
+                with a holistic approach to technology education.
+              </p>
+              <a
+                href="https://dsvv.ac.in"
+                target="_blank"
+                class="inline-block btn-glow bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg"
+              >
+                Visit University Website
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Daily Leaderboard Section -->
+        <div class="bg-white p-6 rounded-xl shadow-md mb-8">
+          <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+            <i class="fas fa-trophy text-yellow-500 mr-3"></i> Daily Leaderboard
+          </h2>
+
+          <div class="relative mb-8">
+            <div class="flex justify-between items-center mb-4">
+              <h3
+                id="slider-date-label"
+                class="text-lg font-semibold text-gray-700"
+              >
+                Today's Top Performers
+              </h3>
+              <div class="flex space-x-2">
+                <button
+                  id="prev-day"
+                  class="bg-gray-200 hover:bg-gray-300 rounded-full p-2"
+                >
+                  <i class="fas fa-chevron-left"></i>
+                </button>
+                <button
+                  id="next-day"
+                  class="bg-gray-200 hover:bg-gray-300 rounded-full p-2"
+                >
+                  <i class="fas fa-chevron-right"></i>
+                </button>
+              </div>
             </div>
 
-            <!-- Mobile menu -->
-            <div id="mobile-menu" class="hidden md:hidden mt-4">
-                <div class="px-2 pt-2 pb-3 space-y-1">
-                    <a href="/" class="block text-white hover:bg-blue-600 px-3 py-2 rounded">Home</a>
-                    <a href="/view_score" class="block text-white hover:bg-blue-600 px-3 py-2 rounded">Results</a>
-                    <a href="/student_dashboard" class="block text-white hover:bg-blue-600 px-3 py-2 rounded">Quiz</a>
-                    
-                    <div class="border-t border-blue-500 pt-2">
-                        <a href="/login" class="block text-white hover:bg-blue-600 px-3 py-2 rounded">Login</a>
-                        <a href="/signup" class="block text-white hover:bg-blue-600 px-3 py-2 rounded">Sign Up</a>
-                    </div>
-                </div>
+            <div id="daily-leaderboard" class="overflow-x-auto">
+              <!-- Daily leaderboard will be loaded here by JavaScript -->
+              <div class="text-center py-8">
+                <div
+                  class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"
+                ></div>
+                <p class="mt-4 text-gray-600">Loading leaderboard data...</p>
+              </div>
             </div>
-        </nav>
+          </div>
+        </div>
 
-        <!-- Main Content -->
-        <main class="container mx-auto px-4 py-8 flex-grow">
-            <div class="text-center fade-in">
-                <h1 class="text-4xl md:text-5xl font-bold mb-4 text-gray-800">Welcome to <span class="text-blue-600">DSVV Quiz Portal</span></h1>
-                <p class="text-lg md:text-xl text-gray-700 mb-8 max-w-3xl mx-auto">
-                    Department of Computer Science presents an interactive platform to test your technical knowledge
-                </p>
+        <!-- Features Section -->
+        <div class="grid md:grid-cols-3 gap-6 mb-10">
+          <!-- Feature 1 -->
+          <div
+            class="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 fade-in"
+            style="animation-delay: 0.3s"
+          >
+            <div class="text-blue-600 mb-4 flex justify-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-12 w-12"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                />
+              </svg>
+            </div>
+            <h3 class="text-xl font-semibold text-center mb-3 text-blue-800">
+              Cutting-Edge Curriculum
+            </h3>
+            <p class="text-gray-700 text-center">
+              Our Computer Science programs integrate modern technologies with
+              ethical computing practices
+            </p>
+          </div>
+
+          <!-- Feature 2 -->
+          <div
+            class="bg-gradient-to-br from-yellow-50 to-yellow-100 p-6 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 fade-in"
+            style="animation-delay: 0.4s"
+          >
+            <div class="text-yellow-600 mb-4 flex justify-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-12 w-12"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                />
+              </svg>
+            </div>
+            <h3 class="text-xl font-semibold text-center mb-3 text-yellow-800">
+              Interactive Learning
+            </h3>
+            <p class="text-gray-700 text-center">
+              Engage with quizzes that reinforce concepts from AI, Web
+              Development, Cybersecurity and more
+            </p>
+          </div>
+
+          <!-- Feature 3 -->
+          <div
+            class="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 fade-in"
+            style="animation-delay: 0.5s"
+          >
+            <div class="text-green-600 mb-4 flex justify-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-12 w-12"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                />
+              </svg>
+            </div>
+            <h3 class="text-xl font-semibold text-center mb-3 text-green-800">
+              Progress Tracking
+            </h3>
+            <p class="text-gray-700 text-center">
+              Monitor your performance and see how you compare with peers on the
+              leaderboard
+            </p>
+          </div>
+        </div>
+
+        <!-- Tech Quotes Section -->
+        <div
+          class="bg-gray-800 text-white rounded-xl p-8 mb-10 fade-in"
+          style="animation-delay: 0.6s"
+        >
+          <h2 class="text-2xl font-bold mb-6 text-center text-yellow-300">
+            Inspirational Tech Quotes
+          </h2>
+          <div class="grid md:grid-cols-2 gap-6">
+            <div
+              class="bg-gray-700 p-5 rounded-lg border-l-4 border-yellow-400"
+            >
+              <p class="italic mb-2">
+                "The computer was born to solve problems that did not exist
+                before."
+              </p>
+              <p class="font-semibold text-yellow-300">— Bill Gates</p>
+            </div>
+            <div class="bg-gray-700 p-5 rounded-lg border-l-4 border-blue-400">
+              <p class="italic mb-2">
+                "Learning to write programs stretches your mind, and helps you
+                think better."
+              </p>
+              <p class="font-semibold text-blue-300">— Steve Jobs</p>
+            </div>
+            <div class="bg-gray-700 p-5 rounded-lg border-l-4 border-green-400">
+              <p class="italic mb-2">
+                "The function of good software is to make the complex appear
+                simple."
+              </p>
+              <p class="font-semibold text-green-300">— Grady Booch</p>
+            </div>
+            <div
+              class="bg-gray-700 p-5 rounded-lg border-l-4 border-purple-400"
+            >
+              <p class="italic mb-2">
+                "The best way to predict the future is to invent it."
+              </p>
+              <p class="font-semibold text-purple-300">— Alan Kay</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Call to Action -->
+        <div class="text-center fade-in" style="animation-delay: 0.7s">
+          <h3 class="text-xl font-semibold mb-6 text-gray-700">
+            Ready to test your knowledge?
+          </h3>
+          <div class="flex flex-col sm:flex-row justify-center gap-4">
+            <a
+              href="/login"
+              class="btn-glow bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-6 rounded-lg shadow-md"
+            >
+              Login to Continue
+            </a>
+            <a
+              href="/signup"
+              class="btn-glow bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white font-bold py-3 px-6 rounded-lg shadow-md"
+            >
+              New Student? Sign Up
+            </a>
+          </div>
+        </div>
+      </main>
+
+      <!-- Footer -->
+      <footer class="bg-gray-800 text-white mt-auto">
+        <div class="container mx-auto px-4 py-8">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+              <img
+                src="/static/images/dsvvlogo.png"
+                alt="DSVV Logo"
+                class="h-16 mb-4"
+              />
+              <p class="text-gray-400">Department of Computer Science</p>
+              <p class="text-gray-400">Dev Sanskriti Vishwavidyalaya</p>
             </div>
 
-            <!-- University Info Section -->
-            <div class="bg-white rounded-xl shadow-lg p-6 mb-10 mt-8 fade-in" style="animation-delay: 0.2s">
-                <div class="flex flex-col md:flex-row items-center">
-                    <div class="md:w-1/3 mb-6 md:mb-0 flex justify-center">
-                        <img src="/static/images/dsvvquiz.webp" alt="DSVV Logo" class="h-46 float">
-                    </div>
-                    <div class="md:w-2/3 md:pl-8">
-                        <h2 class="text-2xl font-bold text-blue-800 mb-4">Dev Sanskriti Vishwavidyalaya</h2>
-                        <p class="text-gray-700 mb-4">
-                            A unique university established in 2002 by Shriram Sharma Acharya, blending modern education with ancient Indian wisdom. 
-                            The Department of Computer Science offers cutting-edge programs with a holistic approach to technology education.
-                        </p>
-                        <a href="https://dsvv.ac.in" target="_blank" class="inline-block btn-glow bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">
-                            Visit University Website
-                        </a>
-                    </div>
-                </div>
+            <div>
+              <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
+              <ul class="space-y-2">
+                <li>
+                  <a href="/" class="text-gray-400 hover:text-white">Home</a>
+                </li>
+                <li>
+                  <a
+                    href="/student_dashboard"
+                    class="text-gray-400 hover:text-white"
+                    >Quiz Portal</a
+                  >
+                </li>
+                <li>
+                  <a href="/view_score" class="text-gray-400 hover:text-white"
+                    >Results</a
+                  >
+                </li>
+              </ul>
             </div>
 
-            <!-- Daily Leaderboard Section -->
-            <div class="bg-white p-6 rounded-xl shadow-md mb-8">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                    <i class="fas fa-trophy text-yellow-500 mr-3"></i> Daily Leaderboard
-                </h2>
-                
-                <div class="relative mb-8">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 id="slider-date-label" class="text-lg font-semibold text-gray-700">Today's Top Performers</h3>
-                        <div class="flex space-x-2">
-                            <button id="prev-day" class="bg-gray-200 hover:bg-gray-300 rounded-full p-2">
-                                <i class="fas fa-chevron-left"></i>
-                            </button>
-                            <button id="next-day" class="bg-gray-200 hover:bg-gray-300 rounded-full p-2">
-                                <i class="fas fa-chevron-right"></i>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div id="daily-leaderboard" class="overflow-x-auto">
-                        <!-- Daily leaderboard will be loaded here by JavaScript -->
-                        <div class="text-center py-8">
-                            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                            <p class="mt-4 text-gray-600">Loading leaderboard data...</p>
-                        </div>
-                    </div>
-                </div>
+            <div>
+              <h3 class="text-lg font-semibold mb-4">Contact</h3>
+              <ul class="space-y-2">
+                <li class="text-gray-400">Email: cs@dsvv.ac.in</li>
+                <li class="text-gray-400">Phone: +91-XXXX-XXXXXX</li>
+                <li class="text-gray-400">
+                  Address: Dev Sanskriti Vishwavidyalaya, Haridwar
+                </li>
+              </ul>
             </div>
 
-            <!-- Features Section -->
-            <div class="grid md:grid-cols-3 gap-6 mb-10">
-                <!-- Feature 1 -->
-                <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 fade-in" style="animation-delay: 0.3s">
-                    <div class="text-blue-600 mb-4 flex justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-semibold text-center mb-3 text-blue-800">Cutting-Edge Curriculum</h3>
-                    <p class="text-gray-700 text-center">
-                        Our Computer Science programs integrate modern technologies with ethical computing practices
-                    </p>
-                </div>
-
-                <!-- Feature 2 -->
-                <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 p-6 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 fade-in" style="animation-delay: 0.4s">
-                    <div class="text-yellow-600 mb-4 flex justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-semibold text-center mb-3 text-yellow-800">Interactive Learning</h3>
-                    <p class="text-gray-700 text-center">
-                        Engage with quizzes that reinforce concepts from AI, Web Development, Cybersecurity and more
-                    </p>
-                </div>
-
-                <!-- Feature 3 -->
-                <div class="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 fade-in" style="animation-delay: 0.5s">
-                    <div class="text-green-600 mb-4 flex justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-semibold text-center mb-3 text-green-800">Progress Tracking</h3>
-                    <p class="text-gray-700 text-center">
-                        Monitor your performance and see how you compare with peers on the leaderboard
-                    </p>
-                </div>
+            <div>
+              <h3 class="text-lg font-semibold mb-4">Follow Us</h3>
+              <div class="flex space-x-4">
+                <a href="#" class="text-gray-400 hover:text-white"
+                  ><i class="fab fa-facebook-f text-xl"></i
+                ></a>
+                <a href="#" class="text-gray-400 hover:text-white"
+                  ><i class="fab fa-twitter text-xl"></i
+                ></a>
+                <a href="#" class="text-gray-400 hover:text-white"
+                  ><i class="fab fa-linkedin-in text-xl"></i
+                ></a>
+                <a href="#" class="text-gray-400 hover:text-white"
+                  ><i class="fab fa-instagram text-xl"></i
+                ></a>
+              </div>
             </div>
+          </div>
 
-            <!-- Tech Quotes Section -->
-            <div class="bg-gray-800 text-white rounded-xl p-8 mb-10 fade-in" style="animation-delay: 0.6s">
-                <h2 class="text-2xl font-bold mb-6 text-center text-yellow-300">Inspirational Tech Quotes</h2>
-                <div class="grid md:grid-cols-2 gap-6">
-                    <div class="bg-gray-700 p-5 rounded-lg border-l-4 border-yellow-400">
-                        <p class="italic mb-2">"The computer was born to solve problems that did not exist before."</p>
-                        <p class="font-semibold text-yellow-300">— Bill Gates</p>
-                    </div>
-                    <div class="bg-gray-700 p-5 rounded-lg border-l-4 border-blue-400">
-                        <p class="italic mb-2">"Learning to write programs stretches your mind, and helps you think better."</p>
-                        <p class="font-semibold text-blue-300">— Steve Jobs</p>
-                    </div>
-                    <div class="bg-gray-700 p-5 rounded-lg border-l-4 border-green-400">
-                        <p class="italic mb-2">"The function of good software is to make the complex appear simple."</p>
-                        <p class="font-semibold text-green-300">— Grady Booch</p>
-                    </div>
-                    <div class="bg-gray-700 p-5 rounded-lg border-l-4 border-purple-400">
-                        <p class="italic mb-2">"The best way to predict the future is to invent it."</p>
-                        <p class="font-semibold text-purple-300">— Alan Kay</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Call to Action -->
-            <div class="text-center fade-in" style="animation-delay: 0.7s">
-                <h3 class="text-xl font-semibold mb-6 text-gray-700">Ready to test your knowledge?</h3>
-                <div class="flex flex-col sm:flex-row justify-center gap-4">
-                    <a href="/login" class="btn-glow bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-6 rounded-lg shadow-md">
-                        Login to Continue
-                    </a>
-                    <a href="/signup" class="btn-glow bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white font-bold py-3 px-6 rounded-lg shadow-md">
-                        New Student? Sign Up
-                    </a>
-                </div>
-            </div>
-        </main>
-
-        <!-- Footer -->
-        <footer class="bg-gray-800 text-white mt-auto">
-            <div class="container mx-auto px-4 py-8">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                    <div>
-                        <img src="/static/images/dsvvlogo.png" alt="DSVV Logo" class="h-16 mb-4">
-                        <p class="text-gray-400">Department of Computer Science</p>
-                        <p class="text-gray-400">Dev Sanskriti Vishwavidyalaya</p>
-                    </div>
-                    
-                    <div>
-                        <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
-                        <ul class="space-y-2">
-                            <li><a href="/" class="text-gray-400 hover:text-white">Home</a></li>
-                            <li><a href="/student_dashboard" class="text-gray-400 hover:text-white">Quiz Portal</a></li>
-                            <li><a href="/view_score" class="text-gray-400 hover:text-white">Results</a></li>
-                        </ul>
-                    </div>
-                    
-                    <div>
-                        <h3 class="text-lg font-semibold mb-4">Contact</h3>
-                        <ul class="space-y-2">
-                            <li class="text-gray-400">Email: cs@dsvv.ac.in</li>
-                            <li class="text-gray-400">Phone: +91-XXXX-XXXXXX</li>
-                            <li class="text-gray-400">Address: Dev Sanskriti Vishwavidyalaya, Haridwar</li>
-                        </ul>
-                    </div>
-                    
-                    <div>
-                        <h3 class="text-lg font-semibold mb-4">Follow Us</h3>
-                        <div class="flex space-x-4">
-                            <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-facebook-f text-xl"></i></a>
-                            <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-twitter text-xl"></i></a>
-                            <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-linkedin-in text-xl"></i></a>
-                            <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-instagram text-xl"></i></a>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="border-t border-gray-700 mt-8 pt-6 text-center">
-                    <p class="text-gray-400">© 2023 Dev Sanskriti Vishwavidyalaya. All rights reserved.</p>
-                </div>
-            </div>
-        </footer>
+          <div class="border-t border-gray-700 mt-8 pt-6 text-center">
+            <p class="text-gray-400">
+              © 2023 Dev Sanskriti Vishwavidyalaya. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
 
     <script>
-        // JavaScript for dropdown menus
-        document.addEventListener('DOMContentLoaded', function() {
-            // User dropdown
-            const userMenuButton = document.getElementById('user-menu-button');
-            const userMenu = document.getElementById('user-menu');
-            
-            if (userMenuButton && userMenu) {
-                userMenuButton.addEventListener('click', function() {
-                    userMenu.classList.toggle('hidden');
-                });
-                
-                // Close dropdown when clicking outside
-                document.addEventListener('click', function(event) {
-                    if (!userMenuButton.contains(event.target) && !userMenu.contains(event.target)) {
-                        userMenu.classList.add('hidden');
-                    }
-                });
-            }
-            
-            // Mobile menu
-            const mobileMenuButton = document.getElementById('mobile-menu-button');
-            const mobileMenu = document.getElementById('mobile-menu');
-            
-            if (mobileMenuButton && mobileMenu) {
-                mobileMenuButton.addEventListener('click', function() {
-                    mobileMenu.classList.toggle('hidden');
-                });
-            }
-        });
+      // JavaScript for dropdown menus
+      document.addEventListener("DOMContentLoaded", function () {
+        // User dropdown
+        const userMenuButton = document.getElementById("user-menu-button");
+        const userMenu = document.getElementById("user-menu");
 
-        // JavaScript for date-based leaderboard slider
-        document.addEventListener('DOMContentLoaded', function() {
-            const dateLabel = document.getElementById('slider-date-label');
-            const dailyLeaderboard = document.getElementById('daily-leaderboard');
-            const prevBtn = document.getElementById('prev-day');
-            const nextBtn = document.getElementById('next-day');
-            
-            let currentDateIndex = 0;
-            let dateData = [];
-            
-            // Fetch date-based leaderboard data
-            fetch('/api/daily_leaderboard')
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    dateData = data.dates;
-                    updateLeaderboard();
-                })
-                .catch(error => {
-                    console.error('Error loading leaderboard:', error);
-                    dailyLeaderboard.innerHTML = `
+        if (userMenuButton && userMenu) {
+          userMenuButton.addEventListener("click", function () {
+            userMenu.classList.toggle("hidden");
+          });
+
+          // Close dropdown when clicking outside
+          document.addEventListener("click", function (event) {
+            if (
+              !userMenuButton.contains(event.target) &&
+              !userMenu.contains(event.target)
+            ) {
+              userMenu.classList.add("hidden");
+            }
+          });
+        }
+
+        // Mobile menu
+        const mobileMenuButton = document.getElementById("mobile-menu-button");
+        const mobileMenu = document.getElementById("mobile-menu");
+
+        if (mobileMenuButton && mobileMenu) {
+          mobileMenuButton.addEventListener("click", function () {
+            mobileMenu.classList.toggle("hidden");
+          });
+        }
+      });
+
+      // JavaScript for date-based leaderboard slider
+      document.addEventListener("DOMContentLoaded", function () {
+        const dateLabel = document.getElementById("slider-date-label");
+        const dailyLeaderboard = document.getElementById("daily-leaderboard");
+        const prevBtn = document.getElementById("prev-day");
+        const nextBtn = document.getElementById("next-day");
+
+        let currentDateIndex = 0;
+        let dateData = [];
+
+        // Fetch date-based leaderboard data
+        fetch("/api/daily_leaderboard")
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Network response was not ok");
+            }
+            return response.json();
+          })
+          .then((data) => {
+            dateData = data.dates;
+            updateLeaderboard();
+          })
+          .catch((error) => {
+            console.error("Error loading leaderboard:", error);
+            dailyLeaderboard.innerHTML = `
                         <div class="text-center py-8">
                             <i class="fas fa-exclamation-triangle text-red-500 text-4xl mb-4"></i>
                             <p class="text-gray-500">Error loading leaderboard data.</p>
                             <p class="text-sm text-gray-400 mt-2">Please try refreshing the page.</p>
                         </div>
                     `;
-                });
-            
-            function updateDateLabel() {
-                if (dateData.length > 0 && dateData[currentDateIndex]) {
-                    const date = new Date(dateData[currentDateIndex].date);
-                    const today = new Date();
-                    const yesterday = new Date(today);
-                    yesterday.setDate(yesterday.getDate() - 1);
-                    
-                    let dateText;
-                    if (date.toDateString() === today.toDateString()) {
-                        dateText = "Today's Top Performers";
-                    } else if (date.toDateString() === yesterday.toDateString()) {
-                        dateText = "Yesterday's Top Performers";
-                    } else {
-                        dateText = `Top Performers on ${date.toLocaleDateString()}`;
-                    }
-                    
-                    dateLabel.textContent = dateText;
-                    
-                    // Update button states
-                    prevBtn.disabled = currentDateIndex === 0;
-                    nextBtn.disabled = currentDateIndex === dateData.length - 1;
-                    
-                    // Update button styles based on state
-                    if (prevBtn.disabled) {
-                        prevBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                        prevBtn.classList.remove('hover:bg-gray-300');
-                    } else {
-                        prevBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                        prevBtn.classList.add('hover:bg-gray-300');
-                    }
-                    
-                    if (nextBtn.disabled) {
-                        nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                        nextBtn.classList.remove('hover:bg-gray-300');
-                    } else {
-                        nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                        nextBtn.classList.add('hover:bg-gray-300');
-                    }
-                }
+          });
+
+        function updateDateLabel() {
+          if (dateData.length > 0 && dateData[currentDateIndex]) {
+            const date = new Date(dateData[currentDateIndex].date);
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+
+            let dateText;
+            if (date.toDateString() === today.toDateString()) {
+              dateText = "Today's Top Performers";
+            } else if (date.toDateString() === yesterday.toDateString()) {
+              dateText = "Yesterday's Top Performers";
+            } else {
+              // Format date as DD/MM/YY (FIXED)
+              const day = String(date.getDate()).padStart(2, "0");
+              const month = String(date.getMonth() + 1).padStart(2, "0");
+              const year = String(date.getFullYear()).slice(-2);
+              dateText = `Top Performers on ${day}/${month}/${year}`;
             }
-            
-            function updateLeaderboard() {
-                if (dateData.length > 0 && dateData[currentDateIndex]) {
-                    const leaders = dateData[currentDateIndex].leaders;
-                    
-                    if (leaders.length > 0) {
-                        dailyLeaderboard.innerHTML = `
+
+            dateLabel.textContent = dateText;
+
+            // Update button states
+            prevBtn.disabled = currentDateIndex === 0;
+            nextBtn.disabled = currentDateIndex === dateData.length - 1;
+
+            // Update button styles based on state
+            if (prevBtn.disabled) {
+              prevBtn.classList.add("opacity-50", "cursor-not-allowed");
+              prevBtn.classList.remove("hover:bg-gray-300");
+            } else {
+              prevBtn.classList.remove("opacity-50", "cursor-not-allowed");
+              prevBtn.classList.add("hover:bg-gray-300");
+            }
+
+            if (nextBtn.disabled) {
+              nextBtn.classList.add("opacity-50", "cursor-not-allowed");
+              nextBtn.classList.remove("hover:bg-gray-300");
+            } else {
+              nextBtn.classList.remove("opacity-50", "cursor-not-allowed");
+              nextBtn.classList.add("hover:bg-gray-300");
+            }
+          }
+        }
+
+        function updateLeaderboard() {
+          if (dateData.length > 0 && dateData[currentDateIndex]) {
+            const leaders = dateData[currentDateIndex].leaders;
+
+            if (leaders.length > 0) {
+              dailyLeaderboard.innerHTML = `
                             <table class="w-full border-collapse">
-                                <thead>
-                                    <tr class="bg-gray-100 text-left">
-                                        <th class="py-3 px-4 font-medium text-gray-700">Rank</th>
-                                        <th class="py-3 px-4 font-medium text-gray-700">Student</th>
-                                        <th class="py-3 px-4 font-medium text-gray-700">Score</th>
-                                        <th class="py-3 px-4 font-medium text-gray-700">Percentage</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${leaders.map((student, index) => `
-                                        <tr class="border-b border-gray-200 hover:bg-gray-50 ${index < 3 ? 'leaderboard-row' : ''}">
-                                            <td class="py-3 px-4 font-bold">${index + 1}</td>
-                                            <td class="py-3 px-4">${student.user_name}</td>
-                                            <td class="py-3 px-4 font-bold">${student.score}/${student.total}</td>
-                                            <td class="py-3 px-4 font-bold text-blue-600">${student.percentage ? student.percentage.toFixed(2) : 0}%</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
+    <thead>
+        <tr class="bg-gray-100 text-left">
+            <th class="py-3 px-4 font-medium text-gray-700">Rank</th>
+            <th class="py-3 px-4 font-medium text-gray-700">Student</th>
+            <th class="py-3 px-4 font-medium text-gray-700">Course</th>
+            <th class="py-3 px-4 font-medium text-gray-700">Sem</th>
+            <th class="py-3 px-4 font-medium text-gray-700">Score</th>
+            <th class="py-3 px-4 font-medium text-gray-700">Percentage</th>
+        </tr>
+    </thead>
+    <tbody>
+        ${leaders
+          .map(
+            (student, index) => `
+            <tr class="border-b border-gray-200 hover:bg-gray-50 ${
+              index < 3 ? "leaderboard-row" : ""
+            }">
+                <td class="py-3 px-4 font-bold">${index + 1}</td>
+                <td class="py-3 px-4">${student.user_name}</td>
+                <td class="py-3 px-4">${student.course || "N/A"}</td>
+                <td class="py-3 px-4">${student.semester || "N/A"}</td>
+                <td class="py-3 px-4 font-bold">${student.score}/${
+              student.total
+            }</td>
+                <td class="py-3 px-4 font-bold text-blue-600">${
+                  student.percentage ? student.percentage.toFixed(2) : 0
+                }%</td>
+            </tr>
+        `
+          )
+          .join("")}
+    </tbody>
+</table>
                         `;
-                    } else {
-                        dailyLeaderboard.innerHTML = `
+            } else {
+              dailyLeaderboard.innerHTML = `
                             <div class="text-center py-8">
                                 <i class="fas fa-chart-line text-gray-400 text-4xl mb-4"></i>
                                 <p class="text-gray-500">No quiz results for this date.</p>
                             </div>
                         `;
-                    }
-                    
-                    updateDateLabel();
-                } else if (dateData.length === 0) {
-                    dailyLeaderboard.innerHTML = `
+            }
+
+            updateDateLabel();
+          } else if (dateData.length === 0) {
+            dailyLeaderboard.innerHTML = `
                         <div class="text-center py-8">
                             <i class="fas fa-chart-line text-gray-400 text-4xl mb-4"></i>
                             <p class="text-gray-500">No leaderboard data available yet.</p>
                             <p class="text-sm text-gray-400 mt-2">Check back after quizzes have been completed.</p>
                         </div>
                     `;
-                }
-            }
-            
-            prevBtn.addEventListener('click', function() {
-                if (currentDateIndex > 0) {
-                    currentDateIndex--;
-                    updateLeaderboard();
-                }
-            });
-            
-            nextBtn.addEventListener('click', function() {
-                if (currentDateIndex < dateData.length - 1) {
-                    currentDateIndex++;
-                    updateLeaderboard();
-                }
-            });
+          }
+        }
+
+        prevBtn.addEventListener("click", function () {
+          if (currentDateIndex > 0) {
+            currentDateIndex--;
+            updateLeaderboard();
+          }
         });
+
+        nextBtn.addEventListener("click", function () {
+          if (currentDateIndex < dateData.length - 1) {
+            currentDateIndex++;
+            updateLeaderboard();
+          }
+        });
+      });
     </script>
-</body>
+  </body>
 </html>

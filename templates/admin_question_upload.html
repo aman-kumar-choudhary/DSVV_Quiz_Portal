@@ -67,22 +67,23 @@
       }
 
       header {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        z-index: 2000;
-        height: 80px;
-        padding: 10px 20px;
-        background-color: #ffffff;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      }
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 2000;
+            height: 60px;
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .logo-container {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            border-bottom-right-radius: 20px;
+        }
 
-      .logo-container {
-        background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-        border-bottom-right-radius: 20px;
-      }
-
+        header .logo-container img {
+            height: 70px;
+        }
       .nav-item {
         transition: all 0.2s ease;
         border-left: 4px solid transparent;
@@ -146,7 +147,7 @@
           />
         </div>
         <div class="flex items-center space-x-6">
-          <!-- Notifications and user menu (same as admin.html) -->
+          <!-- Admin Notifications -->
           <div class="relative">
             <button
               id="admin-notifications-btn"
@@ -159,6 +160,25 @@
                 >0</span
               >
             </button>
+            <div
+              id="admin-notifications-dropdown"
+              class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg py-2 hidden z-50 max-h-96 overflow-y-auto"
+            >
+              <div class="px-4 py-2 border-b border-gray-200">
+                <h3 class="font-semibold text-gray-700">Admin Notifications</h3>
+              </div>
+              <div id="admin-notifications-list" class="p-2">
+                <!-- Notifications will be loaded here -->
+              </div>
+              <div class="px-4 py-2 border-t border-gray-200 text-center">
+                <button
+                  id="mark-all-read"
+                  class="text-blue-600 text-sm hover:underline"
+                >
+                  Mark all as read
+                </button>
+              </div>
+            </div>
           </div>
 
           <!-- Hamburger Menu Button -->
@@ -187,6 +207,7 @@
                 class="fas fa-chevron-down ml-1 text-gray-600 text-xs hidden md:block"
               ></i>
             </button>
+            <!-- User dropdown -->
             <div
               id="user-dropdown"
               class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 hidden z-50"

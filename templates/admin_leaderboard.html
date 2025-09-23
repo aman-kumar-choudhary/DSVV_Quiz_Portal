@@ -1,125 +1,968 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Leaderboard - DSVV Quiz System</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-        body { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); min-height: 100vh; }
+        
+        body {
+          background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+          min-height: 100vh;
+          margin: 0;
+        }
+
+        .logo-container {
+          background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+          border-bottom-right-radius: 20px;
+        }
+
+        .sidebar {
+          width: 250px;
+          background: linear-gradient(180deg, #1e40af 0%, #3b82f6 100%);
+          transition: all 0.3s ease;
+          box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+          z-index: 1000;
+          position: fixed;
+          top: 80px;
+          bottom: 0;
+          left: 0;
+          overflow-y: auto;
+        }
+
+        .sidebar.collapsed {
+          width: 70px;
+        }
+
+        .main-content {
+          transition: all 0.3s ease;
+          width: calc(100% - 250px);
+          margin-left: 250px;
+          margin-top: 80px;
+        }
+
+        .main-content.expanded {
+          width: calc(100% - 70px);
+          margin-left: 70px;
+          margin-top: 80px;
+        }
+
+        .nav-item {
+          transition: all 0.2s ease;
+          border-left: 4px solid transparent;
+        }
+
+        .nav-item:hover {
+          background: rgba(255, 255, 255, 0.1);
+          border-left: 4px solid #93c5fd;
+        }
+
+        .nav-item.active {
+          background: rgba(255, 255, 255, 0.15);
+          border-left: 4px solid #ffffff;
+        }
+
+        .card-hover {
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card-hover:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .stats-card {
+          border-left: 4px solid;
+          transition: all 0.3s ease;
+        }
+
+        .stats-card:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Leaderboard row styles */
         .leaderboard-row { transition: all 0.3s ease; }
         .leaderboard-row:hover { background: #f8fafc; }
         .rank-1 { background: linear-gradient(90deg, #fef3c7 0%, #fde68a 100%); border-left: 4px solid #f59e0b; }
         .rank-2 { background: linear-gradient(90deg, #f3f4f6 0%, #e5e7eb 100%); border-left: 4px solid #9ca3af; }
         .rank-3 { background: linear-gradient(90deg, #fed7aa 0%, #fdba74 100%); border-left: 4px solid #f97316; }
+
+        @media (max-width: 768px) {
+          .sidebar {
+            width: 70px;
+            top: 80px;
+          }
+
+          .sidebar .menu-text {
+            display: none;
+          }
+
+          .main-content {
+            width: calc(100% - 70px);
+            margin-left: 70px;
+            margin-top: 80px;
+          }
+
+          .sidebar.collapsed {
+            width: 0;
+            display: none;
+          }
+
+          .main-content.expanded {
+            width: 100%;
+            margin-left: 0;
+            margin-top: 80px;
+          }
+
+          #hamburger-toggle {
+            display: block;
+          }
+        }
+
+        #hamburger-toggle {
+          display: none;
+        }
+
+        header {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          z-index: 2000;
+          height: 60px;
+          background-color: #ffffff;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .logo-container {
+          background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+          border-bottom-right-radius: 20px;
+        }
+
+        header .logo-container img {
+          height: 70px;
+        }
+
+        .notification-badge {
+          position: absolute;
+          top: -5px;
+          right: -5px;
+          background-color: #ef4444;
+          color: white;
+          border-radius: 50%;
+          width: 18px;
+          height: 18px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 10px;
+          font-weight: bold;
+        }
+
+        .activity-item {
+          border-left: 3px solid #3b82f6;
+          transition: all 0.2s ease;
+        }
+
+        .activity-item:hover {
+          background-color: #f8fafc;
+          border-left-color: #1d4ed8;
+        }
+
+        .feedback-item {
+          border-left: 3px solid #10b981;
+        }
+
+        .quiz-active {
+          background: linear-gradient(90deg, #dbeafe 0%, #eff6ff 100%);
+          border-left: 4px solid #3b82f6;
+        }
+        
+        /* New styles for cascading dropdowns */
+        .form-select {
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .input-focus:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
     </style>
-</head>
-<body class="min-h-screen">
-    <!-- Header and Navigation -->
-    
-    <div class="main-content min-h-screen p-6 mt-0">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-            <h1 class="text-3xl font-bold text-gray-800 flex items-center">
-                <i class="fas fa-trophy text-yellow-600 mr-3"></i> Leaderboard
-            </h1>
-            <nav class="flex space-x-2 text-sm text-gray-500">
-                <a href="/admin" class="hover:text-blue-600">Dashboard</a>
-                <span>/</span>
-                <span class="text-blue-600">Leaderboard</span>
-            </nav>
+  </head>
+  <body class="flex flex-col min-h-screen">
+    <!-- Header with Logo and Hamburger Menu -->
+    <header
+      class="bg-white shadow-md py-4 px-4 flex justify-between items-center fixed top-0 left-0 right-0 z-50 h-20"
+    >
+      <div class="flex items-center w-full justify-between">
+        <!-- Logo in Header -->
+        <div class="logo-container flex items-center">
+          <img
+            src="/static/images/dsvvlogo.png"
+            alt="DSVV Logo"
+            class="h-24 mr-3"
+          />
         </div>
+        <div class="flex items-center space-x-6">
+          <!-- Admin Notifications -->
+          <div class="relative">
+            <button
+              id="admin-notifications-btn"
+              class="text-gray-600 focus:outline-none relative"
+            >
+              <i class="fas fa-bell text-xl"></i>
+              <span
+                id="admin-notification-count"
+                class="notification-badge hidden"
+                >0</span
+              >
+            </button>
+            <div
+              id="admin-notifications-dropdown"
+              class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg py-2 hidden z-50 max-h-96 overflow-y-auto"
+            >
+              <div class="px-4 py-2 border-b border-gray-200">
+                <h3 class="font-semibold text-gray-700">Admin Notifications</h3>
+              </div>
+              <div id="admin-notifications-list" class="p-2">
+                <!-- Notifications will be loaded here -->
+              </div>
+              <div class="px-4 py-2 border-t border-gray-200 text-center">
+                <button
+                  id="mark-all-read"
+                  class="text-blue-600 text-sm hover:underline"
+                >
+                  Mark all as read
+                </button>
+              </div>
+            </div>
+          </div>
 
-        <!-- Filters -->
-        <div class="bg-white rounded-xl shadow-md p-6 mb-6">
-            <h2 class="text-lg font-semibold mb-4 text-gray-700">Filter Results</h2>
-            <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Course</label>
-                    <select name="course" class="w-full p-2 border border-gray-300 rounded-lg">
-                        <option value="">All Courses</option>
-                        {% for course in courses %}
-                        <option value="{{ course }}" {% if selected_course == course %}selected{% endif %}>{{ course }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Semester</label>
-                    <select name="semester" class="w-full p-2 border border-gray-300 rounded-lg">
-                        <option value="">All Semesters</option>
-                        {% for semester in semesters %}
-                        <option value="{{ semester }}" {% if selected_semester == semester %}selected{% endif %}>{{ semester }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Quiz</label>
-                    <select name="quiz_id" class="w-full p-2 border border-gray-300 rounded-lg">
-                        <option value="">All Quizzes</option>
-                        {% for quiz in quizzes %}
-                        <option value="{{ quiz.quiz_id }}" {% if selected_quiz == quiz.quiz_id %}selected{% endif %}>{{ quiz.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="flex items-end">
-                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
-                        Apply Filters
-                    </button>
-                </div>
-            </form>
-        </div>
+          <!-- Hamburger Menu Button -->
+          <button
+            id="hamburger-toggle"
+            class="text-gray-600 focus:outline-none md:hidden"
+          >
+            <i class="fas fa-bars text-xl"></i>
+          </button>
 
-        {% if leaderboard %}
-        <div class="bg-white rounded-xl shadow-md overflow-hidden">
-            <table class="min-w-full">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Percentage</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    {% for student in leaderboard %}
-                    <tr class="leaderboard-row {% if loop.index <= 3 %}rank-{{ loop.index }}{% endif %}">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-center">{{ loop.index }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm font-medium text-gray-900">{{ student.user_name }}</div>
-                            <div class="text-sm text-gray-500">{{ student.scholar_id }}</div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm">
-                            {{ student.score }}/{{ student.total }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">
-                            {{ student.percentage|round(2) }}%
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm">
-                            {{ (student.completion_time / 60)|round(2) }} mins
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm">
-                            {{ student.formatted_date }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm">
-                            {{ student.course }} Sem {{ student.semester }}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+          <!-- User Profile -->
+          <div class="relative">
+            <button
+              id="user-menu-button"
+              class="flex items-center focus:outline-none"
+            >
+              <div
+                class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold"
+              >
+                A
+              </div>
+              <span class="ml-2 text-gray-700 hidden md:block"
+                >admin.computer</span
+              >
+              <i
+                class="fas fa-chevron-down ml-1 text-gray-600 text-xs hidden md:block"
+              ></i>
+            </button>
+            <!-- User dropdown -->
+            <div
+              id="user-dropdown"
+              class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 hidden z-50"
+            >
+              <a
+                href="#"
+                class="block px-4 py-2 text-gray-700 hover:bg-gray-100"
+              >
+                <i class="fas fa-user-circle mr-2"></i>Profile
+              </a>
+              <a
+                href="#"
+                class="block px-4 py-2 text-gray-700 hover:bg-gray-100"
+              >
+                <i class="fas fa-cog mr-2"></i>Settings
+              </a>
+              <a
+                href="/logout"
+                class="block px-4 py-2 text-gray-700 hover:bg-gray-100"
+              >
+                <i class="fas fa-sign-out-alt mr-2"></i>Logout
+              </a>
+            </div>
+          </div>
         </div>
-        {% else %}
-        <div class="bg-white rounded-xl shadow-md p-12 text-center">
-            <i class="fas fa-chart-line text-gray-400 text-6xl mb-4"></i>
-            <h2 class="text-2xl font-semibold text-gray-800 mb-2">No Leaderboard Data</h2>
-            <p class="text-gray-600 mb-6">No quiz results available for the selected filters.</p>
-        </div>
-        {% endif %}
+      </div>
+    </header>
+
+    <!-- Dropdown Menu (hidden by default) -->
+    <nav
+      id="dropdown-menu"
+      class="hidden md:hidden bg-gradient-to-b from-blue-800 to-blue-600 text-white shadow-lg mt-20 fixed left-0 right-0 z-40"
+    >
+      <ul class="space-y-2 px-4 py-4">
+        <li class="nav-item">
+          <a
+            href="/admin"
+            class="flex items-center p-3 rounded-lg hover:bg-blue-700"
+          >
+            <i class="fas fa-tachometer-alt w-6 text-center"></i>
+            <span class="ml-3">Dashboard</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a
+            href="/admin/questions/management"
+            class="flex items-center p-3 text-white rounded-lg"
+          >
+            <i class="fas fa-book w-6 text-center"></i>
+            <span class="ml-3 menu-text">Question Management</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a
+            href="/admin/quizzes"
+            class="flex items-center p-3 text-white rounded-lg"
+          >
+            <i class="fas fa-rocket w-6 text-center"></i>
+            <span class="ml-3 menu-text">Quiz Management</span>
+          </a>
+        </li>
+        <li class="nav-item active">
+          <a
+            href="/admin/leaderboard"
+            class="flex items-center p-3 text-white rounded-lg"
+          >
+            <i class="fas fa-trophy w-6 text-center"></i>
+            <span class="ml-3 menu-text">Leaderboard</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a
+            href="/admin/results"
+            class="flex items-center p-3 rounded-lg hover:bg-blue-700"
+          >
+            <i class="fas fa-chart-bar w-6 text-center"></i>
+            <span class="ml-3">Results</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a
+            href="/admin/users"
+            class="flex items-center p-3 rounded-lg hover:bg-blue-700"
+          >
+            <i class="fas fa-users w-6 text-center"></i>
+            <span class="ml-3">User Management</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a
+            href="#"
+            class="flex items-center p-3 rounded-lg hover:bg-blue-700"
+          >
+            <i class="fas fa-cog w-6 text-center"></i>
+            <span class="ml-3">Settings</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a
+            href="/logout"
+            class="flex items-center p-3 rounded-lg hover:bg-blue-700"
+          >
+            <i class="fas fa-sign-out-alt w-6 text-center"></i>
+            <span class="ml-3">Logout</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- Sidebar Navigation (moved below header) -->
+    <div class="sidebar h-[calc(100vh-80px)] mt-0">
+      <div class="py-6">
+        <ul class="space-y-2 px-4">
+          <li class="nav-item">
+            <a
+              href="/admin"
+              class="flex items-center p-3 text-white rounded-lg"
+            >
+              <i class="fas fa-tachometer-alt w-6 text-center"></i>
+              <span class="ml-3 menu-text">Dashboard</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a
+              href="/admin/questions/management"
+              class="flex items-center p-3 text-white rounded-lg"
+            >
+              <i class="fas fa-book w-6 text-center"></i>
+              <span class="ml-3 menu-text">Question Management</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a
+              href="/admin/quizzes"
+              class="flex items-center p-3 text-white rounded-lg"
+            >
+              <i class="fas fa-rocket w-6 text-center"></i>
+              <span class="ml-3 menu-text">Quiz Management</span>
+            </a>
+          </li>
+          <li class="nav-item active">
+            <a
+              href="/admin/leaderboard"
+              class="flex items-center p-3 text-white rounded-lg"
+            >
+              <i class="fas fa-trophy w-6 text-center"></i>
+              <span class="ml-3 menu-text">Leaderboard</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a
+              href="/admin/results"
+              class="flex items-center p-3 text-white rounded-lg"
+            >
+              <i class="fas fa-chart-bar w-6 text-center"></i>
+              <span class="ml-3 menu-text">Results</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a
+              href="/admin/users"
+              class="flex items-center p-3 text-white rounded-lg"
+            >
+              <i class="fas fa-users w-6 text-center"></i>
+              <span class="ml-3 menu-text">User Management</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="flex items-center p-3 text-white rounded-lg">
+              <i class="fas fa-cog w-6 text-center"></i>
+              <span class="ml-3 menu-text">Settings</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a
+              href="/logout"
+              class="flex items-center p-3 text-white rounded-lg"
+            >
+              <i class="fas fa-sign-out-alt w-6 text-center"></i>
+              <span class="ml-3 menu-text">Logout</span>
+            </a>
+          </li>
+        </ul>
+      </div>
     </div>
-</body>
+
+    <!-- Main Content -->
+    <div class="main-content min-h-[calc(100vh-80px)]">
+        <div class="p-6 mt-0">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+                <h1 class="text-3xl font-bold text-gray-800 flex items-center">
+                    <i class="fas fa-trophy text-yellow-600 mr-3"></i> Leaderboard
+                </h1>
+                <nav class="flex space-x-2 text-sm text-gray-500">
+                    <a href="/admin" class="hover:text-blue-600">Dashboard</a>
+                    <span>/</span>
+                    <span class="text-blue-600">Leaderboard</span>
+                </nav>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                <h2 class="text-lg font-semibold mb-4 text-gray-700">Filter Results</h2>
+                <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <!-- School Filter -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">School</label>
+                        <select name="school" id="school-filter" class="form-select input-focus w-full p-2 border border-gray-300 rounded-lg" onchange="updateDepartmentOptions()">
+                            <option value="">All Schools</option>
+                            {% for school in schools %}
+                            <option value="{{ school }}" {% if selected_school == school %}selected{% endif %}>{{ school }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Department Filter -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                        <select name="department" id="department-filter" class="form-select input-focus w-full p-2 border border-gray-300 rounded-lg" onchange="updateCourseOptions()">
+                            <option value="">All Departments</option>
+                            {% for department in departments %}
+                            <option value="{{ department }}" {% if selected_department == department %}selected{% endif %}>{{ department }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Course Filter -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Course</label>
+                        <select name="course" id="course-filter" class="form-select input-focus w-full p-2 border border-gray-300 rounded-lg">
+                            <option value="">All Courses</option>
+                            {% for course in courses %}
+                            <option value="{{ course }}" {% if selected_course == course %}selected{% endif %}>{{ course }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Semester Filter -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Semester</label>
+                        <select name="semester" class="form-select input-focus w-full p-2 border border-gray-300 rounded-lg">
+                            <option value="">All Semesters</option>
+                            {% for semester in semesters %}
+                            <option value="{{ semester }}" {% if selected_semester == semester %}selected{% endif %}>{{ semester }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Quiz Filter -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Quiz</label>
+                        <select name="quiz_id" class="form-select input-focus w-full p-2 border border-gray-300 rounded-lg">
+                            <option value="">All Quizzes</option>
+                            {% for quiz in quizzes %}
+                            <option value="{{ quiz.quiz_id }}" {% if selected_quiz == quiz.quiz_id %}selected{% endif %}>{{ quiz.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Limit Filter -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Top Results</label>
+                        <select name="limit" class="form-select input-focus w-full p-2 border border-gray-300 rounded-lg">
+                            <option value="10" {% if limit == 10 %}selected{% endif %}>Top 10</option>
+                            <option value="20" {% if limit == 20 %}selected{% endif %}>Top 20</option>
+                            <option value="50" {% if limit == 50 %}selected{% endif %}>Top 50</option>
+                            <option value="100" {% if limit == 100 %}selected{% endif %}>Top 100</option>
+                        </select>
+                    </div>
+
+                    <div class="flex items-end md:col-span-4">
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                            Apply Filters
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            {% if leaderboard %}
+            <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                <table class="min-w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Percentage</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for student in leaderboard %}
+                        <tr class="leaderboard-row {% if loop.index <= 3 %}rank-{{ loop.index }}{% endif %}">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-center">{{ loop.index }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">{{ student.user_name }}</div>
+                                <div class="text-sm text-gray-500">{{ student.scholar_id }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                {{ student.score }}/{{ student.total }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">
+                                {{ student.percentage|round(2) }}%
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                {{ (student.completion_time / 60)|round(2) }} mins
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                {{ student.formatted_date }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                {{ student.course }} Sem {{ student.semester }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="bg-white rounded-xl shadow-md p-12 text-center">
+                <i class="fas fa-chart-line text-gray-400 text-6xl mb-4"></i>
+                <h2 class="text-2xl font-semibold text-gray-800 mb-2">No Leaderboard Data</h2>
+                <p class="text-gray-600 mb-6">No quiz results available for the selected filters.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        // School and department data (same as signup.html)
+        const schoolDepartments = {
+            "School of Technology, Communication and Management": [
+                "Department of Computer Sciences",
+                "Department of Tourism Management",
+                "Department of Journalism & Mass Communication",
+                "Department of Animation and Visual Effects",
+            ],
+            "School of Biological Sciences and Sustainability": [
+                "Department of Rural Studies and Sustainability",
+            ],
+            "School of Indology": [
+                "Department of Sanskrit and Vedic Studies",
+                "Department of Hindi",
+                "Department of Indian Classical Music",
+                "Department of History and Indian Culture",
+            ],
+            "School of Humanities, Social Sciences and Foundation Courses": [
+                "Department of English",
+                "Department of Education",
+                "Department of Psychology",
+                "Department of Life Management",
+                "Department of Scientific Spirituality",
+                "Department of Oriental Studies, Religious Studies & Philosophy",
+                "Department of Yogic Sciences and Human Consciousness",
+            ],
+        };
+
+        const departmentCourses = {
+            "Department of Computer Sciences": [
+                "B.Sc. Information Technology (Honors)",
+                "Bachelor of Computer Application (Honors)",
+                "Master of Computer Application (Data Science)",
+            ],
+            "Department of Tourism Management": [
+                "B.B.A Tourism & Travel Management (Honors)",
+                "M.B.A. Tourism & Travel Management",
+            ],
+            "Department of Journalism & Mass Communication": [
+                "B.A. Journalism and Mass Communication (Honors)",
+                "M. A. Journalism and Mass Communication",
+                "M. A. Spiritual Journalism",
+            ],
+            "Department of Animation and Visual Effects": [
+                "B.Voc. (Bachelor of Vocation) in 3D Animation and VFX (Honors)",
+            ],
+            "Department of Rural Studies and Sustainability": [
+                "Bachelor of Rural Studies (Honors)",
+            ],
+            "Department of English": ["B.A. English (Honors)"],
+            "Department of Education": ["B.Ed. (Bachelor of Education)"],
+            "Department of Psychology": [
+                "B.A. Psychology (Honors)",
+                "M.A. Counselling Psychology",
+                "M.Sc. Counselling Psychology",
+            ],
+            "Department of Life Management": [
+                "Life Management - Compulsory Program for PG and UG",
+            ],
+            "Department of Scientific Spirituality": [
+                "M.Sc. Herbal Medicine and Natural Product Chemistry",
+                "M.Sc. Molecular Physiology and Traditional Health Sciences",
+                "M.Sc. Indigenous Approaches for Child Development & Generational Dynamics",
+                "M.Sc. Indian Knowledge Systems",
+                "M.A. Indian Knowledge Systems",
+            ],
+            "Department of Oriental Studies, Religious Studies & Philosophy": [
+                "M.A. Hindu Studies",
+                "M.A. Philosophy",
+            ],
+            "Department of Yogic Sciences and Human Consciousness": [
+                "B.Sc. Yogic Science (Honors)",
+                "M.Sc. Yoga Therapy",
+                "M.A. Human Consciousness & Yogic Science",
+                "M.Sc. Human Consciousness & Yogic Science",
+                "P. G. Diploma Human Consciousness, Yoga & Alternative Therapy",
+                "Certificate In Yoga And Alternative Therapy",
+            ],
+            "Department of Sanskrit and Vedic Studies": [
+                "B.A. Sanskrit (Honors)",
+                "M.A. Sanskrit",
+            ],
+            "Department of Hindi": ["B.A. Hindi (Honors)", "M.A. Hindi"],
+            "Department of Indian Classical Music": [
+                "B.A. Music (Vocal) (Honors)",
+                "M.A. Music (Vocal)",
+                "B.A. Music Instrumental Mridang/Tabla (Honors)",
+                "M.A. Music (Tabla, Pakhaawaj)",
+            ],
+            "Department of History and Indian Culture": [
+                "B.A. History (Honors)",
+                "M. A. History and Indian Culture",
+            ],
+        };
+
+        // Filter dropdown functionality
+        function updateDepartmentOptions() {
+            const schoolSelect = document.getElementById('school-filter');
+            const departmentSelect = document.getElementById('department-filter');
+            const selectedSchool = schoolSelect.value;
+            
+            // Reset and disable dependent dropdowns
+            departmentSelect.innerHTML = '<option value="">All Departments</option>';
+            document.getElementById('course-filter').innerHTML = '<option value="">All Courses</option>';
+            
+            if (selectedSchool) {
+                // Populate departments based on selected school
+                const departments = schoolDepartments[selectedSchool] || [];
+                departments.forEach(dept => {
+                    const option = document.createElement('option');
+                    option.value = dept;
+                    option.textContent = dept;
+                    departmentSelect.appendChild(option);
+                });
+            }
+        }
+
+        function updateCourseOptions() {
+            const departmentSelect = document.getElementById('department-filter');
+            const courseSelect = document.getElementById('course-filter');
+            const selectedDepartment = departmentSelect.value;
+            
+            // Reset course dropdown
+            courseSelect.innerHTML = '<option value="">All Courses</option>';
+            
+            if (selectedDepartment) {
+                // Populate courses based on selected department
+                const courses = departmentCourses[selectedDepartment] || [];
+                courses.forEach(course => {
+                    const option = document.createElement('option');
+                    option.value = course;
+                    option.textContent = course;
+                    courseSelect.appendChild(option);
+                });
+            }
+        }
+
+        // Initialize dropdowns on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDepartmentOptions();
+            updateCourseOptions();
+            
+            // Set initial values if filters are already applied
+            const schoolFilter = document.getElementById('school-filter');
+            const departmentFilter = document.getElementById('department-filter');
+            const courseFilter = document.getElementById('course-filter');
+            
+            if (schoolFilter.value) {
+                updateDepartmentOptions();
+                if (departmentFilter.value) {
+                    updateCourseOptions();
+                }
+            }
+        });
+
+        // Admin notifications functionality
+        const adminNotificationsBtn = document.getElementById(
+          "admin-notifications-btn"
+        );
+        const adminNotificationsDropdown = document.getElementById(
+          "admin-notifications-dropdown"
+        );
+        const adminNotificationCount = document.getElementById(
+          "admin-notification-count"
+        );
+        const adminNotificationsList = document.getElementById(
+          "admin-notifications-list"
+        );
+        const markAllReadBtn = document.getElementById("mark-all-read");
+
+        function loadAdminNotifications() {
+          fetch("/api/admin_notifications")
+            .then((response) => response.json())
+            .then((data) => {
+              const notifications = data.notifications;
+              const unreadCount = notifications.filter((n) => !n.read).length;
+
+              // Update notification count
+              if (unreadCount > 0) {
+                adminNotificationCount.textContent = unreadCount;
+                adminNotificationCount.classList.remove("hidden");
+              } else {
+                adminNotificationCount.classList.add("hidden");
+              }
+
+              // Update notifications list
+              if (notifications.length > 0) {
+                adminNotificationsList.innerHTML = notifications
+                  .map(
+                    (notification) => `
+                                <div class="p-3 border-b border-gray-100 ${
+                                  notification.read ? "" : "bg-blue-50"
+                                }">
+                                    <div class="flex justify-between items-start mb-1">
+                                        <span class="text-sm font-medium ${
+                                          notification.read
+                                            ? "text-gray-700"
+                                            : "text-blue-700"
+                                        }">
+                                            ${notification.title}
+                                        </span>
+                                        <span class="text-xs text-gray-500">
+                                            ${new Date(
+                                              notification.timestamp
+                                            ).toLocaleTimeString()}
+                                        </span>
+                                    </div>
+                                    <p class="text-sm text-gray-600">${
+                                      notification.message
+                                    }</p>
+                                    <div class="text-xs text-gray-400 mt-1">
+                                        ${new Date(
+                                          notification.timestamp
+                                        ).toLocaleDateString()}
+                                        ${
+                                          notification.course
+                                            ? ` • ${notification.course} Sem ${notification.semester}`
+                                            : ""
+                                        }
+                                    </div>
+                                </div>
+                            `
+                  )
+                  .join("");
+              } else {
+                adminNotificationsList.innerHTML = `
+                                <div class="p-4 text-center text-gray-500">
+                                    <i class="fas fa-bell-slash text-2xl mb-2"></i>
+                                    <p>No notifications</p>
+                                </div>
+                            `;
+              }
+            })
+            .catch((error) => {
+              console.error("Error loading notifications:", error);
+            });
+        }
+
+        // Load notifications initially
+        loadAdminNotifications();
+
+        // Toggle notifications dropdown
+        adminNotificationsBtn.addEventListener("click", function (e) {
+          e.stopPropagation();
+          adminNotificationsDropdown.classList.toggle("hidden");
+        });
+
+        // Mark all as read
+        markAllReadBtn.addEventListener("click", function () {
+          fetch("/api/admin_notifications/read", {
+            method: "POST",
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                loadAdminNotifications();
+              }
+            })
+            .catch((error) => {
+              console.error("Error marking notifications as read:", error);
+            });
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener("click", function (e) {
+          if (
+            !adminNotificationsDropdown.contains(e.target) &&
+            !adminNotificationsBtn.contains(e.target)
+          ) {
+            adminNotificationsDropdown.classList.add("hidden");
+          }
+        });
+
+        // Poll for new notifications every 30 seconds
+        setInterval(loadAdminNotifications, 30000);
+
+        // Toggle user dropdown
+        document
+          .getElementById("user-menu-button")
+          .addEventListener("click", function () {
+            document.getElementById("user-dropdown").classList.toggle("hidden");
+          });
+
+        // Close dropdown when clicking outside
+        document.addEventListener("click", function (event) {
+          const userMenu = document.getElementById("user-menu-button");
+          const dropdown = document.getElementById("user-dropdown");
+
+          if (
+            !userMenu.contains(event.target) &&
+            !dropdown.contains(event.target)
+          ) {
+            dropdown.classList.add("hidden");
+          }
+        });
+
+        // Set active navigation item
+        document.addEventListener("DOMContentLoaded", function () {
+          const currentPage = window.location.pathname;
+          const navItems = document.querySelectorAll(".nav-item");
+
+          navItems.forEach((item) => {
+            const link = item.querySelector("a");
+            if (link.getAttribute("href") === currentPage) {
+              item.classList.add("active");
+            } else {
+              item.classList.remove("active");
+            }
+          });
+        });
+
+        // Hamburger Menu Toggle
+        document
+          .getElementById("hamburger-toggle")
+          .addEventListener("click", function () {
+            const menu = document.getElementById("dropdown-menu");
+            menu.classList.toggle("hidden");
+          });
+
+        // Close menu when clicking outside
+        document.addEventListener("click", function (event) {
+          const toggle = document.getElementById("hamburger-toggle");
+          const menu = document.getElementById("dropdown-menu");
+          if (!toggle.contains(event.target) && !menu.contains(event.target)) {
+            menu.classList.add("hidden");
+          }
+        });
+
+        document
+          .getElementById("hamburger-toggle")
+          .addEventListener("click", function () {
+            const sidebar = document.querySelector(".sidebar");
+            const mainContent = document.querySelector(".main-content");
+
+            sidebar.classList.toggle("collapsed");
+            mainContent.classList.toggle("expanded");
+          });
+
+        // Prevent back-forward cache
+        window.onpageshow = function (event) {
+          if (event.persisted) {
+            window.location.reload();
+          }
+        };
+
+        // Clear session storage on page unload
+        window.onbeforeunload = function () {
+          sessionStorage.removeItem("reload");
+        };
+
+        // Check if page was restored from bfcache
+        if (performance.navigation.type === 2) {
+          // Page was restored from back/forward cache
+          window.location.reload();
+        }
+    </script>
+  </body>
 </html>

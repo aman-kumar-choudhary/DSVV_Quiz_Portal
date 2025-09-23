@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Manage Quiz - DSVV Quiz System</title>
+    <title>Manage Quiz</title>
     <link
       href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
       rel="stylesheet"
@@ -43,10 +43,130 @@
         background: #3b82f6;
         color: white;
       }
+
+      header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 2000;
+        height: 60px;
+        background-color: #ffffff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .logo-container {
+        background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+        border-bottom-right-radius: 20px;
+      }
+
+      header .logo-container img {
+        height: 70px;
+      }
     </style>
   </head>
   <body class="min-h-screen">
     <!-- Header and Navigation -->
+    <header
+      class="bg-white shadow-md py-4 px-4 flex justify-between items-center fixed top-0 left-0 right-0 z-50 h-20"
+    >
+      <div class="flex items-center w-full justify-between">
+        <!-- Logo in Header -->
+        <div class="logo-container flex items-center">
+          <img
+            src="/static/images/dsvvlogo.png"
+            alt="DSVV Logo"
+            class="h-24 mr-3"
+          />
+        </div>
+        <div class="flex items-center space-x-6">
+          <!-- Admin Notifications -->
+          <div class="relative">
+            <button
+              id="admin-notifications-btn"
+              class="text-gray-600 focus:outline-none relative"
+            >
+              <i class="fas fa-bell text-xl"></i>
+              <span
+                id="admin-notification-count"
+                class="notification-badge hidden"
+                >0</span
+              >
+            </button>
+            <div
+              id="admin-notifications-dropdown"
+              class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg py-2 hidden z-50 max-h-96 overflow-y-auto"
+            >
+              <div class="px-4 py-2 border-b border-gray-200">
+                <h3 class="font-semibold text-gray-700">Admin Notifications</h3>
+              </div>
+              <div id="admin-notifications-list" class="p-2">
+                <!-- Notifications will be loaded here -->
+              </div>
+              <div class="px-4 py-2 border-t border-gray-200 text-center">
+                <button
+                  id="mark-all-read"
+                  class="text-blue-600 text-sm hover:underline"
+                >
+                  Mark all as read
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hamburger Menu Button -->
+          <button
+            id="hamburger-toggle"
+            class="text-gray-600 focus:outline-none md:hidden"
+          >
+            <i class="fas fa-bars text-xl"></i>
+          </button>
+
+          <!-- User Profile -->
+          <div class="relative">
+            <button
+              id="user-menu-button"
+              class="flex items-center focus:outline-none"
+            >
+              <div
+                class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold"
+              >
+                A
+              </div>
+              <span class="ml-2 text-gray-700 hidden md:block"
+                >admin.computer</span
+              >
+              <i
+                class="fas fa-chevron-down ml-1 text-gray-600 text-xs hidden md:block"
+              ></i>
+            </button>
+            <!-- User dropdown -->
+            <div
+              id="user-dropdown"
+              class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 hidden z-50"
+            >
+              <a
+                href="#"
+                class="block px-4 py-2 text-gray-700 hover:bg-gray-100"
+              >
+                <i class="fas fa-user-circle mr-2"></i>Profile
+              </a>
+              <a
+                href="#"
+                class="block px-4 py-2 text-gray-700 hover:bg-gray-100"
+              >
+                <i class="fas fa-cog mr-2"></i>Settings
+              </a>
+              <a
+                href="/logout"
+                class="block px-4 py-2 text-gray-700 hover:bg-gray-100"
+              >
+                <i class="fas fa-sign-out-alt mr-2"></i>Logout
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
     <!-- Add your header/navigation code here -->
 
     <!-- Add this hidden div to store quiz data -->
@@ -134,6 +254,7 @@
             <table class="min-w-full">
               <thead>
                 <tr>
+                  <th class="px-4 py-2 text-left">S no.</th>
                   <th class="px-4 py-2 text-left">
                     <input
                       type="checkbox"
@@ -149,6 +270,9 @@
               <tbody id="questions-table-body">
                 {% for question in questions %}
                 <tr class="question-item">
+                  <td class="px-4 py-2 text-sm text-gray-500">
+                    {{ loop.index }}
+                  </td>
                   <td class="px-4 py-2">
                     <input
                       type="checkbox"
@@ -156,6 +280,14 @@
                       value="{{ question.question_id }}"
                       class="question-checkbox"
                       data-tags="{{ question.tags|join(',') if question.tags else '' }}"
+                      {%
+                      if
+                      question.question_id
+                      in
+                      quiz.questions
+                      %}checked{%
+                      endif
+                      %}
                     />
                   </td>
                   <td class="px-4 py-2">
@@ -205,6 +337,7 @@
             <table class="min-w-full">
               <thead>
                 <tr>
+                  <th class="px-4 py-2 text-left">S no.</th>
                   <th class="px-4 py-2 text-left">
                     <input
                       type="checkbox"
@@ -220,13 +353,14 @@
               <tbody id="students-table-body">
                 {% for student in students %}
                 <tr class="student-item">
+                  <td class="px-4 py-2 text-sm text-gray-500">
+                    {{ loop.index }}
+                  </td>
                   <td class="px-4 py-2">
-                    <input
-                      type="checkbox"
-                      name="student"
-                      value="{{ student.scholar_id }}"
-                      class="student-checkbox"
-                    />
+                    <input type="checkbox" name="student" value="{{
+                    student.scholar_id }}" class="student-checkbox" {% if
+                    student.scholar_id in quiz.participants or quiz.participants
+                    and 'all' in quiz.participants %}checked{% endif %} />
                   </td>
                   <td class="px-4 py-2">
                     <div class="text-sm font-medium">{{ student.name }}</div>
@@ -316,6 +450,92 @@
           filterQuestions();
         });
       });
+
+      // Add this to your JavaScript in admin_manage_quiz.html
+      function toggleAllParticipants() {
+        const allCheckbox = document.getElementById("select-all-participants");
+        const studentCheckboxes =
+          document.querySelectorAll(".student-checkbox");
+
+        if (allCheckbox.checked) {
+          // If "All" is selected, uncheck all individual students
+          studentCheckboxes.forEach((checkbox) => {
+            checkbox.checked = false;
+          });
+
+          // Add "all" to participants
+          addAllParticipants();
+        } else {
+          // If "All" is unchecked, remove "all" from participants
+          removeAllParticipants();
+        }
+      }
+
+      async function addAllParticipants() {
+        try {
+          const response = await fetch(
+            `/api/quizzes/{{ quiz.quiz_id }}/participants/all`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+            }
+          );
+
+          const data = await response.json();
+          if (data.success) {
+            showToast(
+              "Success",
+              "All students enrolled in this quiz",
+              "success"
+            );
+          } else {
+            showToast(
+              "Error",
+              data.error || "Failed to enroll all students",
+              "error"
+            );
+          }
+        } catch (error) {
+          showToast(
+            "Error",
+            "Failed to enroll all students: " + error.message,
+            "error"
+          );
+        }
+      }
+
+      async function removeAllParticipants() {
+        try {
+          const response = await fetch(
+            `/api/quizzes/{{ quiz.quiz_id }}/participants/all`,
+            {
+              method: "DELETE",
+              headers: { "Content-Type": "application/json" },
+            }
+          );
+
+          const data = await response.json();
+          if (data.success) {
+            showToast(
+              "Success",
+              'Removed "all" enrollment from quiz',
+              "success"
+            );
+          } else {
+            showToast(
+              "Error",
+              data.error || "Failed to remove all enrollment",
+              "error"
+            );
+          }
+        } catch (error) {
+          showToast(
+            "Error",
+            "Failed to remove all enrollment: " + error.message,
+            "error"
+          );
+        }
+      }
 
       function filterQuestions() {
         const selectedTags = Array.from(

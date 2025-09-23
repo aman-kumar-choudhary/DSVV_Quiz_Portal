@@ -153,14 +153,17 @@
         left: 0;
         right: 0;
         z-index: 2000;
-        height: 80px; /* Increased height for wider header */
-        padding: 10px 20px; /* Added padding for better spacing */
+        height: 60px;
         background-color: #ffffff;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
+      .logo-container {
+        background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+        border-bottom-right-radius: 20px;
+      }
 
       header .logo-container img {
-        height: 70px; /* Adjusted logo size to fit wider header */
+        height: 70px;
       }
 
       .notification-badge {
@@ -813,7 +816,11 @@
             } else if (date.toDateString() === yesterday.toDateString()) {
               dateText = "Yesterday's Top Performers";
             } else {
-              dateText = `Top Performers on ${date.toLocaleDateString()}`;
+              // Format date as DD/MM/YY (FIXED)
+              const day = String(date.getDate()).padStart(2, "0");
+              const month = String(date.getMonth() + 1).padStart(2, "0");
+              const year = String(date.getFullYear()).slice(-2);
+              dateText = `Top Performers on ${day}/${month}/${year}`;
             }
 
             dateLabel.textContent = dateText;
@@ -847,44 +854,46 @@
 
             if (leaders.length > 0) {
               dailyLeaderboard.innerHTML = `
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Percentage</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
-                                    ${leaders
-                                      .map(
-                                        (student, index) => `
-                                        <tr class="${
-                                          index < 3
-                                            ? "leaderboard-row"
-                                            : "hover:bg-gray-50"
-                                        }">
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-center">${
-                                              index + 1
-                                            }</td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">${
-                                              student.user_name
-                                            }</td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm">${
-                                              student.score
-                                            }/${student.total}</td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">${
-                                              student.percentage
-                                                ? student.percentage.toFixed(2)
-                                                : 0
-                                            }%</td>
-                                        </tr>
-                                    `
-                                      )
-                                      .join("")}
-                                </tbody>
-                            </table>
+                           <table class="min-w-full divide-y divide-gray-200">
+    <thead class="bg-gray-50">
+        <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sem</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Percentage</th>
+        </tr>
+    </thead>
+    <tbody class="bg-white divide-y divide-gray-200">
+        ${leaders
+          .map(
+            (student, index) => `
+            <tr class="${index < 3 ? "leaderboard-row" : "hover:bg-gray-50"}">
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-center">${
+                  index + 1
+                }</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">${
+                  student.user_name
+                }</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">${
+                  student.course || "N/A"
+                }</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">${
+                  student.semester || "N/A"
+                }</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">${
+                  student.score
+                }/${student.total}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">${
+                  student.percentage ? student.percentage.toFixed(2) : 0
+                }%</td>
+            </tr>
+        `
+          )
+          .join("")}
+    </tbody>
+</table>
                         `;
             } else {
               dailyLeaderboard.innerHTML = `
@@ -1151,6 +1160,24 @@
           sidebar.classList.toggle("collapsed");
           mainContent.classList.toggle("expanded");
         });
+
+      // Prevent back-forward cache
+      window.onpageshow = function (event) {
+        if (event.persisted) {
+          window.location.reload();
+        }
+      };
+
+      // Clear session storage on page unload
+      window.onbeforeunload = function () {
+        sessionStorage.removeItem("reload");
+      };
+
+      // Check if page was restored from bfcache
+      if (performance.navigation.type === 2) {
+        // Page was restored from back/forward cache
+        window.location.reload();
+      }
     </script>
   </body>
 </html>

@@ -26,12 +26,360 @@
         .fa-chevron-down {
           transition: transform 0.3s ease;
         }
+
+        /* Header and sidebar styles to match admin_question_upload.html */
+        .sidebar {
+          width: 250px;
+          background: linear-gradient(180deg, #1e40af 0%, #3b82f6 100%);
+          position: fixed;
+          top: 80px;
+          bottom: 0;
+          left: 0;
+          overflow-y: auto;
+          transition: all 0.3s ease;
+          box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+          z-index: 1000;
+        }
+
+        .main-content {
+          transition: all 0.3s ease;
+          width: calc(100% - 250px);
+          margin-left: 250px;
+          margin-top: 80px;
+        }
+
+        header {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          z-index: 2000;
+          height: 60px;
+          background-color: #ffffff;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .logo-container {
+          background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+          border-bottom-right-radius: 20px;
+        }
+
+        header .logo-container img {
+          height: 70px;
+        }
+        
+        .nav-item {
+          transition: all 0.2s ease;
+          border-left: 4px solid transparent;
+        }
+
+        .nav-item:hover {
+          background: rgba(255, 255, 255, 0.1);
+          border-left: 4px solid #93c5fd;
+        }
+
+        .nav-item.active {
+          background: rgba(255, 255, 255, 0.15);
+          border-left: 4px solid #ffffff;
+        }
+
+        @media (max-width: 768px) {
+          .sidebar {
+            width: 70px;
+            top: 80px;
+          }
+
+          .sidebar .menu-text {
+            display: none;
+          }
+
+          .main-content {
+            width: calc(100% - 70px);
+            margin-left: 70px;
+            margin-top: 80px;
+          }
+
+          .sidebar.collapsed {
+            width: 0;
+            display: none;
+          }
+
+          .main-content.expanded {
+            width: 100%;
+            margin-left: 0;
+            margin-top: 80px;
+          }
+
+          #hamburger-toggle {
+            display: block;
+          }
+        }
     </style>
 </head>
 <body class="min-h-screen">
-    <!-- Header and Navigation -->
-    
-    <div class="main-content min-h-screen p-6 mt-0">
+    <!-- Header with Logo and Hamburger Menu -->
+    <header
+      class="bg-white shadow-md py-4 px-4 flex justify-between items-center fixed top-0 left-0 right-0 z-50 h-20"
+    >
+      <div class="flex items-center w-full justify-between">
+        <!-- Logo in Header -->
+        <div class="logo-container flex items-center">
+          <img
+            src="/static/images/dsvvlogo.png"
+            alt="DSVV Logo"
+            class="h-24 mr-3"
+          />
+        </div>
+        <div class="flex items-center space-x-6">
+          <!-- Admin Notifications -->
+          <div class="relative">
+            <button
+              id="admin-notifications-btn"
+              class="text-gray-600 focus:outline-none relative"
+            >
+              <i class="fas fa-bell text-xl"></i>
+              <span
+                id="admin-notification-count"
+                class="notification-badge hidden"
+                >0</span
+              >
+            </button>
+            <div
+              id="admin-notifications-dropdown"
+              class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg py-2 hidden z-50 max-h-96 overflow-y-auto"
+            >
+              <div class="px-4 py-2 border-b border-gray-200">
+                <h3 class="font-semibold text-gray-700">Admin Notifications</h3>
+              </div>
+              <div id="admin-notifications-list" class="p-2">
+                <!-- Notifications will be loaded here -->
+              </div>
+              <div class="px-4 py-2 border-t border-gray-200 text-center">
+                <button
+                  id="mark-all-read"
+                  class="text-blue-600 text-sm hover:underline"
+                >
+                  Mark all as read
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hamburger Menu Button -->
+          <button
+            id="hamburger-toggle"
+            class="text-gray-600 focus:outline-none md:hidden"
+          >
+            <i class="fas fa-bars text-xl"></i>
+          </button>
+
+          <!-- User Profile -->
+          <div class="relative">
+            <button
+              id="user-menu-button"
+              class="flex items-center focus:outline-none"
+            >
+              <div
+                class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold"
+              >
+                A
+              </div>
+              <span class="ml-2 text-gray-700 hidden md:block"
+                >admin.computer</span
+              >
+              <i
+                class="fas fa-chevron-down ml-1 text-gray-600 text-xs hidden md:block"
+              ></i>
+            </button>
+            <!-- User dropdown -->
+            <div
+              id="user-dropdown"
+              class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 hidden z-50"
+            >
+              <a
+                href="#"
+                class="block px-4 py-2 text-gray-700 hover:bg-gray-100"
+              >
+                <i class="fas fa-user-circle mr-2"></i>Profile
+              </a>
+              <a
+                href="#"
+                class="block px-4 py-2 text-gray-700 hover:bg-gray-100"
+              >
+                <i class="fas fa-cog mr-2"></i>Settings
+              </a>
+              <a
+                href="/logout"
+                class="block px-4 py-2 text-gray-700 hover:bg-gray-100"
+              >
+                <i class="fas fa-sign-out-alt mr-2"></i>Logout
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Dropdown Menu (hidden by default) -->
+    <nav
+      id="dropdown-menu"
+      class="hidden md:hidden bg-gradient-to-b from-blue-800 to-blue-600 text-white shadow-lg mt-20 fixed left-0 right-0 z-40"
+    >
+      <ul class="space-y-2 px-4 py-4">
+        <li class="nav-item">
+          <a
+            href="/admin"
+            class="flex items-center p-3 rounded-lg hover:bg-blue-700"
+          >
+            <i class="fas fa-tachometer-alt w-6 text-center"></i>
+            <span class="ml-3">Dashboard</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a
+            href="/admin/questions/management"
+            class="flex items-center p-3 text-white rounded-lg"
+          >
+            <i class="fas fa-book w-6 text-center"></i>
+            <span class="ml-3 menu-text">Question Management</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a
+            href="/admin/quizzes"
+            class="flex items-center p-3 text-white rounded-lg"
+          >
+            <i class="fas fa-rocket w-6 text-center"></i>
+            <span class="ml-3 menu-text">Quiz Management</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a
+            href="/admin/leaderboard"
+            class="flex items-center p-3 text-white rounded-lg"
+          >
+            <i class="fas fa-trophy w-6 text-center"></i>
+            <span class="ml-3 menu-text">Leaderboard</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a
+            href="/admin/results"
+            class="flex items-center p-3 rounded-lg hover:bg-blue-700"
+          >
+            <i class="fas fa-chart-bar w-6 text-center"></i>
+            <span class="ml-3">Results</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a
+            href="/admin/users"
+            class="flex items-center p-3 rounded-lg hover:bg-blue-700"
+          >
+            <i class="fas fa-users w-6 text-center"></i>
+            <span class="ml-3">User Management</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a
+            href="#"
+            class="flex items-center p-3 rounded-lg hover:bg-blue-700"
+          >
+            <i class="fas fa-cog w-6 text-center"></i>
+            <span class="ml-3">Settings</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a
+            href="/logout"
+            class="flex items-center p-3 rounded-lg hover:bg-blue-700"
+          >
+            <i class="fas fa-sign-out-alt w-6 text-center"></i>
+            <span class="ml-3">Logout</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- Sidebar Navigation -->
+    <div class="sidebar h-[calc(100vh-80px)] mt-0">
+      <div class="py-6">
+        <ul class="space-y-2 px-4">
+          <li class="nav-item">
+            <a
+              href="/admin"
+              class="flex items-center p-3 text-white rounded-lg"
+            >
+              <i class="fas fa-tachometer-alt w-6 text-center"></i>
+              <span class="ml-3 menu-text">Dashboard</span>
+            </a>
+          </li>
+          <li class="nav-item active">
+            <a
+              href="/admin/questions/management"
+              class="flex items-center p-3 text-white rounded-lg"
+            >
+              <i class="fas fa-book w-6 text-center"></i>
+              <span class="ml-3 menu-text">Question Management</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a
+              href="/admin/quizzes"
+              class="flex items-center p-3 text-white rounded-lg"
+            >
+              <i class="fas fa-rocket w-6 text-center"></i>
+              <span class="ml-3 menu-text">Quiz Management</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a
+              href="/admin/leaderboard"
+              class="flex items-center p-3 text-white rounded-lg"
+            >
+              <i class="fas fa-trophy w-6 text-center"></i>
+              <span class="ml-3 menu-text">Leaderboard</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a
+              href="/admin/results"
+              class="flex items-center p-3 text-white rounded-lg"
+            >
+              <i class="fas fa-chart-bar w-6 text-center"></i>
+              <span class="ml-3 menu-text">Results</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a
+              href="/admin/users"
+              class="flex items-center p-3 text-white rounded-lg"
+            >
+              <i class="fas fa-users w-6 text-center"></i>
+              <span class="ml-3 menu-text">User Management</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="flex items-center p-3 text-white rounded-lg">
+              <i class="fas fa-cog w-6 text-center"></i>
+              <span class="ml-3 menu-text">Settings</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a
+              href="/logout"
+              class="flex items-center p-3 text-white rounded-lg"
+            >
+              <i class="fas fa-sign-out-alt w-6 text-center"></i>
+              <span class="ml-3 menu-text">Logout</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content p-6 mt-0">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
             <h1 class="text-3xl font-bold text-gray-800 flex items-center">
                 <i class="fas fa-tasks text-yellow-600 mr-3"></i> Question Review
@@ -163,6 +511,35 @@
             questionCard.querySelector('.selected-tags').value = JSON.stringify(selectedTags);
         }
 
+        // Mobile menu toggle
+        document.getElementById("hamburger-toggle").addEventListener("click", function () {
+          const dropdownMenu = document.getElementById("dropdown-menu");
+          dropdownMenu.classList.toggle("hidden");
+        });
+
+        // User dropdown toggle
+        document.getElementById("user-menu-button").addEventListener("click", function () {
+          const userDropdown = document.getElementById("user-dropdown");
+          userDropdown.classList.toggle("hidden");
+        });
+
+        // Close dropdowns when clicking outside
+        document.addEventListener("click", function (event) {
+          const userMenuButton = document.getElementById("user-menu-button");
+          const userDropdown = document.getElementById("user-dropdown");
+
+          if (!userMenuButton.contains(event.target) && !userDropdown.contains(event.target)) {
+            userDropdown.classList.add("hidden");
+          }
+
+          const hamburgerToggle = document.getElementById("hamburger-toggle");
+          const dropdownMenu = document.getElementById("dropdown-menu");
+
+          if (!hamburgerToggle.contains(event.target) && !dropdownMenu.contains(event.target)) {
+            dropdownMenu.classList.add("hidden");
+          }
+        });
+
         document.addEventListener('DOMContentLoaded', function() {
           // Collapse all questions by default
           document.querySelectorAll('.question-details').forEach(detail => {
@@ -227,61 +604,61 @@
           });
 
           // Update the update button event listener
-document.querySelectorAll('.update-btn').forEach(btn => {
-    btn.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        const questionCard = btn.closest('.question-card');
-        const questionId = questionCard.dataset.questionId;
-        
-        // Add null checks for all form elements
-        const textElement = questionCard.querySelector('.question-text');
-        const option1Element = questionCard.querySelector('.option-1');
-        const option2Element = questionCard.querySelector('.option-2');
-        const option3Element = questionCard.querySelector('.option-3');
-        const option4Element = questionCard.querySelector('.option-4');
-        const correctAnswerElement = questionCard.querySelector('.correct-answer');
-        
-        // Check if elements exist before accessing value
-        if (!textElement || !option1Element || !option2Element || !option3Element || !option4Element || !correctAnswerElement) {
-            showStatus('error', 'Form elements not found');
-            return;
-        }
-        
-        const text = textElement.value;
-        const options = [
-            option1Element.value,
-            option2Element.value,
-            option3Element.value,
-            option4Element.value
-        ];
-        const correctAnswer = correctAnswerElement.value;
-        
-        // Make sure correctAnswer is one of the options
-        if (!options.includes(correctAnswer)) {
-            showStatus('error', 'Correct answer must match one of the options');
-            return;
-        }
-        
-        try {
-            const response = await fetch('/api/questions/review/update', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    question_id: questionId,
-                    action: 'update',
-                    text: text,
-                    options: options,
-                    correct_answer: correctAnswer
-                })
+          document.querySelectorAll('.update-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const questionCard = btn.closest('.question-card');
+                const questionId = questionCard.dataset.questionId;
+                
+                // Add null checks for all form elements
+                const textElement = questionCard.querySelector('.question-text');
+                const option1Element = questionCard.querySelector('.option-1');
+                const option2Element = questionCard.querySelector('.option-2');
+                const option3Element = questionCard.querySelector('.option-3');
+                const option4Element = questionCard.querySelector('.option-4');
+                const correctAnswerElement = questionCard.querySelector('.correct-answer');
+                
+                // Check if elements exist before accessing value
+                if (!textElement || !option1Element || !option2Element || !option3Element || !option4Element || !correctAnswerElement) {
+                    showStatus('error', 'Form elements not found');
+                    return;
+                }
+                
+                const text = textElement.value;
+                const options = [
+                    option1Element.value,
+                    option2Element.value,
+                    option3Element.value,
+                    option4Element.value
+                ];
+                const correctAnswer = correctAnswerElement.value;
+                
+                // Make sure correctAnswer is one of the options
+                if (!options.includes(correctAnswer)) {
+                    showStatus('error', 'Correct answer must match one of the options');
+                    return;
+                }
+                
+                try {
+                    const response = await fetch('/api/questions/review/update', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            question_id: questionId,
+                            action: 'update',
+                            text: text,
+                            options: options,
+                            correct_answer: correctAnswer
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    showStatus(data.success ? 'success' : 'error', data.message || data.error);
+                } catch (error) {
+                    showStatus('error', 'Failed to update question: ' + error.message);
+                }
             });
-            
-            const data = await response.json();
-            showStatus(data.success ? 'success' : 'error', data.message || data.error);
-        } catch (error) {
-            showStatus('error', 'Failed to update question: ' + error.message);
-        }
-    });
-});
+          });
         });
 
         function showStatus(type, message) {
