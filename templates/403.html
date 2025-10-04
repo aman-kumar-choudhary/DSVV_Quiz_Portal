@@ -1,19 +1,44 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forbidden - DSVV Quiz System</title>
+<html>
+  <head>
+    <title>Access Denied - DSVV Quiz System</title>
     <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-    <div class="text-center">
-        <h1 class="text-6xl font-bold text-yellow-600">403</h1>
-        <h2 class="text-2xl font-semibold mt-4">Forbidden</h2>
-        <p class="mt-2 text-gray-600">You don't have permission to access this resource.</p>
-        <a href="/" class="mt-4 inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-            Return to Home
-        </a>
+  </head>
+  <body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="bg-white p-8 rounded-lg shadow-md max-w-md w-full">
+      <div class="text-center">
+        <div class="bg-red-100 text-red-600 rounded-full p-4 inline-block mb-4">
+          <i class="fas fa-ban text-2xl"></i>
+        </div>
+        <h1 class="text-2xl font-bold text-gray-800 mb-2">Access Denied</h1>
+        <p class="text-gray-600 mb-4">
+          You don't have permission to access this resource.
+        </p>
+
+        <div class="bg-gray-50 p-4 rounded-lg mb-4 text-left">
+          <p class="text-sm">
+            <strong>Your Role:</strong> {{ user_role|title }}
+          </p>
+          <p class="text-sm">
+            <strong>Permissions:</strong> {{ user_permissions|join(', ') }}
+          </p>
+        </div>
+
+        <div class="space-y-2">
+          <a
+            href="/admin"
+            class="block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            Return to Dashboard
+          </a>
+          <a
+            href="/logout"
+            class="block bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
+          >
+            Logout
+          </a>
+        </div>
+      </div>
     </div>
-</body>
+  </body>
 </html>

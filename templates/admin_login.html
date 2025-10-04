@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login - DSVV Quiz System</title>
+    <title>Admin Login - DSVV Quiz System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
@@ -11,9 +11,8 @@
     />
     <link
       rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
-
     <style>
       body {
         font-family: "Poppins", sans-serif;
@@ -42,12 +41,44 @@
       .glow-on-hover:hover {
         box-shadow: 0 0 15px rgba(37, 99, 235, 0.3);
       }
-      /* 🔹 Hide default select arrow so only custom one shows */
       select {
         -webkit-appearance: none;
         -moz-appearance: none;
         appearance: none;
         background-image: none;
+      }
+      .role-option {
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+      }
+      .role-option:hover {
+        background-color: #f1f5f9;
+      }
+      .role-option.selected {
+        border-color: #2563eb;
+        background-color: #dbeafe;
+      }
+      .role-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 12px;
+      }
+      .admin-role {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+      }
+      .faculty-role {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+      }
+      .coordinator-role {
+        background: linear-gradient(135deg, #10b981, #059669);
       }
     </style>
   </head>
@@ -67,9 +98,9 @@
         <div
           class="bg-gradient-to-r from-blue-800 to-blue-900 py-5 px-6 text-center"
         >
-          <h1 class="text-2xl font-bold text-white">Welcome Back</h1>
+          <h1 class="text-2xl font-bold text-white">Admin Portal</h1>
           <p class="text-blue-100 text-sm mt-1 opacity-90">
-            Sign in to access your dashboard
+            Select your role and sign in
           </p>
         </div>
 
@@ -99,41 +130,85 @@
           <form method="POST" action="/admin-login" class="space-y-6">
             <!-- Role Selection -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2"
-                >Login</label
+              <label class="block text-sm font-medium text-gray-700 mb-3"
+                >Select Your Role</label
               >
-              <div class="mt-1 relative">
-                <select
-                  name="role"
-                  class="input-focus block w-full pl-3 pr-10 py-2.5 text-base border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 sm:text-sm"
-                >
-                  <option value="admin">Admin</option>
-                </select>
-                <div
-                  class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none"
-                >
-                  <svg
-                    class="h-5 w-5 text-gray-400"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fill-rule="evenodd"
-                      d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                      clip-rule="evenodd"
-                    />
-                  </svg>
+
+              <!-- Admin Role -->
+              <div
+                class="role-option"
+                data-role="admin"
+                onclick="selectRole('admin')"
+              >
+                <div class="flex items-center">
+                  <div class="role-icon admin-role">
+                    <i class="fas fa-crown text-white"></i>
+                  </div>
+                  <div>
+                    <div class="font-semibold text-gray-800">Administrator</div>
+                    <div class="text-sm text-gray-600">
+                      Full system access with user management
+                    </div>
+                    <div class="text-xs text-gray-500 mt-1">
+                      Permissions: Create, Read, Update, Delete, Manage Users
+                    </div>
+                  </div>
                 </div>
               </div>
+
+              <!-- Faculty Role -->
+              <div
+                class="role-option"
+                data-role="faculty"
+                onclick="selectRole('faculty')"
+              >
+                <div class="flex items-center">
+                  <div class="role-icon faculty-role">
+                    <i class="fas fa-chalkboard-teacher text-white"></i>
+                  </div>
+                  <div>
+                    <div class="font-semibold text-gray-800">Faculty</div>
+                    <div class="text-sm text-gray-600">
+                      Content management access
+                    </div>
+                    <div class="text-xs text-gray-500 mt-1">
+                      Permissions: Create, Read, Update
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Coordinator Role -->
+              <div
+                class="role-option"
+                data-role="coordinator"
+                onclick="selectRole('coordinator')"
+              >
+                <div class="flex items-center">
+                  <div class="role-icon coordinator-role">
+                    <i class="fas fa-user-tie text-white"></i>
+                  </div>
+                  <div>
+                    <div class="font-semibold text-gray-800">Coordinator</div>
+                    <div class="text-sm text-gray-600">
+                      View and create content
+                    </div>
+                    <div class="text-xs text-gray-500 mt-1">
+                      Permissions: Create, Read
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <input type="hidden" name="role" id="selected-role" required />
             </div>
 
-            <!-- Scholar ID / Username -->
+            <!-- Username -->
             <div>
               <label
                 for="identifier"
                 class="block text-sm font-medium text-gray-700 mb-2"
-                >Scholar ID / Username</label
+                >Username</label
               >
               <div class="mt-1 relative">
                 <input
@@ -142,23 +217,12 @@
                   name="identifier"
                   required
                   class="input-focus block w-full px-4 py-2.5 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 placeholder-gray-400"
-                  placeholder="Enter your ID/Username"
+                  placeholder="Enter your username"
                 />
                 <div
                   class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"
                 >
-                  <svg
-                    class="h-5 w-5 text-gray-400"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fill-rule="evenodd"
-                      d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                      clip-rule="evenodd"
-                    />
-                  </svg>
+                  <i class="fas fa-user text-gray-400"></i>
                 </div>
               </div>
             </div>
@@ -182,18 +246,7 @@
                 <div
                   class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"
                 >
-                  <svg
-                    class="h-5 w-5 text-gray-400"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fill-rule="evenodd"
-                      d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                      clip-rule="evenodd"
-                    />
-                  </svg>
+                  <i class="fas fa-lock text-gray-400"></i>
                 </div>
               </div>
               <div class="mt-2 text-right">
@@ -213,18 +266,7 @@
                 class="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 glow-on-hover"
               >
                 Sign In
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-5 w-5 ml-2"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fill-rule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z"
-                    clip-rule="evenodd"
-                  />
-                </svg>
+                <i class="fas fa-sign-in-alt ml-2"></i>
               </button>
             </div>
           </form>
@@ -235,17 +277,17 @@
               <div class="w-full border-t border-gray-200"></div>
             </div>
             <div class="relative flex justify-center text-sm">
-              <span class="px-2 bg-white text-gray-500">New to DSVV Quiz?</span>
+              <span class="px-2 bg-white text-gray-500">Student Portal</span>
             </div>
           </div>
 
-          <!-- Sign Up Link -->
+          <!-- Student Login Link -->
           <div class="text-center">
             <a
-              href="/signup"
+              href="/login"
               class="w-full inline-flex justify-center py-2.5 px-4 border border-gray-200 rounded-xl shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
             >
-              Create your account
+              <i class="fas fa-graduation-cap mr-2"></i>Student Login
             </a>
           </div>
         </div>
@@ -253,11 +295,50 @@
 
       <!-- Footer Note -->
       <div class="mt-8 text-center text-sm text-gray-500">
-        <p>© 2023 Dev Sanskriti Vishwavidyalaya. All rights reserved.</p>
-        <p class="mt-1">Version 2.1.0</p>
+        <p>© 2024 Dev Sanskriti Vishwavidyalaya. All rights reserved.</p>
+        <p class="mt-1">Role-Based Access Control System v3.0</p>
       </div>
     </div>
+
     <script>
+      let selectedRole = "";
+
+      function selectRole(role) {
+        selectedRole = role;
+
+        // Remove selected class from all options
+        document.querySelectorAll(".role-option").forEach((option) => {
+          option.classList.remove("selected");
+        });
+
+        // Add selected class to clicked option
+        document
+          .querySelector(`.role-option[data-role="${role}"]`)
+          .classList.add("selected");
+
+        // Update hidden input
+        document.getElementById("selected-role").value = role;
+
+        // Update placeholder based on role
+        const usernameInput = document.getElementById("identifier");
+        if (role === "admin") {
+          usernameInput.placeholder = "Enter admin username";
+        } else if (role === "faculty") {
+          usernameInput.placeholder = "Enter faculty username";
+        } else if (role === "coordinator") {
+          usernameInput.placeholder = "Enter coordinator username";
+        }
+      }
+
+      // Form validation
+      document.querySelector("form").addEventListener("submit", function (e) {
+        if (!selectedRole) {
+          e.preventDefault();
+          alert("Please select your role");
+          return false;
+        }
+      });
+
       // Prevent back-forward cache
       window.onpageshow = function (event) {
         if (event.persisted) {
@@ -272,7 +353,6 @@
 
       // Check if page was restored from bfcache
       if (performance.navigation.type === 2) {
-        // Page was restored from back/forward cache
         window.location.reload();
       }
     </script>

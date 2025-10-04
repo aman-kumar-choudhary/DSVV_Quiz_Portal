@@ -46,6 +46,10 @@ question_bank_collection = db.question_bank
 quizzes_collection = db.quizzes
 quiz_participants_collection = db.quiz_participants
 
+# New collections for role-based system
+admin_users_collection = db.admin_users
+roles_collection = db.roles
+
 # Session configuration
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=2)
 app.config['SESSION_COOKIE_SECURE'] = False
@@ -58,19 +62,56 @@ ADMIN_CREDENTIALS = {"username": "admin.computer", "password": bcrypt.generate_p
 # Question difficulty tags
 QUESTION_TAGS = ['beginner', 'easy', 'intermediate', 'advanced', 'expert']
 
+# Update the ROLES configuration - Add dashboard_access for all roles
+ROLES = {
+    'admin': {
+        'level': 3, 
+        'permissions': ['create', 'read', 'update', 'delete', 'manage_users'],
+        'dashboard_access': ['/admin', '/admin/questions/*', '/admin/quizzes/*', '/admin/results', '/admin/leaderboard', '/admin/users/*', '/admin/users/manage-admins']
+    },
+    'faculty': {
+        'level': 2, 
+        'permissions': ['create', 'read', 'update'],
+        'dashboard_access': ['/admin', '/admin/questions/*', '/admin/quizzes/*', '/admin/results', '/admin/leaderboard']
+    },
+    'coordinator': {
+        'level': 1, 
+        'permissions': ['create', 'read'],
+        'dashboard_access': ['/admin', '/admin/questions/management', '/admin/questions/upload', '/admin/questions/review', '/admin/results']
+    }
+}
+
+def initialize_roles():
+    """Initialize roles in the database"""
+    for role_name, role_data in ROLES.items():
+        if not roles_collection.find_one({'name': role_name}):
+            roles_collection.insert_one({
+                'name': role_name,
+                'level': role_data['level'],
+                'permissions': role_data['permissions'],
+                'created_at': datetime.now()
+            })
+
 def login_required(role="any"):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
+            # Check if user is logged in
             if 'username' not in session and 'scholar_id' not in session:
                 return redirect(url_for('login'))
             
-            if role != "any":
+            # For admin routes, check if user has admin role
+            if role == "admin":
                 user_role = session.get('role')
-                if user_role != role:
+                # Allow all admin roles (admin, faculty, coordinator)
+                if user_role not in ['admin', 'faculty', 'coordinator']:
                     abort(403)
             
-            # Check if user is blocked
+            # For student routes
+            if role == "student" and session.get('role') != 'student':
+                abort(403)
+            
+            # Check if user is blocked (for students)
             if session.get('role') == 'student':
                 user = users_collection.find_one({'scholar_id': session['scholar_id']})
                 if user and user.get('blocked', False):
@@ -82,8 +123,40 @@ def login_required(role="any"):
             response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
             response.headers['Pragma'] = 'no-cache'
             response.headers['Expires'] = '0'
-            response.headers['X-Accel-Expires'] = '0'  # For nginx
+            response.headers['X-Accel-Expires'] = '0'
             return response
+        return decorated_function
+    return decorator 
+
+def permission_required(permission):
+    """Decorator to check if user has specific permission"""
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if session.get('user_type') == 'super_admin':
+                return f(*args, **kwargs)
+            
+            user_permissions = session.get('permissions', [])
+            if permission not in user_permissions:
+                abort(403)
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
+def role_required(min_role_level):
+    """Decorator to check if user has minimum role level"""
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if session.get('user_type') == 'super_admin':
+                return f(*args, **kwargs)
+            
+            user_role = session.get('role')
+            user_level = ROLES.get(user_role, {}).get('level', 0)
+            
+            if user_level < min_role_level:
+                abort(403)
+            return f(*args, **kwargs)
         return decorated_function
     return decorator
 
@@ -98,31 +171,25 @@ def no_cache(f):
     return decorated_function
 
 def validate_input(input_data, expected_fields):
-    """
-    Validate input data against expected fields
-    """
+    """Validate input data against expected fields"""
     for field in expected_fields:
         if field not in input_data:
             return False, f"Missing field: {field}"
-    
-    # Additional validation can be added here
     return True, "Valid"
 
 def sanitize_input(input_data):
-    """
-    Sanitize input data to prevent XSS attacks
-    """
+    """Sanitize input data to prevent XSS attacks"""
     if isinstance(input_data, dict):
         return {k: sanitize_input(v) for k, v in input_data.items()}
     elif isinstance(input_data, list):
         return [sanitize_input(item) for item in input_data]
     elif isinstance(input_data, str):
-        # Basic XSS prevention
         return input_data.replace('<', '&lt;').replace('>', '&gt;')
     else:
         return input_data
 
 def create_indexes():
+    """Create database indexes"""
     users_collection.create_index("scholar_id", unique=True)
     users_collection.create_index("email", unique=True)
     questions_collection.create_index("question_id", unique=True)
@@ -144,8 +211,12 @@ def create_indexes():
     admin_notifications_collection.create_index("read")
     activities_collection.create_index("timestamp")
     quiz_participants_collection.create_index([("quiz_id", 1), ("scholar_id", 1)], unique=True)
+    admin_users_collection.create_index("username", unique=True)
+    admin_users_collection.create_index("role")
+    admin_users_collection.create_index("active")
 
 def cleanup_duplicate_emails():
+    """Clean up duplicate emails in users collection"""
     pipeline = [
         {"$group": {
             "_id": "$email",
@@ -164,18 +235,15 @@ def cleanup_duplicate_emails():
         remove_ids = dup["ids"][1:]
         users_collection.delete_many({"_id": {"$in": remove_ids}})
 
-cleanup_duplicate_emails()
-create_indexes()
-
 def add_blocked_field():
+    """Add blocked field to existing users"""
     users_collection.update_many(
         {"blocked": {"$exists": False}},
         {"$set": {"blocked": False}}
     )
 
-add_blocked_field()
-
 def create_notification(scholar_id, title, message, notification_type="info"):
+    """Create a notification for student"""
     notification = {
         "scholar_id": scholar_id,
         "title": title,
@@ -188,6 +256,7 @@ def create_notification(scholar_id, title, message, notification_type="info"):
     return notification
 
 def create_admin_notification(title, message, notification_type="info", scholar_id=None, course=None, semester=None):
+    """Create a notification for admin users"""
     notification = {
         "title": title,
         "message": message,
@@ -200,7 +269,6 @@ def create_admin_notification(title, message, notification_type="info", scholar_
     }
     admin_notifications_collection.insert_one(notification)
     return notification
-
 
 def get_all_courses():
     """Get all unique courses from the database"""
@@ -223,6 +291,7 @@ def get_all_schools():
     return sorted([school for school in schools if school])
 
 def get_admin_notifications(limit=20):
+    """Get admin notifications"""
     notifications = list(admin_notifications_collection.find().sort("timestamp", -1).limit(limit))
     for notification in notifications:
         notification['_id'] = str(notification['_id'])
@@ -231,12 +300,14 @@ def get_admin_notifications(limit=20):
     return notifications
 
 def mark_admin_notifications_read():
+    """Mark all admin notifications as read"""
     admin_notifications_collection.update_many(
         {"read": False},
         {"$set": {"read": True}}
     )
 
 def get_notifications(scholar_id, limit=10):
+    """Get student notifications"""
     notifications = list(notifications_collection.find(
         {"scholar_id": scholar_id}
     ).sort("timestamp", -1).limit(limit))
@@ -247,6 +318,7 @@ def get_notifications(scholar_id, limit=10):
     return notifications
 
 def get_user_stats(scholar_id):
+    """Get user statistics"""
     quiz_attempts = results_collection.count_documents({"scholar_id": scholar_id, "published": True})
     pipeline = [
         {"$match": {"scholar_id": scholar_id, "published": True}},
@@ -271,6 +343,7 @@ def get_user_stats(scholar_id):
         }
 
 def add_created_at_to_users():
+    """Add created_at field to existing users"""
     users_collection.update_many(
         {"created_at": {"$exists": False}},
         {"$set": {"created_at": datetime.now()}}
@@ -278,14 +351,12 @@ def add_created_at_to_users():
 
 def is_quiz_active(course, semester):
     """Check if there's an active quiz for the given course/semester"""
-    # Check if there's an active quiz for this specific course/semester
     specific_quiz = quizzes_collection.find_one({
         "course": course,
         "semester": semester,
         "status": "active"
     })
     
-    # Check if there's an active quiz with "all" for course and/or semester
     all_course_quiz = quizzes_collection.find_one({
         "course": "all",
         "semester": semester,
@@ -304,15 +375,34 @@ def is_quiz_active(course, semester):
         "status": "active"
     })
     
-    # Return True if any quiz is active (don't check for active questions)
     return (specific_quiz is not None or 
             all_course_quiz is not None or 
             all_semester_quiz is not None or 
             all_course_semester_quiz is not None)
 
+def has_dashboard_access(path):
+    """Check if user has access to the requested path"""
+    if session.get('user_type') == 'super_admin':
+        return True
+    
+    user_role = session.get('role')
+    allowed_paths = session.get('dashboard_access', [])
+    
+    # Check if path matches any allowed pattern
+    for allowed_path in allowed_paths:
+        if allowed_path.endswith('*'):
+            # Wildcard match
+            if path.startswith(allowed_path[:-1]):
+                return True
+        else:
+            # Exact match
+            if path == allowed_path:
+                return True
+    
+    return False
+
 def find_active_quiz(course, semester):
-    """Find an active quiz for the given course/semester, handling 'all' values"""
-    # Try exact match first
+    """Find an active quiz for the given course/semester"""
     quiz = quizzes_collection.find_one({
         "course": course,
         "semester": semester,
@@ -321,7 +411,6 @@ def find_active_quiz(course, semester):
     if quiz:
         return quiz
     
-    # Try course="all" with specific semester
     quiz = quizzes_collection.find_one({
         "course": "all",
         "semester": semester,
@@ -330,7 +419,6 @@ def find_active_quiz(course, semester):
     if quiz:
         return quiz
     
-    # Try specific course with semester="all"
     quiz = quizzes_collection.find_one({
         "course": course,
         "semester": "all",
@@ -339,7 +427,6 @@ def find_active_quiz(course, semester):
     if quiz:
         return quiz
     
-    # Try both "all"
     quiz = quizzes_collection.find_one({
         "course": "all",
         "semester": "all",
@@ -348,6 +435,7 @@ def find_active_quiz(course, semester):
     return quiz
 
 def log_activity(activity_type, description, scholar_id=None, course=None, semester=None):
+    """Log system activity"""
     activity = {
         "type": activity_type,
         "description": description,
@@ -359,22 +447,17 @@ def log_activity(activity_type, description, scholar_id=None, course=None, semes
     activities_collection.insert_one(activity)
     return activity
 
-add_created_at_to_users()
-
 def check_student_enrollment(scholar_id, quiz_id, course, semester):
-    """Check if a student is enrolled in a quiz with proper hierarchical filtering"""
-    # Check if student is specifically enrolled
+    """Check if a student is enrolled in a quiz"""
     quiz = quizzes_collection.find_one({"quiz_id": quiz_id})
     if not quiz:
         return False
     
     participants = quiz.get('participants', [])
     
-    # If student is specifically listed, allow access
     if scholar_id in participants:
         return True
     
-    # If 'all' is in participants, check if student matches the hierarchical filters
     if 'all' in participants:
         return check_student_matches_filters(course, semester, quiz)
     
@@ -382,32 +465,23 @@ def check_student_enrollment(scholar_id, quiz_id, course, semester):
 
 def check_student_matches_filters(student_course, student_semester, quiz):
     """Check if a student matches the quiz's hierarchical filters"""
-    # Check school filter
     if quiz['school'] != 'all':
-        # Get all departments in the school
         departments_in_school = schoolDepartments.get(quiz['school'], [])
-        
-        # Check if student's course belongs to any department in this school
         course_matches_school = False
         for dept in departments_in_school:
             if student_course in departmentCourses.get(dept, []):
                 course_matches_school = True
                 break
-        
         if not course_matches_school:
             return False
     
-    # Check department filter
     if quiz['department'] != 'all':
-        # Check if student's course belongs to this department
         if student_course not in departmentCourses.get(quiz['department'], []):
             return False
     
-    # Check course filter
     if quiz['course'] != 'all' and student_course != quiz['course']:
         return False
     
-    # Check semester filter
     if quiz['semester'] != 'all' and str(student_semester) != quiz['semester']:
         return False
     
@@ -509,9 +583,16 @@ departmentCourses = {
     ],
 }
 
+# Initialize the system
+cleanup_duplicate_emails()
+create_indexes()
+add_blocked_field()
+add_created_at_to_users()
+initialize_roles()
+
 @app.after_request
 def after_request(response):
-    # Prevent back-button caching of sensitive pages
+    """Set cache control headers for sensitive pages"""
     if request.path.startswith('/admin') or request.path.startswith('/student') or request.path == '/quiz':
         response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
         response.headers["Pragma"] = "no-cache"
@@ -520,6 +601,7 @@ def after_request(response):
 
 @app.route('/')
 def index():
+    """Home page"""
     is_logged_in = bool(session.get('scholar_id') or session.get('username'))
     user = None
     if is_logged_in and session.get('role') == 'student':
@@ -529,8 +611,11 @@ def index():
             user.update(user_stats)
     return render_template('index.html', is_logged_in=is_logged_in, user=user)
 
+# ==================== AUTHENTICATION ROUTES ====================
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    """Student login"""
     if request.method == 'POST':
         role = request.form.get('role')
         identifier = request.form['identifier']
@@ -552,115 +637,53 @@ def login():
 
 @app.route('/admin-login', methods=['GET', 'POST'])
 def admin_login():
+    """Admin panel login with role selection"""
     if request.method == 'POST':
         role = request.form.get('role')
         identifier = request.form['identifier']
         password = request.form['password']
-        if role == 'admin':
-            if identifier == ADMIN_CREDENTIALS["username"] and bcrypt.check_password_hash(ADMIN_CREDENTIALS["password"], password):
+        
+        # Check if it's the super admin (original admin)
+        if role == 'admin' and identifier == ADMIN_CREDENTIALS["username"]:
+            if bcrypt.check_password_hash(ADMIN_CREDENTIALS["password"], password):
                 session['role'] = 'admin'
                 session['username'] = identifier
+                session['user_type'] = 'super_admin'
+                session['permissions'] = ROLES['admin']['permissions']
+                session['dashboard_access'] = ROLES['admin']['dashboard_access']
                 return redirect(url_for('admin'))
-        flash('Invalid admin credentials', 'error')
-        return render_template('admin_login.html')
-    return render_template('admin_login.html')
-
-# school_departments = {
-#     "School of Technology, Communication and Management": [
-#         "Department of Computer Sciences",
-#         "Department of Tourism Management",
-#         "Department of Journalism & Mass Communication",
-#         "Department of Animation and Visual Effects",
-#     ],
-#     "School of Biological Sciences and Sustainability": [
-#         "Department of Rural Studies and Sustainability",
-#     ],
-#     "School of Indology": [
-#         "Department of Sanskrit and Vedic Studies",
-#         "Department of Hindi",
-#         "Department of Indian Classical Music",
-#         "Department of History and Indian Culture",
-#     ],
-#     "School of Humanities, Social Sciences and Foundation Courses": [
-#         "Department of English",
-#         "Department of Education",
-#         "Department of Psychology",
-#         "Department of Life Management",
-#         "Department of Scientific Spirituality",
-#         "Department of Oriental Studies, Religious Studies & Philosophy",
-#         "Department of Yogic Sciences and Human Consciousness",
-#     ],
-# }
-
-# department_courses = {
-#     "Department of Computer Sciences": [
-#         "B.Sc. Information Technology (Honors)",
-#         "Bachelor of Computer Application (Honors)",
-#         "Master of Computer Application (Data Science)",
-#     ],
-#     "Department of Tourism Management": [
-#         "B.B.A Tourism & Travel Management (Honors)",
-#         "M.B.A. Tourism & Travel Management",
-#     ],
-#     "Department of Journalism & Mass Communication": [
-#         "B.A. Journalism and Mass Communication (Honors)",
-#         "M. A. Journalism and Mass Communication",
-#         "M. A. Spiritual Journalism",
-#     ],
-#     "Department of Animation and Visual Effects": [
-#         "B.Voc. (Bachelor of Vocation) in 3D Animation and VFX (Honors)",
-#     ],
-#     "Department of Rural Studies and Sustainability": [
-#         "Bachelor of Rural Studies (Honors)",
-#     ],
-#     "Department of English": ["B.A. English (Honors)"],
-#     "Department of Education": ["B.Ed. (Bachelor of Education)"],
-#     "Department of Psychology": [
-#         "B.A. Psychology (Honors)",
-#         "M.A. Counselling Psychology",
-#         "M.Sc. Counselling Psychology",
-#     ],
-#     "Department of Life Management": [
-#         "Life Management - Compulsory Program for PG and UG",
-#     ],
-#     "Department of Scientific Spirituality": [
-#         "M.Sc. Herbal Medicine and Natural Product Chemistry",
-#         "M.Sc. Molecular Physiology and Traditional Health Sciences",
-#         "M.Sc. Indigenous Approaches for Child Development & Generational Dynamics",
-#         "M.Sc. Indian Knowledge Systems",
-#         "M.A. Indian Knowledge Systems",
-#     ],
-#     "Department of Oriental Studies, Religious Studies & Philosophy": [
-#         "M.A. Hindu Studies",
-#         "M.A. Philosophy",
-#     ],
-#     "Department of Yogic Sciences and Human Consciousness": [
-#         "B.Sc. Yogic Science (Honors)",
-#         "M.Sc. Yoga Therapy",
-#         "M.A. Human Consciousness & Yogic Science",
-#         "M.Sc. Human Consciousness & Yogic Science",
-#         "P. G. Diploma Human Consciousness, Yoga & Alternative Therapy",
-#         "Certificate In Yoga And Alternative Therapy",
-#     ],
-#     "Department of Sanskrit and Vedic Studies": [
-#         "B.A. Sanskrit (Honors)",
-#         "M.A. Sanskrit",
-#     ],
-#     "Department of Hindi": ["B.A. Hindi (Honors)", "M.A. Hindi"],
-#     "Department of Indian Classical Music": [
-#         "B.A. Music (Vocal) (Honors)",
-#         "M.A. Music (Vocal)",
-#         "B.A. Music Instrumental Mridang/Tabla (Honors)",
-#         "M.A. Music (Tabla, Pakhaawaj)",
-#     ],
-#     "Department of History and Indian Culture": [
-#         "B.A. History (Honors)",
-#         "M. A. History and Indian Culture",
-#     ],
-# }
+        
+        # Check in admin_users collection for other roles
+        admin_user = admin_users_collection.find_one({
+            "username": identifier, 
+            "role": role,
+            "active": True
+        })
+        
+        if admin_user and bcrypt.check_password_hash(admin_user['password'], password):
+            session['role'] = admin_user['role']
+            session['username'] = admin_user['username']
+            session['user_id'] = str(admin_user['_id'])
+            session['user_type'] = 'admin_user'
+            session['permissions'] = ROLES.get(admin_user['role'], {}).get('permissions', [])
+            session['dashboard_access'] = ROLES.get(admin_user['role'], {}).get('dashboard_access', [])
+            
+            # Update last login
+            admin_users_collection.update_one(
+                {"_id": admin_user['_id']},
+                {"$set": {"last_login": datetime.now()}}
+            )
+            
+            return redirect(url_for('admin'))
+        
+        flash('Invalid credentials for selected role', 'error')
+        return render_template('admin_login.html', roles=ROLES.keys())
+    
+    return render_template('admin_login.html', roles=ROLES.keys())
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
+    """Student registration"""
     if request.method == 'POST':
         try:
             scholar_id = request.form.get('scholar_id', '').strip()
@@ -673,7 +696,7 @@ def signup():
             password = request.form.get('password', '')
             retype_password = request.form.get('retype-password', '')
             
-            # Basic validation - check if required fields are present
+            # Basic validation
             required_fields = {
                 'scholar_id': scholar_id,
                 'name': name,
@@ -691,25 +714,25 @@ def signup():
                 flash(f"Missing required fields: {', '.join(missing_fields)}", "error")
                 return render_template('signup.html', 
                                     school_departments=schoolDepartments,
-                                    department_courses=departmentCourses )
+                                    department_courses=departmentCourses)
             
             if password != retype_password:
                 flash("Passwords do not match", "error")
                 return render_template('signup.html', 
                                     school_departments=schoolDepartments,
-                                    department_courses=departmentCourses )
+                                    department_courses=departmentCourses)
             
             if users_collection.find_one({"scholar_id": scholar_id}):
                 flash("Scholar ID already exists", "error")
                 return render_template('signup.html', 
                                     school_departments=schoolDepartments,
-                                    department_courses=departmentCourses )
+                                    department_courses=departmentCourses)
             
             if users_collection.find_one({"email": email}):
                 flash("Email already registered", "error")
                 return render_template('signup.html', 
                                     school_departments=schoolDepartments,
-                                    department_courses=departmentCourses )
+                                    department_courses=departmentCourses)
             
             hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
             users_collection.insert_one({
@@ -734,7 +757,6 @@ def signup():
                 "start_time": datetime.now()
             })
             
-            # Create welcome notification
             create_notification(
                 scholar_id,
                 "Welcome to Quiz System",
@@ -742,7 +764,6 @@ def signup():
                 "success"
             )
             
-            # Create admin notification for new registration
             create_admin_notification(
                 "New User Registration",
                 f"{name} ({scholar_id}) from {course} has registered in the system",
@@ -750,7 +771,6 @@ def signup():
                 scholar_id
             )
             
-            # Log activity
             log_activity(
                 "user_registered",
                 f"New user registered: {name} ({scholar_id}) - {course}",
@@ -764,37 +784,182 @@ def signup():
             flash("An error occurred during registration. Please try again.", "error")
             return render_template('signup.html', 
                          school_departments=schoolDepartments,
-                         department_courses=departmentCourses )
+                         department_courses=departmentCourses)
     
-    # For GET request, pass the school and department data to the template
     return render_template('signup.html', 
                          school_departments=schoolDepartments,
-                         department_courses=departmentCourses )
+                         department_courses=departmentCourses)
+
+
+# ==================== ADMIN USER MANAGEMENT ROUTES ====================
+
+@app.route('/admin/users/manage-admins')
+@login_required(role='admin')
+@role_required(3)  # Only admin level 3 (super admin) can manage admin users
+def manage_admin_users():
+    """Manage admin users page"""
+    admin_users = list(admin_users_collection.find({}))
+    return render_template('admin_manage_users.html', 
+                         admin_users=admin_users, 
+                         roles=ROLES.keys())
+
+@app.route('/admin/users/manage-admins-data')
+@login_required(role='admin')
+@role_required(3)
+def manage_admin_users_data():
+    """Serve admin users data for the management page"""
+    try:
+        admin_users = list(admin_users_collection.find({}, {'password': 0}))  # Exclude password field
+        
+        # Convert ObjectId to string for JSON serialization
+        for user in admin_users:
+            user['_id'] = str(user['_id'])
+            if 'created_at' in user and user['created_at']:
+                user['created_at'] = user['created_at'].isoformat()
+            if 'last_login' in user and user['last_login']:
+                user['last_login'] = user['last_login'].isoformat()
+        
+        return jsonify({
+            "success": True,
+            "admin_users": admin_users
+        })
+    
+    except Exception as e:
+        print(f"Error in manage_admin_users_data: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/admin-users/create', methods=['POST'])
+@login_required(role='admin')
+@role_required(3)
+def create_admin_user():
+    """Create a new admin user"""
+    try:
+        data = request.json
+        username = data.get('username')
+        password = data.get('password')
+        role = data.get('role')
+        name = data.get('name')
+        email = data.get('email')
+        
+        if not all([username, password, role, name]):
+            return jsonify({"error": "All fields are required"}), 400
+        
+        if role not in ROLES:
+            return jsonify({"error": "Invalid role"}), 400
+        
+        # Check if username already exists
+        if admin_users_collection.find_one({"username": username}):
+            return jsonify({"error": "Username already exists"}), 400
+        
+        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+        
+        admin_user = {
+            "username": username,
+            "password": hashed_password,
+            "role": role,
+            "name": name,
+            "email": email,
+            "active": True,
+            "created_by": session.get('username', 'system'),
+            "created_at": datetime.now(),
+            "last_login": None
+        }
+        
+        admin_users_collection.insert_one(admin_user)
+        
+        log_activity(
+            "admin_user_created",
+            f"Created {role} user: {name} ({username})",
+            scholar_id=None
+        )
+        
+        return jsonify({"success": True, "message": "Admin user created successfully"})
+    
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/admin-users/update', methods=['POST'])
+@login_required(role='admin')
+@role_required(3)
+def update_admin_user():
+    """Update admin user"""
+    try:
+        data = request.json
+        user_id = data.get('user_id')
+        updates = {}
+        
+        if 'password' in data and data['password']:
+            updates['password'] = bcrypt.generate_password_hash(data['password']).decode('utf-8')
+        
+        if 'role' in data:
+            updates['role'] = data['role']
+        
+        if 'name' in data:
+            updates['name'] = data['name']
+        
+        if 'email' in data:
+            updates['email'] = data['email']
+        
+        if 'active' in data:
+            updates['active'] = data['active']
+        
+        admin_users_collection.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$set": updates}
+        )
+        
+        return jsonify({"success": True, "message": "User updated successfully"})
+    
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/admin-users/delete', methods=['POST'])
+@login_required(role='admin')
+@role_required(3)
+def delete_admin_user():
+    """Delete admin user"""
+    try:
+        user_id = request.json.get('user_id')
+        admin_users_collection.delete_one({"_id": ObjectId(user_id)})
+        
+        log_activity(
+            "admin_user_deleted",
+            f"Deleted admin user with ID: {user_id}",
+            scholar_id=None
+        )
+        
+        return jsonify({"success": True, "message": "User deleted successfully"})
+    
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# ==================== QUIZ ROUTES (Updated with permissions) ====================
 
 @app.route('/quiz')
 @login_required(role='student')
 def quiz():
+    """Quiz page for students"""
     if 'questions' not in session:
         return redirect(url_for('student_dashboard'))
-    
     return render_template('quiz.html')
 
 @app.route('/api/get_questions', methods=['GET'])
 @login_required(role='student')
 def get_questions():
+    """Get questions for student quiz"""
     if 'questions' not in session:
         return jsonify({"error": "No questions available"}), 400
-    
     return jsonify(session['questions'])
 
 @app.route('/api/students/filter', methods=['POST'])
 @login_required(role='admin')
+@permission_required('read')
 def filter_students():
+    """Filter students - Requires read permission"""
     try:
         filters = request.json
         query = {}
         
-        # Build query based on filters
         for key, value in filters.items():
             if value and value != "all":
                 query[key] = value
@@ -804,6 +969,627 @@ def filter_students():
     
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+# ==================== ADMIN DASHBOARD ROUTES (Updated with permissions) ====================
+
+@app.route('/admin')
+def admin():
+    """Admin dashboard - Accessible to all admin roles"""
+    # Get accurate stats
+    total_students = users_collection.count_documents({})
+    total_questions = question_bank_collection.count_documents({})
+    total_quizzes = results_collection.count_documents({"published": True})
+    
+    # Calculate average score
+    pipeline = [
+        {"$match": {"published": True}},
+        {"$group": {
+            "_id": None,
+            "avg_score": {"$avg": {"$multiply": [{"$divide": ["$score", "$total"]}, 100]}}
+        }}
+    ]
+    
+    avg_score_result = list(results_collection.aggregate(pipeline))
+    average_score = avg_score_result[0]['avg_score'] if avg_score_result else 0
+    
+    # Get active quizzes
+    active_quizzes = []
+    quizzes = quizzes_collection.find({"status": "active"})
+    for quiz in quizzes:
+        active_quizzes.append({
+            "title": quiz.get('title', 'Untitled Quiz'),
+            "course": quiz.get('course', 'N/A'),
+            "semester": quiz.get('semester', 'N/A'),
+            "duration": quiz.get('duration', 0),
+            "started_at": quiz.get('started_at', datetime.now())
+        })
+    
+    # Get leaderboard - but limit based on role
+    pipeline = [
+        {"$match": {"published": True}},
+        {"$sort": {"score": -1, "completion_time": 1, "timestamp": 1}},
+        {"$limit": 10},
+        {"$lookup": {
+            "from": "users",
+            "localField": "scholar_id",
+            "foreignField": "scholar_id",
+            "as": "user_info"
+        }},
+        {"$unwind": "$user_info"},
+        {"$project": {
+            "scholar_id": 1,
+            "user_name": "$user_info.name",
+            "course": 1,
+            "semester": 1,
+            "score": 1,
+            "total": 1,
+            "timestamp": 1,
+            "completion_time": 1,
+            "percentage": {"$multiply": [{"$divide": ["$score", "$total"]}, 100]}
+        }}
+    ]
+    
+    leaderboard = list(results_collection.aggregate(pipeline))
+    
+    # Format dates in leaderboard
+    for item in leaderboard:
+        if 'timestamp' in item and isinstance(item['timestamp'], datetime):
+            item['formatted_date'] = item['timestamp'].strftime('%d/%m/%y')
+    
+    # Get recent feedback and activities
+    recent_feedback = list(feedback_collection.find({}, {'_id': 0}).sort('timestamp', -1).limit(5))
+    recent_activities = list(activities_collection.find({}, {'_id': 0}).sort('timestamp', -1).limit(10))
+    
+    stats = {
+        'total_students': total_students,
+        'total_questions': total_questions,
+        'total_quizzes': total_quizzes,
+        'average_score': round(average_score, 2),
+        'leaderboard': leaderboard,
+        'recent_feedback': recent_feedback,
+        'recent_activities': recent_activities,
+        'active_quizzes': active_quizzes
+    }
+    
+    return render_template('admin.html', stats=stats)
+
+# ==================== QUESTION MANAGEMENT ROUTES (Updated with permissions) ====================
+
+@app.route('/admin/questions/management')
+@login_required(role='admin')
+@role_required(2)  # Faculty level (2) and above can access
+def admin_questions_management():
+    """Question management main page"""
+    pending_count = question_review_collection.count_documents({})
+    bank_count = question_bank_collection.count_documents({})
+    
+    return render_template('admin_questions_main.html', 
+                         pending_count=pending_count,
+                         bank_count=bank_count)
+
+@app.route('/admin/questions/upload', methods=['GET', 'POST'])
+@login_required(role='admin')
+@permission_required('create')  # Requires create permission
+def admin_question_upload():
+    """Upload questions - Requires create permission"""
+    if request.method == 'POST':
+        try:
+            if 'json_file' in request.files and request.files['json_file'].filename != '':
+                file = request.files['json_file']
+                if file.filename.endswith('.json'):
+                    data = json.load(file)
+                    for question_data in data:
+                        question_id = str(uuid.uuid4())
+                        question = {
+                            "question_id": question_id,
+                            "text": question_data.get('question'),
+                            "options": question_data.get('options', []),
+                            "correct_answer": question_data.get('correct_answer'),
+                            "created_at": datetime.now(),
+                            "status": "pending_review"
+                        }
+                        question_review_collection.insert_one(question)
+                    return jsonify({"success": True, "message": f"{len(data)} questions uploaded for review"})
+            
+            elif 'csv_file' in request.files and request.files['csv_file'].filename != '':
+                file = request.files['csv_file']
+                if file.filename.endswith('.csv'):
+                    df = pd.read_csv(file)
+                    for _, row in df.iterrows():
+                        question_id = str(uuid.uuid4())
+                        question = {
+                            "question_id": question_id,
+                            "text": row['question'],
+                            "options": [row['option1'], row['option2'], row['option3'], row['option4']],
+                            "correct_answer": row['correct_answer'],
+                            "created_at": datetime.now(),
+                            "status": "pending_review"
+                        }
+                        question_review_collection.insert_one(question)
+                    return jsonify({"success": True, "message": f"{len(df)} questions uploaded for review"})
+            
+            else:
+                question_text = request.form.get('question_text')
+                options = [
+                    request.form.get('option1'),
+                    request.form.get('option2'),
+                    request.form.get('option3'),
+                    request.form.get('option4')
+                ]
+                correct_answer_index = request.form.get('correct_answer')
+                
+                if not all([question_text, options[0], options[1], options[2], options[3], correct_answer_index]):
+                    return jsonify({"error": "All fields are required"}), 400
+                
+                correct_answer = options[int(correct_answer_index) - 1] if correct_answer_index.isdigit() else correct_answer_index
+                
+                if correct_answer not in options:
+                    return jsonify({"error": "Correct answer must be one of the options"}), 400
+                
+                question_id = str(uuid.uuid4())
+                question = {
+                    "question_id": question_id,
+                    "text": question_text,
+                    "options": options,
+                    "correct_answer": correct_answer,
+                    "created_at": datetime.now(),
+                    "status": "pending_review"
+                }
+                question_review_collection.insert_one(question)
+                return jsonify({"success": True, "message": "Question added for review"})
+                
+        except Exception as e:
+            return jsonify({"error": str(e)}), 400
+    
+    return render_template('admin_question_upload.html')
+
+@app.route('/admin/questions/review')
+@login_required(role='admin')
+@role_required(2)  # Faculty level and above
+def admin_question_review():
+    """Question review page"""
+    questions = list(question_review_collection.find({}))
+    return render_template('admin_question_review.html', questions=questions, tags=QUESTION_TAGS)
+
+@app.route('/api/questions/review/update', methods=['POST'])
+@login_required(role='admin')
+@permission_required('update')  # Requires update permission
+def update_review_question():
+    """Update question in review"""
+    data = request.json
+    question_id = data.get('question_id')
+    action = data.get('action')
+    
+    if not question_id or not action:
+        return jsonify({"error": "Question ID and action are required"}), 400
+    
+    question = question_review_collection.find_one({"question_id": question_id})
+    if not question:
+        return jsonify({"error": "Question not found"}), 404
+    
+    if action == 'approve':
+        question_bank_data = {
+            "question_id": question['question_id'],
+            "text": question['text'],
+            "options": question['options'],
+            "correct_answer": question['correct_answer'],
+            "tags": data.get('tags', []),
+            "difficulty": data.get('difficulty', 'intermediate'),
+            "created_at": question['created_at'],
+            "approved_at": datetime.now(),
+            "approved_by": session['username']
+        }
+        question_bank_collection.insert_one(question_bank_data)
+        question_review_collection.delete_one({"question_id": question_id})
+        return jsonify({"success": True, "message": "Question approved and moved to question bank"})
+    
+    elif action == 'reject':
+        question_review_collection.delete_one({"question_id": question_id})
+        return jsonify({"success": True, "message": "Question rejected and deleted"})
+    
+    elif action == 'update':
+        update_data = {
+            "text": data.get('text', question['text']),
+            "options": data.get('options', question['options']),
+            "correct_answer": data.get('correct_answer', question['correct_answer'])
+        }
+        question_review_collection.update_one(
+            {"question_id": question_id},
+            {"$set": update_data}
+        )
+        return jsonify({"success": True, "message": "Question updated"})
+    
+    return jsonify({"error": "Invalid action"}), 400
+
+@app.route('/admin/questions/bank')
+@login_required(role='admin')
+@permission_required('read')  # Requires read permission
+def admin_question_bank():
+    """Question bank page"""
+    tag_filter = request.args.get('tag', '')
+    difficulty_filter = request.args.get('difficulty', '')
+    
+    query = {}
+    if tag_filter:
+        query['tags'] = tag_filter
+    if difficulty_filter:
+        query['difficulty'] = difficulty_filter
+    
+    questions = list(question_bank_collection.find(query))
+    return render_template('admin_question_bank.html', questions=questions, tags=QUESTION_TAGS)
+
+@app.route('/api/questions/bank/update', methods=['POST'])
+@login_required(role='admin')
+@permission_required('update')  # Requires update permission
+def update_question_bank():
+    """Update question in bank"""
+    data = request.json
+    question_id = data.get('question_id')
+    action = data.get('action')
+    
+    if not question_id or not action:
+        return jsonify({"error": "Question ID and action are required"}), 400
+    
+    if action == 'update':
+        update_data = {
+            "text": data.get('text'),
+            "options": data.get('options'),
+            "correct_answer": data.get('correct_answer'),
+            "tags": data.get('tags', []),
+            "difficulty": data.get('difficulty', 'intermediate')
+        }
+        update_data = {k: v for k, v in update_data.items() if v is not None}
+        
+        question_bank_collection.update_one(
+            {"question_id": question_id},
+            {"$set": update_data}
+        )
+        return jsonify({"success": True, "message": "Question updated"})
+    
+    elif action == 'delete':
+        question_bank_collection.delete_one({"question_id": question_id})
+        return jsonify({"success": True, "message": "Question deleted"})
+    
+    return jsonify({"error": "Invalid action"}), 400
+
+# ==================== QUIZ MANAGEMENT ROUTES (Updated with permissions) ====================
+
+@app.route('/admin/quizzes')
+@login_required(role='admin')
+@permission_required('read')  # Requires read permission
+def admin_quizzes():
+    """Quiz management page"""
+    quizzes = list(quizzes_collection.find({}).sort('created_at', -1))
+    return render_template('admin_quizzes.html', quizzes=quizzes)
+
+@app.route('/admin/quizzes/list')
+@login_required(role='admin')
+@permission_required('read')
+def list_quizzes():
+    """List quizzes API"""
+    quizzes = list(quizzes_collection.find({}))
+    for quiz in quizzes:
+        quiz['_id'] = str(quiz['_id'])
+    return jsonify({"quizzes": quizzes})
+
+@app.route('/admin/quizzes/create', methods=['POST'])
+@login_required(role='admin')
+@permission_required('create')  # Requires create permission
+def admin_create_quiz():
+    """Create quiz"""
+    try:
+        data = request.get_json()
+        
+        required_fields = ['quiz_title', 'school', 'department', 'course', 'semester', 'duration', 'pass_percentage']
+        for field in required_fields:
+            if field not in data or not data[field]:
+                return jsonify({"error": f"Missing required field: {field}"}), 400
+        
+        quiz_id = str(uuid.uuid4())
+        quiz = {
+            "quiz_id": quiz_id,
+            "title": data['quiz_title'],
+            "school": data['school'],
+            "department": data['department'],
+            "course": data['course'],
+            "semester": data['semester'],
+            "duration": int(data['duration']),
+            "pass_percentage": int(data['pass_percentage']),
+            "status": "draft",
+            "created_at": datetime.now(),
+            "questions": [],
+            "participants": []
+        }
+        
+        quizzes_collection.insert_one(quiz)
+        
+        return jsonify({"success": True, "message": "Quiz created successfully", "quiz_id": quiz_id})
+    
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/admin/quizzes/manage/<quiz_id>')
+@login_required(role='admin')
+@permission_required('update')  # Requires update permission
+def manage_quiz(quiz_id):
+    """Manage specific quiz"""
+    quiz = quizzes_collection.find_one({"quiz_id": quiz_id})
+    if not quiz:
+        return redirect(url_for('admin_quizzes'))
+    
+    if '_id' in quiz:
+        quiz['_id'] = str(quiz['_id'])
+    
+    questions = list(question_bank_collection.find({}))
+    
+    for question in questions:
+        if '_id' in question:
+            question['_id'] = str(question['_id'])
+        if 'text' not in question or not question['text']:
+            question['text'] = 'No question text available'
+        if 'tags' not in question:
+            question['tags'] = []
+        if 'difficulty' not in question:
+            question['difficulty'] = 'Not set'
+    
+    query = build_student_query(quiz)
+    students = list(users_collection.find(query, {'_id': 0, 'scholar_id': 1, 'name': 1, 'course': 1, 'semester': 1}))
+    
+    return render_template('admin_manage_quiz.html', 
+                         quiz=quiz, 
+                         questions=questions, 
+                         students=students,
+                         tags=QUESTION_TAGS)
+
+@app.route('/api/quizzes/<quiz_id>', methods=['DELETE'])
+@login_required(role='admin')
+@permission_required('delete')  # Requires delete permission
+def delete_quiz(quiz_id):
+    """Delete quiz"""
+    try:
+        result = quizzes_collection.delete_one({"quiz_id": quiz_id})
+        if result.deleted_count > 0:
+            quiz_participants_collection.delete_many({"quiz_id": quiz_id})
+            return jsonify({"success": True, "message": "Quiz deleted successfully"})
+        else:
+            return jsonify({"error": "Quiz not found"}), 404
+    
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+# ==================== RESULTS MANAGEMENT ROUTES (Updated with permissions) ====================
+
+@app.route('/admin/results')
+@login_required(role='admin')
+@permission_required('read')  # Requires read permission
+def admin_results():
+    """Results management page"""
+    school = request.args.get('school', '')
+    department = request.args.get('department', '')
+    course = request.args.get('course', '')
+    semester = request.args.get('semester', '')
+    
+    query = {}
+    if school and school != 'All':
+        query['school'] = school
+    if department and department != 'All':
+        query['department'] = department
+    if course and course != 'All':
+        query['course'] = course
+    if semester and semester != 'All':
+        query['semester'] = semester
+    
+    results = list(results_collection.find(query, {'_id': 0}).sort('timestamp', -1))
+    
+    for result in results:
+        user = users_collection.find_one({'scholar_id': result['scholar_id']}, {'_id': 0, 'name': 1})
+        result['user_name'] = user['name'] if user else 'Unknown'
+    
+    top_students = []
+    if course and course != 'All':
+        pipeline = [
+            {"$match": {"course": course, "published": True}},
+            {"$sort": {"score": -1, "completion_time": 1, "timestamp": 1}},
+            {"$limit": 5},
+            {"$lookup": {
+                "from": "users",
+                "localField": "scholar_id",
+                "foreignField": "scholar_id",
+                "as": "user_info"
+            }},
+            {"$unwind": "$user_info"},
+            {"$project": {
+                "scholar_id": 1,
+                "user_name": "$user_info.name",
+                "school": "$user_info.school",
+                "department": "$user_info.department",
+                "course": 1,
+                "semester": 1,
+                "score": 1,
+                "total": 1,
+                "timestamp": 1,
+                "completion_time": 1,
+                "percentage": {"$multiply": [{"$divide": ["$score", "$total"]}, 100]}
+            }}
+        ]
+        
+        if semester and semester != 'All':
+            pipeline[0]["$match"]["semester"] = semester
+        
+        top_students = list(results_collection.aggregate(pipeline))
+    
+    stats = {
+        'total_quizzes': results_collection.count_documents(query),
+        'total_students': len(set([r['scholar_id'] for r in results])),
+        'average_score': results_collection.aggregate([
+            {"$match": query},
+            {"$group": {"_id": None, "avg_score": {"$avg": "$score"}}}
+        ]).next().get('avg_score', 0) if results_collection.count_documents(query) > 0 else 0
+    }
+    
+    return render_template('admin_results.html', 
+                         results=results, 
+                         stats=stats, 
+                         schools=get_all_schools(),
+                         departments=get_all_departments(),
+                         courses=get_all_courses(),
+                         semesters=get_all_semesters(),
+                         selected_school=school,
+                         selected_department=department,
+                         selected_course=course, 
+                         selected_semester=semester,
+                         top_students=top_students)
+
+@app.route('/admin/users')
+@login_required(role='admin')
+@role_required(3)  # Only admin level 3 can manage users
+def admin_users():
+    """User management page - Only for super admin"""
+    school = request.args.get('school', '')
+    department = request.args.get('department', '')
+    course = request.args.get('course', '')
+    semester = request.args.get('semester', '')
+    
+    query = {}
+    if school and school != 'All':
+        query['school'] = school
+    if department and department != 'All':
+        query['department'] = department
+    if course and course != 'All':
+        query['course'] = course
+    if semester and semester != 'All':
+        query['semester'] = semester
+    
+    students = list(users_collection.find(query, {'_id': 0, 'password': 0}).sort('scholar_id', 1))
+    
+    stats = {
+        'total_students': users_collection.count_documents(query),
+    }
+    
+    return render_template('admin_users.html', 
+                           students=students, 
+                           stats=stats, 
+                           schools=get_all_schools(),
+                           departments=get_all_departments(),
+                           courses=get_all_courses(),
+                           semesters=get_all_semesters(),
+                           selected_school=school,
+                           selected_department=department,
+                           selected_course=course, 
+                           selected_semester=semester)
+
+# ==================== STUDENT ROUTES (No changes needed) ====================
+
+@app.route('/student_dashboard', methods=['GET', 'POST'])
+@login_required(role='student')
+def student_dashboard():
+    """Student dashboard"""
+    user = users_collection.find_one({'scholar_id': session['scholar_id']}, {'_id': 0})
+    if not user:
+        session.clear()
+        return redirect(url_for('login'))
+    
+    user_stats = get_user_stats(session['scholar_id'])
+    user.update(user_stats)
+    
+    quiz_active = is_quiz_active(user['course'], user['semester'])
+    user['quiz_active'] = quiz_active
+    
+    if user.get('blocked', False):
+        flash("You have been blocked from participating in quizzes. Contact admin.", "error")
+        return render_template('student_dashboard.html', user=user)
+    
+    if request.method == 'POST':
+        try:
+            submitted_course = request.form['course'].strip()
+            submitted_semester = request.form['semester'].strip()
+            
+            if user['course'].strip() != submitted_course or str(user['semester']).strip() != submitted_semester:
+                flash("Invalid course or semester selection. Please select your registered course and semester.", "error")
+                return render_template('student_dashboard.html', user=user)
+            
+            active_quiz = find_active_quiz(submitted_course, submitted_semester)
+            
+            if not active_quiz:
+                flash("No active quiz for your course and semester at the moment.", "error")
+                return render_template('student_dashboard.html', user=user)
+            
+            is_enrolled = check_student_enrollment(
+                session['scholar_id'], 
+                active_quiz['quiz_id'],
+                user['course'],
+                user['semester']
+            )
+            
+            if not is_enrolled:
+                flash("You are not enrolled in this quiz. Please contact your instructor.", "error")
+                return render_template('student_dashboard.html', user=user)
+            
+            session['quiz_id'] = active_quiz['quiz_id']
+            session['course'] = submitted_course
+            session['semester'] = submitted_semester
+            
+            return redirect(url_for('instructions'))
+            
+        except Exception as e:
+            print(f"Error in student_dashboard: {str(e)}")
+            flash("An error occurred. Please try again.", "error")
+            return render_template('student_dashboard.html', user=user)
+    
+    return render_template('student_dashboard.html', user=user)
+
+# ==================== UTILITY FUNCTIONS ====================
+
+def build_student_query(quiz):
+    """Build student query based on quiz filters"""
+    query = {}
+    
+    if quiz.get('school') != 'all':
+        school_name = quiz.get('school')
+        departments_in_school = schoolDepartments.get(school_name, [])
+        
+        if quiz.get('department') != 'all' and quiz.get('department') in departments_in_school:
+            departments_to_filter = [quiz.get('department')]
+        else:
+            departments_to_filter = departments_in_school
+        
+        courses_to_filter = []
+        for dept in departments_to_filter:
+            courses_to_filter.extend(departmentCourses.get(dept, []))
+        
+        if quiz.get('course') != 'all' and quiz.get('course') in courses_to_filter:
+            query['course'] = quiz.get('course')
+        else:
+            query['course'] = {'$in': courses_to_filter}
+        
+        if quiz.get('semester') != 'all':
+            query['semester'] = quiz.get('semester')
+    
+    else:
+        if quiz.get('department') != 'all':
+            dept_name = quiz.get('department')
+            courses_to_filter = departmentCourses.get(dept_name, [])
+            
+            if quiz.get('course') != 'all' and quiz.get('course') in courses_to_filter:
+                query['course'] = quiz.get('course')
+            else:
+                query['course'] = {'$in': courses_to_filter}
+            
+            if quiz.get('semester') != 'all':
+                query['semester'] = quiz.get('semester')
+        
+        else:
+            if quiz.get('course') != 'all':
+                query['course'] = quiz.get('course')
+                
+                if quiz.get('semester') != 'all':
+                    query['semester'] = quiz.get('semester')
+            else:
+                if quiz.get('semester') != 'all':
+                    query['semester'] = quiz.get('semester')
+    
+    return query
 
 @app.route('/api/submit_answer', methods=['POST'])
 @login_required(role='student')
@@ -1289,86 +2075,7 @@ def view_score():
         )
     return redirect(url_for('index'))
 
-@app.route('/admin')
-@login_required(role='admin')
-def admin():
-    # Get accurate stats
-    total_students = users_collection.count_documents({})
-    total_questions = question_bank_collection.count_documents({})
-    total_quizzes = results_collection.count_documents({"published": True})
-    
-    # Calculate average score
-    pipeline = [
-        {"$match": {"published": True}},
-        {"$group": {
-            "_id": None,
-            "avg_score": {"$avg": {"$multiply": [{"$divide": ["$score", "$total"]}, 100]}}
-        }}
-    ]
-    
-    avg_score_result = list(results_collection.aggregate(pipeline))
-    average_score = avg_score_result[0]['avg_score'] if avg_score_result else 0
-    
-    # Get active quizzes from the quizzes collection
-    active_quizzes = []
-    quizzes = quizzes_collection.find({"status": "active"})
-    for quiz in quizzes:
-        active_quizzes.append({
-            "title": quiz.get('title', 'Untitled Quiz'),
-            "course": quiz.get('course', 'N/A'),
-            "semester": quiz.get('semester', 'N/A'),
-            "duration": quiz.get('duration', 0),  # Convert seconds to minutes
-            "started_at": quiz.get('started_at', datetime.now())
-        })
-    
-    # Get leaderboard
-    pipeline = [
-        {"$match": {"published": True}},
-        {"$sort": {"score": -1, "completion_time": 1, "timestamp": 1}},
-        {"$limit": 10},
-        {"$lookup": {
-            "from": "users",
-            "localField": "scholar_id",
-            "foreignField": "scholar_id",
-            "as": "user_info"
-        }},
-        {"$unwind": "$user_info"},
-        {"$project": {
-            "scholar_id": 1,
-            "user_name": "$user_info.name",
-            "course": 1,
-            "semester": 1,
-            "score": 1,
-            "total": 1,
-            "timestamp": 1,
-            "completion_time": 1,
-            "percentage": {"$multiply": [{"$divide": ["$score", "$total"]}, 100]}
-        }}
-    ]
-    
-    leaderboard = list(results_collection.aggregate(pipeline))
-    
-    # Format dates in leaderboard as DD/MM/YY
-    for item in leaderboard:
-        if 'timestamp' in item and isinstance(item['timestamp'], datetime):
-            item['formatted_date'] = item['timestamp'].strftime('%d/%m/%y')
-    
-    # Get recent feedback and activities
-    recent_feedback = list(feedback_collection.find({}, {'_id': 0}).sort('timestamp', -1).limit(5))
-    recent_activities = list(activities_collection.find({}, {'_id': 0}).sort('timestamp', -1).limit(10))
-    
-    stats = {
-        'total_students': total_students,
-        'total_questions': total_questions,
-        'total_quizzes': total_quizzes,
-        'average_score': round(average_score, 2),
-        'leaderboard': leaderboard,
-        'recent_feedback': recent_feedback,
-        'recent_activities': recent_activities,
-        'active_quizzes': active_quizzes
-    }
-    
-    return render_template('admin.html', stats=stats)
+
 
 @app.route('/api/daily_leaderboard')
 def daily_leaderboard_api():
@@ -1446,150 +2153,10 @@ def daily_leaderboard_api():
         print(f"Error in daily_leaderboard_api: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
 
-@app.route('/admin/results')
-@login_required(role='admin')
-def admin_results():
-    school = request.args.get('school', '')
-    department = request.args.get('department', '')
-    course = request.args.get('course', '')
-    semester = request.args.get('semester', '')
-    
-    query = {}
-    if school and school != 'All':
-        query['school'] = school
-    if department and department != 'All':
-        query['department'] = department
-    if course and course != 'All':
-        query['course'] = course
-    if semester and semester != 'All':
-        query['semester'] = semester
-    
-    results = list(results_collection.find(query, {'_id': 0}).sort('timestamp', -1))
-    
-    for result in results:
-        user = users_collection.find_one({'scholar_id': result['scholar_id']}, {'_id': 0, 'name': 1})
-        result['user_name'] = user['name'] if user else 'Unknown'
-    
-    top_students = []
-    if course and course != 'All':
-        pipeline = [
-            {"$match": {"course": course, "published": True}},
-            {"$sort": {"score": -1, "completion_time": 1, "timestamp": 1}},
-            {"$limit": 5},
-            {"$lookup": {
-                "from": "users",
-                "localField": "scholar_id",
-                "foreignField": "scholar_id",
-                "as": "user_info"
-            }},
-            {"$unwind": "$user_info"},
-            {"$project": {
-                "scholar_id": 1,
-                "user_name": "$user_info.name",
-                "school": "$user_info.school",
-                "department": "$user_info.department",
-                "course": 1,
-                "semester": 1,
-                "score": 1,
-                "total": 1,
-                "timestamp": 1,
-                "completion_time": 1,
-                "percentage": {"$multiply": [{"$divide": ["$score", "$total"]}, 100]}
-            }}
-        ]
-        
-        if semester and semester != 'All':
-            pipeline[0]["$match"]["semester"] = semester
-        
-        top_students = list(results_collection.aggregate(pipeline))
-    
-    stats = {
-        'total_quizzes': results_collection.count_documents(query),
-        'total_students': len(set([r['scholar_id'] for r in results])),
-        'average_score': results_collection.aggregate([
-            {"$match": query},
-            {"$group": {"_id": None, "avg_score": {"$avg": "$score"}}}
-        ]).next().get('avg_score', 0) if results_collection.count_documents(query) > 0 else 0
-    }
-    
-    return render_template('admin_results.html', 
-                         results=results, 
-                         stats=stats, 
-                         schools=get_all_schools(),
-                         departments=get_all_departments(),
-                         courses=get_all_courses(),
-                         semesters=get_all_semesters(),
-                         selected_school=school,
-                         selected_department=department,
-                         selected_course=course, 
-                         selected_semester=semester,
-                         top_students=top_students)
 
 
-@app.route('/student_dashboard', methods=['GET', 'POST'])
-@login_required(role='student')
-def student_dashboard():
-    user = users_collection.find_one({'scholar_id': session['scholar_id']}, {'_id': 0})
-    if not user:
-        session.clear()
-        return redirect(url_for('login'))
-    
-    user_stats = get_user_stats(session['scholar_id'])
-    user.update(user_stats)
-    
-    # Check if quiz is active for the student's registered course/semester
-    quiz_active = is_quiz_active(user['course'], user['semester'])
-    user['quiz_active'] = quiz_active
-    
-    if user.get('blocked', False):
-        flash("You have been blocked from participating in quizzes. Contact admin.", "error")
-        return render_template('student_dashboard.html', user=user)
-    
-    if request.method == 'POST':
-        try:
-            # Get the submitted course and semester
-            submitted_course = request.form['course'].strip()
-            submitted_semester = request.form['semester'].strip()
-            
-            # Verify they match the student's registered course/semester
-            if user['course'].strip() != submitted_course or str(user['semester']).strip() != submitted_semester:
-                flash("Invalid course or semester selection. Please select your registered course and semester.", "error")
-                return render_template('student_dashboard.html', user=user)
-            
-            # Find active quiz using the helper function (handles "all" values)
-            active_quiz = find_active_quiz(submitted_course, submitted_semester)
-            
-            if not active_quiz:
-                flash("No active quiz for your course and semester at the moment.", "error")
-                return render_template('student_dashboard.html', user=user)
-            
-            # Check if student is enrolled in the quiz with proper hierarchical filtering
-            is_enrolled = check_student_enrollment(
-                session['scholar_id'], 
-                active_quiz['quiz_id'],
-                user['course'],
-                user['semester']
-            )
-            
-            if not is_enrolled:
-                flash("You are not enrolled in this quiz. Please contact your instructor.", "error")
-                return render_template('student_dashboard.html', user=user)
-            
-            # ✅ ADD THIS: Store quiz info in session and redirect to instructions
-            session['quiz_id'] = active_quiz['quiz_id']
-            session['course'] = submitted_course
-            session['semester'] = submitted_semester
-            
-            return redirect(url_for('instructions'))
-            
-        except Exception as e:
-            print(f"Error in student_dashboard: {str(e)}")
-            import traceback
-            traceback.print_exc()
-            flash("An error occurred. Please try again.", "error")
-            return render_template('student_dashboard.html', user=user)
-    
-    return render_template('student_dashboard.html', user=user)
+
+
 
 
 @app.route('/api/course_leaderboard/<course>/<semester>')
@@ -1972,45 +2539,17 @@ def not_found(error):
 def internal_error(error):
     return render_template('500.html'), 500
 
+
 @app.errorhandler(403)
 def forbidden(error):
-    return render_template('403.html'), 403
+    user_role = session.get('role', 'Unknown')
+    user_permissions = session.get('permissions', [])
+    
+    return render_template('403.html', 
+                         user_role=user_role,
+                         user_permissions=user_permissions,
+                         error_message="You don't have sufficient permissions to access this resource."), 403
 
-@app.route('/admin/users')
-@login_required(role='admin')
-def admin_users():
-    school = request.args.get('school', '')
-    department = request.args.get('department', '')
-    course = request.args.get('course', '')
-    semester = request.args.get('semester', '')
-    
-    query = {}
-    if school and school != 'All':
-        query['school'] = school
-    if department and department != 'All':
-        query['department'] = department
-    if course and course != 'All':
-        query['course'] = course
-    if semester and semester != 'All':
-        query['semester'] = semester
-    
-    students = list(users_collection.find(query, {'_id': 0, 'password': 0}).sort('scholar_id', 1))
-    
-    stats = {
-        'total_students': users_collection.count_documents(query),
-    }
-    
-    return render_template('admin_users.html', 
-                           students=students, 
-                           stats=stats, 
-                           schools=get_all_schools(),
-                           departments=get_all_departments(),
-                           courses=get_all_courses(),
-                           semesters=get_all_semesters(),
-                           selected_school=school,
-                           selected_department=department,
-                           selected_course=course, 
-                           selected_semester=semester)
 
 @app.route('/api/edit_user', methods=['POST'])
 @login_required(role='admin')
@@ -2114,366 +2653,16 @@ def check_blocked():
             return jsonify({"blocked": True})
     return jsonify({"blocked": False})
 
-# ==================== NEW QUESTION MANAGEMENT ROUTES ====================
 
-@app.route('/admin/questions/management')
-@login_required(role='admin')
-def admin_questions_management():
-    # Get counts from the database
-    pending_count = question_review_collection.count_documents({})
-    bank_count = question_bank_collection.count_documents({})
-    
-    return render_template('admin_questions_main.html', 
-                         pending_count=pending_count,
-                         bank_count=bank_count)
 
-@app.route('/admin/questions/upload', methods=['GET', 'POST'])
-@login_required(role='admin')
-def admin_question_upload():
-    if request.method == 'POST':
-        try:
-            if 'json_file' in request.files and request.files['json_file'].filename != '':
-                file = request.files['json_file']
-                if file.filename.endswith('.json'):
-                    data = json.load(file)
-                    for question_data in data:
-                        question_id = str(uuid.uuid4())
-                        question = {
-                            "question_id": question_id,
-                            "text": question_data.get('question'),
-                            "options": question_data.get('options', []),
-                            "correct_answer": question_data.get('correct_answer'),
-                            "created_at": datetime.now(),
-                            "status": "pending_review"
-                        }
-                        question_review_collection.insert_one(question)
-                    return jsonify({"success": True, "message": f"{len(data)} questions uploaded for review"})
-            
-            elif 'csv_file' in request.files and request.files['csv_file'].filename != '':
-                file = request.files['csv_file']
-                if file.filename.endswith('.csv'):
-                    df = pd.read_csv(file)
-                    for _, row in df.iterrows():
-                        question_id = str(uuid.uuid4())
-                        question = {
-                            "question_id": question_id,
-                            "text": row['question'],
-                            "options": [row['option1'], row['option2'], row['option3'], row['option4']],
-                            "correct_answer": row['correct_answer'],
-                            "created_at": datetime.now(),
-                            "status": "pending_review"
-                        }
-                        question_review_collection.insert_one(question)
-                    return jsonify({"success": True, "message": f"{len(df)} questions uploaded for review"})
-            
-            else:
-                question_text = request.form.get('question_text')
-                options = [
-                    request.form.get('option1'),
-                    request.form.get('option2'),
-                    request.form.get('option3'),
-                    request.form.get('option4')
-                ]
-                correct_answer_index = request.form.get('correct_answer')
-                
-                if not all([question_text, options[0], options[1], options[2], options[3], correct_answer_index]):
-                    return jsonify({"error": "All fields are required"}), 400
-                
-                # Get the correct answer text based on the selected index
-                correct_answer = options[int(correct_answer_index) - 1] if correct_answer_index.isdigit() else correct_answer_index
-                
-                if correct_answer not in options:
-                    return jsonify({"error": "Correct answer must be one of the options"}), 400
-                
-                question_id = str(uuid.uuid4())
-                question = {
-                    "question_id": question_id,
-                    "text": question_text,
-                    "options": options,
-                    "correct_answer": correct_answer,
-                    "created_at": datetime.now(),
-                    "status": "pending_review"
-                }
-                question_review_collection.insert_one(question)
-                return jsonify({"success": True, "message": "Question added for review"})
-                
-        except Exception as e:
-            return jsonify({"error": str(e)}), 400
-    
-    return render_template('admin_question_upload.html')
 
-@app.route('/admin/questions/review')
-@login_required(role='admin')
-def admin_question_review():
-    questions = list(question_review_collection.find({}))
-    return render_template('admin_question_review.html', questions=questions, tags=QUESTION_TAGS)
 
-@app.route('/api/questions/review/update', methods=['POST'])
-@login_required(role='admin')
-def update_review_question():
-    data = request.json
-    question_id = data.get('question_id')
-    action = data.get('action')
-    
-    if not question_id or not action:
-        return jsonify({"error": "Question ID and action are required"}), 400
-    
-    question = question_review_collection.find_one({"question_id": question_id})
-    if not question:
-        return jsonify({"error": "Question not found"}), 404
-    
-    if action == 'approve':
-        question_bank_data = {
-            "question_id": question['question_id'],
-            "text": question['text'],
-            "options": question['options'],
-            "correct_answer": question['correct_answer'],
-            "tags": data.get('tags', []),
-            "difficulty": data.get('difficulty', 'intermediate'),
-            "created_at": question['created_at'],
-            "approved_at": datetime.now(),
-            "approved_by": session['username']
-        }
-        question_bank_collection.insert_one(question_bank_data)
-        question_review_collection.delete_one({"question_id": question_id})
-        return jsonify({"success": True, "message": "Question approved and moved to question bank"})
-    
-    elif action == 'reject':
-        question_review_collection.delete_one({"question_id": question_id})
-        return jsonify({"success": True, "message": "Question rejected and deleted"})
-    
-    elif action == 'update':
-        update_data = {
-            "text": data.get('text', question['text']),
-            "options": data.get('options', question['options']),
-            "correct_answer": data.get('correct_answer', question['correct_answer'])
-        }
-        question_review_collection.update_one(
-            {"question_id": question_id},
-            {"$set": update_data}
-        )
-        return jsonify({"success": True, "message": "Question updated"})
-    
-    return jsonify({"error": "Invalid action"}), 400
 
-@app.route('/admin/questions/bank')
-@login_required(role='admin')
-def admin_question_bank():
-    tag_filter = request.args.get('tag', '')
-    difficulty_filter = request.args.get('difficulty', '')
-    
-    query = {}
-    if tag_filter:
-        query['tags'] = tag_filter
-    if difficulty_filter:
-        query['difficulty'] = difficulty_filter
-    
-    questions = list(question_bank_collection.find(query))
-    return render_template('admin_question_bank.html', questions=questions, tags=QUESTION_TAGS)
 
-@app.route('/api/questions/bank/update', methods=['POST'])
-@login_required(role='admin')
-def update_question_bank():
-    data = request.json
-    question_id = data.get('question_id')
-    action = data.get('action')
-    
-    if not question_id or not action:
-        return jsonify({"error": "Question ID and action are required"}), 400
-    
-    if action == 'update':
-        update_data = {
-            "text": data.get('text'),
-            "options": data.get('options'),
-            "correct_answer": data.get('correct_answer'),
-            "tags": data.get('tags', []),
-            "difficulty": data.get('difficulty', 'intermediate')
-        }
-        update_data = {k: v for k, v in update_data.items() if v is not None}
-        
-        question_bank_collection.update_one(
-            {"question_id": question_id},
-            {"$set": update_data}
-        )
-        return jsonify({"success": True, "message": "Question updated"})
-    
-    elif action == 'delete':
-        question_bank_collection.delete_one({"question_id": question_id})
-        return jsonify({"success": True, "message": "Question deleted"})
-    
-    return jsonify({"error": "Invalid action"}), 400
 
-# ==================== NEW QUIZ MANAGEMENT ROUTES ====================
 
-@app.route('/admin/quizzes')
-@login_required(role='admin')
-def admin_quizzes():
-    quizzes = list(quizzes_collection.find({}).sort('created_at', -1))
-    return render_template('admin_quizzes.html', quizzes=quizzes)
 
-# Add this route for listing quizzes
-@app.route('/admin/quizzes/list')
-@login_required(role='admin')
-def list_quizzes():
-    quizzes = list(quizzes_collection.find({}))
-    # Convert ObjectId to string for JSON serialization
-    for quiz in quizzes:
-        quiz['_id'] = str(quiz['_id'])
-    
-    return jsonify({"quizzes": quizzes})
 
-@app.route('/admin/quizzes/create', methods=['POST'])
-@login_required(role='admin')
-def admin_create_quiz():
-    try:
-        data = request.get_json()
-        
-        # Validate required fields
-        required_fields = ['quiz_title', 'school', 'department', 'course', 'semester', 'duration', 'pass_percentage']
-        for field in required_fields:
-            if field not in data or not data[field]:
-                return jsonify({"error": f"Missing required field: {field}"}), 400
-        
-        quiz_id = str(uuid.uuid4())
-        quiz = {
-            "quiz_id": quiz_id,
-            "title": data['quiz_title'],
-            "school": data['school'],
-            "department": data['department'],
-            "course": data['course'],
-            "semester": data['semester'],
-            "duration": int(data['duration']),
-            "pass_percentage": int(data['pass_percentage']),
-            "status": "draft",
-            "created_at": datetime.now(),
-            "questions": [],
-            "participants": []  # Start with empty participants
-        }
-        
-        quizzes_collection.insert_one(quiz)
-        
-        return jsonify({"success": True, "message": "Quiz created successfully", "quiz_id": quiz_id})
-    
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/admin/quizzes/manage/<quiz_id>')
-@login_required(role='admin')
-def manage_quiz(quiz_id):
-    quiz = quizzes_collection.find_one({"quiz_id": quiz_id})
-    if not quiz:
-        return redirect(url_for('admin_quizzes'))
-    
-    # Convert ObjectId to string for JSON serialization
-    if '_id' in quiz:
-        quiz['_id'] = str(quiz['_id'])
-    
-    # Get all questions from question bank for selection
-    questions = list(question_bank_collection.find({}))
-    
-    # Clean up questions and convert ObjectId to string
-    for question in questions:
-        if '_id' in question:
-            question['_id'] = str(question['_id'])
-        if 'text' not in question or not question['text']:
-            question['text'] = 'No question text available'
-        if 'tags' not in question:
-            question['tags'] = []
-        if 'difficulty' not in question:
-            question['difficulty'] = 'Not set'
-    
-    # Get students based on the hierarchical filtering
-    query = build_student_query(quiz)
-    
-    students = list(users_collection.find(query, {'_id': 0, 'scholar_id': 1, 'name': 1, 'course': 1, 'semester': 1}))
-    
-    return render_template('admin_manage_quiz.html', 
-                         quiz=quiz, 
-                         questions=questions, 
-                         students=students,
-                         tags=QUESTION_TAGS)
-
-def build_student_query(quiz):
-    """
-    Build a query to filter students based on the quiz's school, department, course, and semester
-    following the hierarchical structure: School -> Department -> Course -> Semester
-    """
-    query = {}
-    
-    # Handle school filter
-    if quiz.get('school') != 'all':
-        # If school is specified, get all departments in that school
-        school_name = quiz.get('school')
-        departments_in_school = schoolDepartments.get(school_name, [])
-        
-        # If department is also specified and it's in this school, use it
-        if quiz.get('department') != 'all' and quiz.get('department') in departments_in_school:
-            departments_to_filter = [quiz.get('department')]
-        else:
-            departments_to_filter = departments_in_school
-        
-        # Get all courses in the selected departments
-        courses_to_filter = []
-        for dept in departments_to_filter:
-            courses_to_filter.extend(departmentCourses.get(dept, []))
-        
-        # If course is specified and it's in the filtered courses, use it
-        if quiz.get('course') != 'all' and quiz.get('course') in courses_to_filter:
-            query['course'] = quiz.get('course')
-        else:
-            query['course'] = {'$in': courses_to_filter}
-        
-        # Handle semester filter
-        if quiz.get('semester') != 'all':
-            query['semester'] = quiz.get('semester')
-    
-    else:
-        # School is 'all', check if department is specified
-        if quiz.get('department') != 'all':
-            # Department is specified, get all courses in that department
-            dept_name = quiz.get('department')
-            courses_to_filter = departmentCourses.get(dept_name, [])
-            
-            # If course is specified and it's in this department, use it
-            if quiz.get('course') != 'all' and quiz.get('course') in courses_to_filter:
-                query['course'] = quiz.get('course')
-            else:
-                query['course'] = {'$in': courses_to_filter}
-            
-            # Handle semester filter
-            if quiz.get('semester') != 'all':
-                query['semester'] = quiz.get('semester')
-        
-        else:
-            # Both school and department are 'all', check if course is specified
-            if quiz.get('course') != 'all':
-                query['course'] = quiz.get('course')
-                
-                # Handle semester filter
-                if quiz.get('semester') != 'all':
-                    query['semester'] = quiz.get('semester')
-            else:
-                # Course is also 'all', only filter by semester if specified
-                if quiz.get('semester') != 'all':
-                    query['semester'] = quiz.get('semester')
-    
-    return query
-
-@app.route('/api/quizzes/<quiz_id>', methods=['DELETE'])
-@login_required(role='admin')
-def delete_quiz(quiz_id):
-    try:
-        # FIXED: Use the correct collection name (quizzes_collection instead of quiz_collection)
-        result = quizzes_collection.delete_one({"quiz_id": quiz_id})
-        if result.deleted_count > 0:
-            # Also delete any participants for this quiz
-            quiz_participants_collection.delete_many({"quiz_id": quiz_id})
-            return jsonify({"success": True, "message": "Quiz deleted successfully"})
-        else:
-            return jsonify({"error": "Quiz not found"}), 404
-    
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
 
 @app.route('/api/quizzes/<quiz_id>/questions', methods=['POST'])
 @login_required(role='admin')

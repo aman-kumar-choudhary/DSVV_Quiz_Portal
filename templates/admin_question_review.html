@@ -1,610 +1,242 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Question Review - DSVV Quiz System</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-        body { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); min-height: 100vh; }
-        .question-card { transition: all 0.3s ease; border-left: 4px solid #f59e0b; }
-        .question-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
-        .tag { transition: all 0.2s ease; }
-        .tag:hover { transform: scale(1.05); }
-        .tag.selected { background: #3b82f6; color: white; }
-        
-        /* Additional styles for collapsible questions */
-        .question-header {
-          transition: background-color 0.2s ease;
-        }
-        .question-header:hover {
-          background-color: #f8fafc;
-        }
-        .fa-chevron-down {
-          transition: transform 0.3s ease;
-        }
 
-        /* Header and sidebar styles to match admin_question_upload.html */
-        .sidebar {
-          width: 250px;
-          background: linear-gradient(180deg, #1e40af 0%, #3b82f6 100%);
-          position: fixed;
-          top: 80px;
-          bottom: 0;
-          left: 0;
-          overflow-y: auto;
-          transition: all 0.3s ease;
-          box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-          z-index: 1000;
-        }
+{% extends "admin_base.html" %}
 
-        .main-content {
-          transition: all 0.3s ease;
-          width: calc(100% - 250px);
-          margin-left: 250px;
-          margin-top: 80px;
-        }
+{% block title %}Question Review - DSVV Quiz System{% endblock %}
 
-        header {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          z-index: 2000;
-          height: 60px;
-          background-color: #ffffff;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        
-        .logo-container {
-          background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-          border-bottom-right-radius: 20px;
-        }
+{% block extra_head %}
+<style>
+    .question-card { 
+        transition: all 0.3s ease; 
+        border-left: 4px solid #f59e0b; 
+    }
+    .question-card:hover { 
+        transform: translateY(-2px); 
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); 
+    }
+    .tag { 
+        transition: all 0.2s ease; 
+    }
+    .tag:hover { 
+        transform: scale(1.05); 
+    }
+    .tag.selected { 
+        background: #3b82f6; 
+        color: white; 
+    }
+    
+    /* Additional styles for collapsible questions */
+    .question-header {
+        transition: background-color 0.2s ease;
+    }
+    .question-header:hover {
+        background-color: #f8fafc;
+    }
+    .fa-chevron-down {
+        transition: transform 0.3s ease;
+    }
+</style>
+{% endblock %}
 
-        header .logo-container img {
-          height: 70px;
-        }
-        
-        .nav-item {
-          transition: all 0.2s ease;
-          border-left: 4px solid transparent;
-        }
-
-        .nav-item:hover {
-          background: rgba(255, 255, 255, 0.1);
-          border-left: 4px solid #93c5fd;
-        }
-
-        .nav-item.active {
-          background: rgba(255, 255, 255, 0.15);
-          border-left: 4px solid #ffffff;
-        }
-
-        @media (max-width: 768px) {
-          .sidebar {
-            width: 70px;
-            top: 80px;
-          }
-
-          .sidebar .menu-text {
-            display: none;
-          }
-
-          .main-content {
-            width: calc(100% - 70px);
-            margin-left: 70px;
-            margin-top: 80px;
-          }
-
-          .sidebar.collapsed {
-            width: 0;
-            display: none;
-          }
-
-          .main-content.expanded {
-            width: 100%;
-            margin-left: 0;
-            margin-top: 80px;
-          }
-
-          #hamburger-toggle {
-            display: block;
-          }
-        }
-    </style>
-</head>
-<body class="min-h-screen">
-    <!-- Header with Logo and Hamburger Menu -->
-    <header
-      class="bg-white shadow-md py-4 px-4 flex justify-between items-center fixed top-0 left-0 right-0 z-50 h-20"
-    >
-      <div class="flex items-center w-full justify-between">
-        <!-- Logo in Header -->
-        <div class="logo-container flex items-center">
-          <img
-            src="/static/images/dsvvlogo.png"
-            alt="DSVV Logo"
-            class="h-24 mr-3"
-          />
+{% block content %}
+<div class="p-6">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-800 flex items-center">
+            <i class="fas fa-tasks text-yellow-600 mr-3"></i> Question Review
+        </h1>
+        <div class="flex items-center space-x-4">
+            <span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm">
+                {{ questions|length }} questions pending review
+            </span>
+            <nav class="flex space-x-2 text-sm text-gray-500">
+                <a href="/admin" class="hover:text-blue-600">Dashboard</a>
+                <span>/</span>
+                <a href="/admin/questions/management" class="hover:text-blue-600">Questions</a>
+                <span>/</span>
+                <span class="text-blue-600">Review</span>
+            </nav>
         </div>
-        <div class="flex items-center space-x-6">
-          <!-- Admin Notifications -->
-          <div class="relative">
-            <button
-              id="admin-notifications-btn"
-              class="text-gray-600 focus:outline-none relative"
-            >
-              <i class="fas fa-bell text-xl"></i>
-              <span
-                id="admin-notification-count"
-                class="notification-badge hidden"
-                >0</span
-              >
-            </button>
-            <div
-              id="admin-notifications-dropdown"
-              class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg py-2 hidden z-50 max-h-96 overflow-y-auto"
-            >
-              <div class="px-4 py-2 border-b border-gray-200">
-                <h3 class="font-semibold text-gray-700">Admin Notifications</h3>
-              </div>
-              <div id="admin-notifications-list" class="p-2">
-                <!-- Notifications will be loaded here -->
-              </div>
-              <div class="px-4 py-2 border-t border-gray-200 text-center">
-                <button
-                  id="mark-all-read"
-                  class="text-blue-600 text-sm hover:underline"
-                >
-                  Mark all as read
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Hamburger Menu Button -->
-          <button
-            id="hamburger-toggle"
-            class="text-gray-600 focus:outline-none md:hidden"
-          >
-            <i class="fas fa-bars text-xl"></i>
-          </button>
-
-          <!-- User Profile -->
-          <div class="relative">
-            <button
-              id="user-menu-button"
-              class="flex items-center focus:outline-none"
-            >
-              <div
-                class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold"
-              >
-                A
-              </div>
-              <span class="ml-2 text-gray-700 hidden md:block"
-                >admin.computer</span
-              >
-              <i
-                class="fas fa-chevron-down ml-1 text-gray-600 text-xs hidden md:block"
-              ></i>
-            </button>
-            <!-- User dropdown -->
-            <div
-              id="user-dropdown"
-              class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 hidden z-50"
-            >
-              <a
-                href="#"
-                class="block px-4 py-2 text-gray-700 hover:bg-gray-100"
-              >
-                <i class="fas fa-user-circle mr-2"></i>Profile
-              </a>
-              <a
-                href="#"
-                class="block px-4 py-2 text-gray-700 hover:bg-gray-100"
-              >
-                <i class="fas fa-cog mr-2"></i>Settings
-              </a>
-              <a
-                href="/logout"
-                class="block px-4 py-2 text-gray-700 hover:bg-gray-100"
-              >
-                <i class="fas fa-sign-out-alt mr-2"></i>Logout
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </header>
-
-    <!-- Dropdown Menu (hidden by default) -->
-    <nav
-      id="dropdown-menu"
-      class="hidden md:hidden bg-gradient-to-b from-blue-800 to-blue-600 text-white shadow-lg mt-20 fixed left-0 right-0 z-40"
-    >
-      <ul class="space-y-2 px-4 py-4">
-        <li class="nav-item">
-          <a
-            href="/admin"
-            class="flex items-center p-3 rounded-lg hover:bg-blue-700"
-          >
-            <i class="fas fa-tachometer-alt w-6 text-center"></i>
-            <span class="ml-3">Dashboard</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a
-            href="/admin/questions/management"
-            class="flex items-center p-3 text-white rounded-lg"
-          >
-            <i class="fas fa-book w-6 text-center"></i>
-            <span class="ml-3 menu-text">Question Management</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a
-            href="/admin/quizzes"
-            class="flex items-center p-3 text-white rounded-lg"
-          >
-            <i class="fas fa-rocket w-6 text-center"></i>
-            <span class="ml-3 menu-text">Quiz Management</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a
-            href="/admin/leaderboard"
-            class="flex items-center p-3 text-white rounded-lg"
-          >
-            <i class="fas fa-trophy w-6 text-center"></i>
-            <span class="ml-3 menu-text">Leaderboard</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a
-            href="/admin/results"
-            class="flex items-center p-3 rounded-lg hover:bg-blue-700"
-          >
-            <i class="fas fa-chart-bar w-6 text-center"></i>
-            <span class="ml-3">Results</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a
-            href="/admin/users"
-            class="flex items-center p-3 rounded-lg hover:bg-blue-700"
-          >
-            <i class="fas fa-users w-6 text-center"></i>
-            <span class="ml-3">User Management</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a
-            href="#"
-            class="flex items-center p-3 rounded-lg hover:bg-blue-700"
-          >
-            <i class="fas fa-cog w-6 text-center"></i>
-            <span class="ml-3">Settings</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a
-            href="/logout"
-            class="flex items-center p-3 rounded-lg hover:bg-blue-700"
-          >
-            <i class="fas fa-sign-out-alt w-6 text-center"></i>
-            <span class="ml-3">Logout</span>
-          </a>
-        </li>
-      </ul>
-    </nav>
-
-    <!-- Sidebar Navigation -->
-    <div class="sidebar h-[calc(100vh-80px)] mt-0">
-      <div class="py-6">
-        <ul class="space-y-2 px-4">
-          <li class="nav-item">
-            <a
-              href="/admin"
-              class="flex items-center p-3 text-white rounded-lg"
-            >
-              <i class="fas fa-tachometer-alt w-6 text-center"></i>
-              <span class="ml-3 menu-text">Dashboard</span>
-            </a>
-          </li>
-          <li class="nav-item active">
-            <a
-              href="/admin/questions/management"
-              class="flex items-center p-3 text-white rounded-lg"
-            >
-              <i class="fas fa-book w-6 text-center"></i>
-              <span class="ml-3 menu-text">Question Management</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a
-              href="/admin/quizzes"
-              class="flex items-center p-3 text-white rounded-lg"
-            >
-              <i class="fas fa-rocket w-6 text-center"></i>
-              <span class="ml-3 menu-text">Quiz Management</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a
-              href="/admin/leaderboard"
-              class="flex items-center p-3 text-white rounded-lg"
-            >
-              <i class="fas fa-trophy w-6 text-center"></i>
-              <span class="ml-3 menu-text">Leaderboard</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a
-              href="/admin/results"
-              class="flex items-center p-3 text-white rounded-lg"
-            >
-              <i class="fas fa-chart-bar w-6 text-center"></i>
-              <span class="ml-3 menu-text">Results</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a
-              href="/admin/users"
-              class="flex items-center p-3 text-white rounded-lg"
-            >
-              <i class="fas fa-users w-6 text-center"></i>
-              <span class="ml-3 menu-text">User Management</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a href="#" class="flex items-center p-3 text-white rounded-lg">
-              <i class="fas fa-cog w-6 text-center"></i>
-              <span class="ml-3 menu-text">Settings</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a
-              href="/logout"
-              class="flex items-center p-3 text-white rounded-lg"
-            >
-              <i class="fas fa-sign-out-alt w-6 text-center"></i>
-              <span class="ml-3 menu-text">Logout</span>
-            </a>
-          </li>
-        </ul>
-      </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="main-content p-6 mt-0">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-            <h1 class="text-3xl font-bold text-gray-800 flex items-center">
-                <i class="fas fa-tasks text-yellow-600 mr-3"></i> Question Review
-            </h1>
-            <div class="flex items-center space-x-4">
-                <span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm">
-                    {{ questions|length }} questions pending review
-                </span>
-                <nav class="flex space-x-2 text-sm text-gray-500">
-                    <a href="/admin" class="hover:text-blue-600">Dashboard</a>
-                    <span>/</span>
-                    <a href="/admin/questions/management" class="hover:text-blue-600">Questions</a>
-                    <span>/</span>
-                    <span class="text-blue-600">Review</span>
-                </nav>
-            </div>
-        </div>
-
-        {% if questions %}
-          {% for question in questions %}
-          <div class="question-card bg-white rounded-xl shadow-md p-6 mb-4" data-question-id="{{ question.question_id }}">
+    {% if questions %}
+        {% for question in questions %}
+        <div class="question-card bg-white rounded-xl shadow-md p-6 mb-4" data-question-id="{{ question.question_id }}">
             <div class="flex justify-between items-center cursor-pointer question-header" onclick="toggleQuestionDetails(this)">
-              <div class="flex items-center">
-                <h3 class="text-lg font-semibold text-gray-800 mr-3">Question {{ loop.index }}</h3>
-                <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs">
-                  Pending Review
-                </span>
-              </div>
-              <i class="fas fa-chevron-down text-gray-500 transition-transform duration-300"></i>
+                <div class="flex items-center">
+                    <h3 class="text-lg font-semibold text-gray-800 mr-3">Question {{ loop.index }}</h3>
+                    <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs">
+                        Pending Review
+                    </span>
+                </div>
+                <i class="fas fa-chevron-down text-gray-500 transition-transform duration-300"></i>
             </div>
             
             <div class="question-details mt-4 hidden">
-              <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Question Text</label>
-                <textarea class="w-full p-3 border border-gray-300 rounded-lg question-text" rows="2">{{ question.text }}</textarea>
-              </div>
-
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                {% for i in range(4) %}
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">Option {{ i+1 }}</label>
-                  <input type="text" class="w-full p-2 border border-gray-300 rounded-lg option-{{ i+1 }}" value="{{ question.options[i] if question.options[i] else '' }}">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Question Text</label>
+                    <textarea class="w-full p-3 border border-gray-300 rounded-lg question-text" rows="2">{{ question.text }}</textarea>
                 </div>
-                {% endfor %}
-              </div>
 
-              <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Correct Answer</label>
-                <select class="w-full p-2 border border-gray-300 rounded-lg correct-answer">
-                  <option value="">Select correct answer</option>
-                  {% for i in range(4) %}
-                  <option value="{{ question.options[i] }}" {% if question.correct_answer == question.options[i] %}selected{% endif %}>
-                    Option {{ i+1 }}: {{ question.options[i] }}
-                  </option>
-                  {% endfor %}
-                </select>
-              </div>
-
-              <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Tags</label>
-                <div class="flex flex-wrap gap-2">
-                  {% for tag in tags %}
-                  <span class="tag bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm cursor-pointer" data-tag="{{ tag }}">
-                    {{ tag }}
-                  </span>
-                  {% endfor %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    {% for i in range(4) %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Option {{ i+1 }}</label>
+                        <input type="text" class="w-full p-2 border border-gray-300 rounded-lg option-{{ i+1 }}" value="{{ question.options[i] if question.options[i] else '' }}">
+                    </div>
+                    {% endfor %}
                 </div>
-                <input type="hidden" class="selected-tags" value="">
-              </div>
 
-              <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Difficulty Level</label>
-                <select class="w-full p-2 border border-gray-300 rounded-lg difficulty-level">
-                  <option value="intermediate">Intermediate</option>
-                  <option value="beginner">Beginner</option>
-                  <option value="easy">Easy</option>
-                  <option value="advanced">Advanced</option>
-                  <option value="expert">Expert</option>
-                </select>
-              </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Correct Answer</label>
+                    <select class="w-full p-2 border border-gray-300 rounded-lg correct-answer">
+                        <option value="">Select correct answer</option>
+                        {% for i in range(4) %}
+                        <option value="{{ question.options[i] }}" {% if question.correct_answer == question.options[i] %}selected{% endif %}>
+                            Option {{ i+1 }}: {{ question.options[i] }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
 
-              <div class="flex space-x-3">
-                <button class="approve-btn bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">
-                  <i class="fas fa-check mr-2"></i>Approve
-                </button>
-                <button class="reject-btn bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors">
-                  <i class="fas fa-times mr-2"></i>Reject
-                </button>
-                <button class="update-btn bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
-                  <i class="fas fa-save mr-2"></i>Update
-                </button>
-              </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Tags</label>
+                    <div class="flex flex-wrap gap-2">
+                        {% for tag in tags %}
+                        <span class="tag bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm cursor-pointer" data-tag="{{ tag }}">
+                            {{ tag }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                    <input type="hidden" class="selected-tags" value="">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Difficulty Level</label>
+                    <select class="w-full p-2 border border-gray-300 rounded-lg difficulty-level">
+                        <option value="intermediate">Intermediate</option>
+                        <option value="beginner">Beginner</option>
+                        <option value="easy">Easy</option>
+                        <option value="advanced">Advanced</option>
+                        <option value="expert">Expert</option>
+                    </select>
+                </div>
+
+                <div class="flex space-x-3">
+                    <button class="approve-btn bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">
+                        <i class="fas fa-check mr-2"></i>Approve
+                    </button>
+                    <button class="reject-btn bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors">
+                        <i class="fas fa-times mr-2"></i>Reject
+                    </button>
+                    <button class="update-btn bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                        <i class="fas fa-save mr-2"></i>Update
+                    </button>
+                </div>
             </div>
-          </div>
-          {% endfor %}
-        {% else %}
-          <div class="bg-white rounded-xl shadow-md p-12 text-center">
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="bg-white rounded-xl shadow-md p-12 text-center">
             <i class="fas fa-check-circle text-green-500 text-6xl mb-4"></i>
             <h2 class="text-2xl font-semibold text-gray-800 mb-2">No Questions Pending Review</h2>
             <p class="text-gray-600 mb-6">All questions have been reviewed and processed.</p>
             <a href="/admin/questions/upload" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors">
-              <i class="fas fa-upload mr-2"></i>Upload New Questions
+                <i class="fas fa-upload mr-2"></i>Upload New Questions
             </a>
-          </div>
-        {% endif %}
-    </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
 
-    <script>
-        // Tag selection
-        document.querySelectorAll('.tag').forEach(tag => {
-            tag.addEventListener('click', () => {
-                tag.classList.toggle('selected');
-                updateSelectedTags(tag.closest('.question-card'));
+{% block extra_js %}
+<script>
+    // Tag selection
+    document.querySelectorAll('.tag').forEach(tag => {
+        tag.addEventListener('click', () => {
+            tag.classList.toggle('selected');
+            updateSelectedTags(tag.closest('.question-card'));
+        });
+    });
+
+    function toggleQuestionDetails(element) {
+        const details = element.nextElementSibling;
+        const icon = element.querySelector('.fa-chevron-down');
+        
+        details.classList.toggle('hidden');
+        icon.classList.toggle('fa-chevron-down');
+        icon.classList.toggle('fa-chevron-up');
+    }
+
+    function updateSelectedTags(questionCard) {
+        const selectedTags = Array.from(questionCard.querySelectorAll('.tag.selected'))
+            .map(tag => tag.dataset.tag);
+        questionCard.querySelector('.selected-tags').value = JSON.stringify(selectedTags);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Collapse all questions by default
+        document.querySelectorAll('.question-details').forEach(detail => {
+            detail.classList.add('hidden');
+        });
+
+        // Question actions
+        document.querySelectorAll('.approve-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation(); // Prevent triggering the collapse/expand
+                const questionCard = btn.closest('.question-card');
+                const questionId = questionCard.dataset.questionId;
+                const tags = JSON.parse(questionCard.querySelector('.selected-tags').value || '[]');
+                const difficulty = questionCard.querySelector('.difficulty-level').value;
+
+                const response = await fetch('/api/questions/review/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        question_id: questionId,
+                        action: 'approve',
+                        tags: tags,
+                        difficulty: difficulty
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    questionCard.remove();
+                    showStatus('success', data.message);
+                } else {
+                    showStatus('error', data.error);
+                }
             });
         });
 
-        function toggleQuestionDetails(element) {
-          const details = element.nextElementSibling;
-          const icon = element.querySelector('.fa-chevron-down');
-          
-          details.classList.toggle('hidden');
-          icon.classList.toggle('fa-chevron-down');
-          icon.classList.toggle('fa-chevron-up');
-        }
+        document.querySelectorAll('.reject-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation(); // Prevent triggering the collapse/expand
+                const questionCard = btn.closest('.question-card');
+                const questionId = questionCard.dataset.questionId;
 
-        function updateSelectedTags(questionCard) {
-            const selectedTags = Array.from(questionCard.querySelectorAll('.tag.selected'))
-                .map(tag => tag.dataset.tag);
-            questionCard.querySelector('.selected-tags').value = JSON.stringify(selectedTags);
-        }
+                if (confirm('Are you sure you want to reject this question?')) {
+                    const response = await fetch('/api/questions/review/update', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            question_id: questionId,
+                            action: 'reject'
+                        })
+                    });
 
-        // Mobile menu toggle
-        document.getElementById("hamburger-toggle").addEventListener("click", function () {
-          const dropdownMenu = document.getElementById("dropdown-menu");
-          dropdownMenu.classList.toggle("hidden");
+                    const data = await response.json();
+                    if (data.success) {
+                        questionCard.remove();
+                        showStatus('success', data.message);
+                    } else {
+                        showStatus('error', data.error);
+                    }
+                }
+            });
         });
 
-        // User dropdown toggle
-        document.getElementById("user-menu-button").addEventListener("click", function () {
-          const userDropdown = document.getElementById("user-dropdown");
-          userDropdown.classList.toggle("hidden");
-        });
-
-        // Close dropdowns when clicking outside
-        document.addEventListener("click", function (event) {
-          const userMenuButton = document.getElementById("user-menu-button");
-          const userDropdown = document.getElementById("user-dropdown");
-
-          if (!userMenuButton.contains(event.target) && !userDropdown.contains(event.target)) {
-            userDropdown.classList.add("hidden");
-          }
-
-          const hamburgerToggle = document.getElementById("hamburger-toggle");
-          const dropdownMenu = document.getElementById("dropdown-menu");
-
-          if (!hamburgerToggle.contains(event.target) && !dropdownMenu.contains(event.target)) {
-            dropdownMenu.classList.add("hidden");
-          }
-        });
-
-        document.addEventListener('DOMContentLoaded', function() {
-          // Collapse all questions by default
-          document.querySelectorAll('.question-details').forEach(detail => {
-            detail.classList.add('hidden');
-          });
-
-          // Question actions
-          document.querySelectorAll('.approve-btn').forEach(btn => {
-              btn.addEventListener('click', async (e) => {
-                  e.stopPropagation(); // Prevent triggering the collapse/expand
-                  const questionCard = btn.closest('.question-card');
-                  const questionId = questionCard.dataset.questionId;
-                  const tags = JSON.parse(questionCard.querySelector('.selected-tags').value || '[]');
-                  const difficulty = questionCard.querySelector('.difficulty-level').value;
-
-                  const response = await fetch('/api/questions/review/update', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                          question_id: questionId,
-                          action: 'approve',
-                          tags: tags,
-                          difficulty: difficulty
-                      })
-                  });
-
-                  const data = await response.json();
-                  if (data.success) {
-                      questionCard.remove();
-                      showStatus('success', data.message);
-                  } else {
-                      showStatus('error', data.error);
-                  }
-              });
-          });
-
-          document.querySelectorAll('.reject-btn').forEach(btn => {
-              btn.addEventListener('click', async (e) => {
-                  e.stopPropagation(); // Prevent triggering the collapse/expand
-                  const questionCard = btn.closest('.question-card');
-                  const questionId = questionCard.dataset.questionId;
-
-                  if (confirm('Are you sure you want to reject this question?')) {
-                      const response = await fetch('/api/questions/review/update', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                              question_id: questionId,
-                              action: 'reject'
-                          })
-                      });
-
-                      const data = await response.json();
-                      if (data.success) {
-                          questionCard.remove();
-                          showStatus('success', data.message);
-                      } else {
-                          showStatus('error', data.error);
-                      }
-                  }
-              });
-          });
-
-          // Update the update button event listener
-          document.querySelectorAll('.update-btn').forEach(btn => {
+        // Update the update button event listener
+        document.querySelectorAll('.update-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 const questionCard = btn.closest('.question-card');
@@ -658,30 +290,29 @@
                     showStatus('error', 'Failed to update question: ' + error.message);
                 }
             });
-          });
         });
+    });
 
-        function showStatus(type, message) {
-            // Create a status notification element
-            const statusDiv = document.createElement('div');
-            statusDiv.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
-                type === 'success' ? 'bg-green-100 text-green-800 border border-green-400' : 
-                'bg-red-100 text-red-800 border border-red-400'
-            }`;
-            statusDiv.innerHTML = `
-                <div class="flex items-center">
-                    <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} mr-2"></i>
-                    <span>${message}</span>
-                </div>
-            `;
-            
-            document.body.appendChild(statusDiv);
-            
-            // Remove after 5 seconds
-            setTimeout(() => {
-                statusDiv.remove();
-            }, 5000);
-        }
-    </script>
-</body>
-</html>
+    function showStatus(type, message) {
+        // Create a status notification element
+        const statusDiv = document.createElement('div');
+        statusDiv.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+            type === 'success' ? 'bg-green-100 text-green-800 border border-green-400' : 
+            'bg-red-100 text-red-800 border border-red-400'
+        }`;
+        statusDiv.innerHTML = `
+            <div class="flex items-center">
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} mr-2"></i>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(statusDiv);
+        
+        // Remove after 5 seconds
+        setTimeout(() => {
+            statusDiv.remove();
+        }, 5000);
+    }
+</script>
+{% endblock %}

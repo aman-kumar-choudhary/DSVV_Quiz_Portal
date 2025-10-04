@@ -1,1097 +1,732 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Upload Questions - DSVV Quiz System</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
-      rel="stylesheet"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
-    <style>
-      @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-        font-family: "Poppins", sans-serif;
-      }
-      body {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        min-height: 100vh;
-      }
-      .card-hover {
+{% extends "admin_base.html" %}
+
+{% block title %}Upload Questions - DSVV Quiz System{% endblock %}
+
+{% block extra_head %}
+<style>
+    .card-hover {
         transition: all 0.3s ease;
-      }
-      .card-hover:hover {
+    }
+    .card-hover:hover {
         transform: translateY(-2px);
         box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-      }
-      .tab-content {
+    }
+    .tab-content {
         display: none;
-      }
-      .tab-content.active {
+    }
+    .tab-content.active {
         display: block;
-      }
-      .tab-button {
+    }
+    .tab-button {
         transition: all 0.3s ease;
-      }
-      .tab-button.active {
+    }
+    .tab-button.active {
         background: #3b82f6;
         color: white;
-      }
+    }
+</style>
+{% endblock %}
 
-      /* Header and sidebar styles to match admin.html */
-      .sidebar {
-        width: 250px;
-        background: linear-gradient(180deg, #1e40af 0%, #3b82f6 100%);
-        position: fixed;
-        top: 80px;
-        bottom: 0;
-        left: 0;
-        overflow-y: auto;
-        transition: all 0.3s ease;
-        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-        z-index: 1000;
-      }
-
-      .main-content {
-        transition: all 0.3s ease;
-        width: calc(100% - 250px);
-        margin-left: 250px;
-        margin-top: 80px;
-      }
-
-      header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 2000;
-            height: 60px;
-            background-color: #ffffff;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        .logo-container {
-            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-            border-bottom-right-radius: 20px;
-        }
-
-        header .logo-container img {
-            height: 70px;
-        }
-      .nav-item {
-        transition: all 0.2s ease;
-        border-left: 4px solid transparent;
-      }
-
-      .nav-item:hover {
-        background: rgba(255, 255, 255, 0.1);
-        border-left: 4px solid #93c5fd;
-      }
-
-      .nav-item.active {
-        background: rgba(255, 255, 255, 0.15);
-        border-left: 4px solid #ffffff;
-      }
-
-      @media (max-width: 768px) {
-        .sidebar {
-          width: 70px;
-          top: 80px;
-        }
-
-        .sidebar .menu-text {
-          display: none;
-        }
-
-        .main-content {
-          width: calc(100% - 70px);
-          margin-left: 70px;
-          margin-top: 80px;
-        }
-
-        .sidebar.collapsed {
-          width: 0;
-          display: none;
-        }
-
-        .main-content.expanded {
-          width: 100%;
-          margin-left: 0;
-          margin-top: 80px;
-        }
-
-        #hamburger-toggle {
-          display: block;
-        }
-      }
-    </style>
-  </head>
-  <body class="min-h-screen">
-    <!-- Header with Logo and Hamburger Menu -->
-    <header
-      class="bg-white shadow-md py-4 px-4 flex justify-between items-center fixed top-0 left-0 right-0 z-50 h-20"
-    >
-      <div class="flex items-center w-full justify-between">
-        <!-- Logo in Header -->
-        <div class="logo-container flex items-center">
-          <img
-            src="/static/images/dsvvlogo.png"
-            alt="DSVV Logo"
-            class="h-24 mr-3"
-          />
-        </div>
-        <div class="flex items-center space-x-6">
-          <!-- Admin Notifications -->
-          <div class="relative">
-            <button
-              id="admin-notifications-btn"
-              class="text-gray-600 focus:outline-none relative"
-            >
-              <i class="fas fa-bell text-xl"></i>
-              <span
-                id="admin-notification-count"
-                class="notification-badge hidden"
-                >0</span
-              >
-            </button>
-            <div
-              id="admin-notifications-dropdown"
-              class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg py-2 hidden z-50 max-h-96 overflow-y-auto"
-            >
-              <div class="px-4 py-2 border-b border-gray-200">
-                <h3 class="font-semibold text-gray-700">Admin Notifications</h3>
-              </div>
-              <div id="admin-notifications-list" class="p-2">
-                <!-- Notifications will be loaded here -->
-              </div>
-              <div class="px-4 py-2 border-t border-gray-200 text-center">
-                <button
-                  id="mark-all-read"
-                  class="text-blue-600 text-sm hover:underline"
-                >
-                  Mark all as read
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Hamburger Menu Button -->
-          <button
-            id="hamburger-toggle"
-            class="text-gray-600 focus:outline-none md:hidden"
-          >
-            <i class="fas fa-bars text-xl"></i>
-          </button>
-
-          <!-- User Profile -->
-          <div class="relative">
-            <button
-              id="user-menu-button"
-              class="flex items-center focus:outline-none"
-            >
-              <div
-                class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold"
-              >
-                A
-              </div>
-              <span class="ml-2 text-gray-700 hidden md:block"
-                >admin.computer</span
-              >
-              <i
-                class="fas fa-chevron-down ml-1 text-gray-600 text-xs hidden md:block"
-              ></i>
-            </button>
-            <!-- User dropdown -->
-            <div
-              id="user-dropdown"
-              class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 hidden z-50"
-            >
-              <a
-                href="#"
-                class="block px-4 py-2 text-gray-700 hover:bg-gray-100"
-              >
-                <i class="fas fa-user-circle mr-2"></i>Profile
-              </a>
-              <a
-                href="#"
-                class="block px-4 py-2 text-gray-700 hover:bg-gray-100"
-              >
-                <i class="fas fa-cog mr-2"></i>Settings
-              </a>
-              <a
-                href="/logout"
-                class="block px-4 py-2 text-gray-700 hover:bg-gray-100"
-              >
-                <i class="fas fa-sign-out-alt mr-2"></i>Logout
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </header>
-
-    <!-- Dropdown Menu (hidden by default) -->
-    <nav
-      id="dropdown-menu"
-      class="hidden md:hidden bg-gradient-to-b from-blue-800 to-blue-600 text-white shadow-lg mt-20 fixed left-0 right-0 z-40"
-    >
-      <ul class="space-y-2 px-4 py-4">
-        <li class="nav-item">
-          <a
-            href="/admin"
-            class="flex items-center p-3 rounded-lg hover:bg-blue-700"
-          >
-            <i class="fas fa-tachometer-alt w-6 text-center"></i>
-            <span class="ml-3">Dashboard</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a
-            href="/admin/questions/management"
-            class="flex items-center p-3 text-white rounded-lg"
-          >
-            <i class="fas fa-book w-6 text-center"></i>
-            <span class="ml-3 menu-text">Question Management</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a
-            href="/admin/quizzes"
-            class="flex items-center p-3 text-white rounded-lg"
-          >
-            <i class="fas fa-rocket w-6 text-center"></i>
-            <span class="ml-3 menu-text">Quiz Management</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a
-            href="/admin/leaderboard"
-            class="flex items-center p-3 text-white rounded-lg"
-          >
-            <i class="fas fa-trophy w-6 text-center"></i>
-            <span class="ml-3 menu-text">Leaderboard</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a
-            href="/admin/results"
-            class="flex items-center p-3 rounded-lg hover:bg-blue-700"
-          >
-            <i class="fas fa-chart-bar w-6 text-center"></i>
-            <span class="ml-3">Results</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a
-            href="/admin/users"
-            class="flex items-center p-3 rounded-lg hover:bg-blue-700"
-          >
-            <i class="fas fa-users w-6 text-center"></i>
-            <span class="ml-3">User Management</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a
-            href="#"
-            class="flex items-center p-3 rounded-lg hover:bg-blue-700"
-          >
-            <i class="fas fa-cog w-6 text-center"></i>
-            <span class="ml-3">Settings</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a
-            href="/logout"
-            class="flex items-center p-3 rounded-lg hover:bg-blue-700"
-          >
-            <i class="fas fa-sign-out-alt w-6 text-center"></i>
-            <span class="ml-3">Logout</span>
-          </a>
-        </li>
-      </ul>
-    </nav>
-
-    <!-- Sidebar Navigation -->
-    <div class="sidebar h-[calc(100vh-80px)] mt-0">
-      <div class="py-6">
-        <ul class="space-y-2 px-4">
-          <li class="nav-item">
-            <a
-              href="/admin"
-              class="flex items-center p-3 text-white rounded-lg"
-            >
-              <i class="fas fa-tachometer-alt w-6 text-center"></i>
-              <span class="ml-3 menu-text">Dashboard</span>
-            </a>
-          </li>
-          <li class="nav-item active">
-            <a
-              href="/admin/questions/management"
-              class="flex items-center p-3 text-white rounded-lg"
-            >
-              <i class="fas fa-book w-6 text-center"></i>
-              <span class="ml-3 menu-text">Question Management</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a
-              href="/admin/quizzes"
-              class="flex items-center p-3 text-white rounded-lg"
-            >
-              <i class="fas fa-rocket w-6 text-center"></i>
-              <span class="ml-3 menu-text">Quiz Management</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a
-              href="/admin/leaderboard"
-              class="flex items-center p-3 text-white rounded-lg"
-            >
-              <i class="fas fa-trophy w-6 text-center"></i>
-              <span class="ml-3 menu-text">Leaderboard</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a
-              href="/admin/results"
-              class="flex items-center p-3 text-white rounded-lg"
-            >
-              <i class="fas fa-chart-bar w-6 text-center"></i>
-              <span class="ml-3 menu-text">Results</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a
-              href="/admin/users"
-              class="flex items-center p-3 text-white rounded-lg"
-            >
-              <i class="fas fa-users w-6 text-center"></i>
-              <span class="ml-3 menu-text">User Management</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a href="#" class="flex items-center p-3 text-white rounded-lg">
-              <i class="fas fa-cog w-6 text-center"></i>
-              <span class="ml-3 menu-text">Settings</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a
-              href="/logout"
-              class="flex items-center p-3 text-white rounded-lg"
-            >
-              <i class="fas fa-sign-out-alt w-6 text-center"></i>
-              <span class="ml-3 menu-text">Logout</span>
-            </a>
-          </li>
-        </ul>
-      </div>
-    </div>
-
-    <!-- Main Content -->
-    <div class="main-content p-6">
-      <div class="max-w-6xl mx-auto">
+{% block content %}
+<div class="p-6">
+    <div class="max-w-6xl mx-auto">
         <div class="mb-6">
-          <h1 class="text-3xl font-bold text-gray-800">Question Management</h1>
-          <p class="text-gray-600">Upload and manage quiz questions</p>
+            <h1 class="text-3xl font-bold text-gray-800">Question Management</h1>
+            <p class="text-gray-600">Upload and manage quiz questions</p>
         </div>
 
         <!-- Tabs -->
         <div class="bg-white rounded-lg shadow-md mb-6">
-          <div class="flex border-b">
-            <button
-              class="tab-button py-3 px-6 text-blue-600 border-b-2 border-blue-600 font-medium"
-              data-tab="upload"
-            >
-              <i class="fas fa-upload mr-2"></i>Upload Questions
-            </button>
-            <button
-              class="tab-button py-3 px-6 text-gray-600 font-medium"
-              data-tab="review"
-            >
-              <i class="fas fa-check-circle mr-2"></i>Review Questions
-            </button>
-            <button
-              class="tab-button py-3 px-6 text-gray-600 font-medium"
-              data-tab="manage"
-            >
-              <i class="fas fa-cog mr-2"></i>Manage Questions
-            </button>
-          </div>
+            <div class="flex border-b">
+                <button
+                    class="tab-button py-3 px-6 text-blue-600 border-b-2 border-blue-600 font-medium"
+                    data-tab="upload"
+                >
+                    <i class="fas fa-upload mr-2"></i>Upload Questions
+                </button>
+                <button
+                    class="tab-button py-3 px-6 text-gray-600 font-medium"
+                    data-tab="review"
+                >
+                    <i class="fas fa-check-circle mr-2"></i>Review Questions
+                </button>
+                <button
+                    class="tab-button py-3 px-6 text-gray-600 font-medium"
+                    data-tab="manage"
+                >
+                    <i class="fas fa-cog mr-2"></i>Manage Questions
+                </button>
+            </div>
         </div>
 
         <!-- Upload Tab Content -->
         <div id="upload-tab" class="tab-content active">
-          <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h2 class="text-xl font-semibold text-gray-800 mb-4">
-              Upload Questions
-            </h2>
-            <p class="text-gray-600 mb-6">
-              You can upload questions via JSON/CSV files or add them manually.
-            </p>
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                    Upload Questions
+                </h2>
+                <p class="text-gray-600 mb-6">
+                    You can upload questions via JSON/CSV files or add them manually.
+                </p>
 
-            <!-- File Upload Section -->
-            <div class="mb-8">
-              <h3 class="text-lg font-medium text-gray-800 mb-4">
-                Upload via File
-              </h3>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- JSON Upload -->
-                <div
-                  class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center"
-                >
-                  <i class="fas fa-file-code text-4xl text-blue-500 mb-3"></i>
-                  <h4 class="font-medium text-gray-800 mb-2">
-                    JSON File Upload
-                  </h4>
-                  <p class="text-gray-600 text-sm mb-4">
-                    Upload a JSON file with questions
-                  </p>
-                  <form id="json-upload-form" enctype="multipart/form-data">
-                    <input
-                      type="file"
-                      id="json-file"
-                      name="json_file"
-                      accept=".json"
-                      class="hidden"
-                    />
-                    <label
-                      for="json-file"
-                      class="cursor-pointer bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
-                      >Choose File</label
-                    >
-                    <p id="json-file-name" class="text-sm text-gray-600 mt-2">
-                      No file chosen
-                    </p>
-                  </form>
+                <!-- File Upload Section -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-medium text-gray-800 mb-4">
+                        Upload via File
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- JSON Upload -->
+                        <div
+                            class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center"
+                        >
+                            <i class="fas fa-file-code text-4xl text-blue-500 mb-3"></i>
+                            <h4 class="font-medium text-gray-800 mb-2">
+                                JSON File Upload
+                            </h4>
+                            <p class="text-gray-600 text-sm mb-4">
+                                Upload a JSON file with questions
+                            </p>
+                            <form id="json-upload-form" enctype="multipart/form-data">
+                                <input
+                                    type="file"
+                                    id="json-file"
+                                    name="json_file"
+                                    accept=".json"
+                                    class="hidden"
+                                />
+                                <label
+                                    for="json-file"
+                                    class="cursor-pointer bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
+                                    >Choose File</label
+                                >
+                                <p id="json-file-name" class="text-sm text-gray-600 mt-2">
+                                    No file chosen
+                                </p>
+                            </form>
+                        </div>
+
+                        <!-- CSV Upload -->
+                        <div
+                            class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center"
+                        >
+                            <i class="fas fa-file-csv text-4xl text-green-500 mb-3"></i>
+                            <h4 class="font-medium text-gray-800 mb-2">
+                                CSV File Upload
+                            </h4>
+                            <p class="text-gray-600 text-sm mb-4">
+                                Upload a CSV file with questions
+                            </p>
+                            <form id="csv-upload-form" enctype="multipart/form-data">
+                                <input
+                                    type="file"
+                                    id="csv-file"
+                                    name="csv_file"
+                                    accept=".csv"
+                                    class="hidden"
+                                />
+                                <label
+                                    for="csv-file"
+                                    class="cursor-pointer bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition"
+                                    >Choose File</label
+                                >
+                                <p id="csv-file-name" class="text-sm text-gray-600 mt-2">
+                                    No file chosen
+                                </p>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="mt-6 text-center">
+                        <button
+                            id="upload-files-btn"
+                            class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
+                        >
+                            <i class="fas fa-cloud-upload-alt mr-2"></i>Upload Files
+                        </button>
+                    </div>
                 </div>
 
-                <!-- CSV Upload -->
-                <div
-                  class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center"
-                >
-                  <i class="fas fa-file-csv text-4xl text-green-500 mb-3"></i>
-                  <h4 class="font-medium text-gray-800 mb-2">
-                    CSV File Upload
-                  </h4>
-                  <p class="text-gray-600 text-sm mb-4">
-                    Upload a CSV file with questions
-                  </p>
-                  <form id="csv-upload-form" enctype="multipart/form-data">
-                    <input
-                      type="file"
-                      id="csv-file"
-                      name="csv_file"
-                      accept=".csv"
-                      class="hidden"
-                    />
-                    <label
-                      for="csv-file"
-                      class="cursor-pointer bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition"
-                      >Choose File</label
-                    >
-                    <p id="csv-file-name" class="text-sm text-gray-600 mt-2">
-                      No file chosen
-                    </p>
-                  </form>
-                </div>
-              </div>
-              <div class="mt-6 text-center">
-                <button
-                  id="upload-files-btn"
-                  class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
-                >
-                  <i class="fas fa-cloud-upload-alt mr-2"></i>Upload Files
-                </button>
-              </div>
-            </div>
-
-            <!-- Manual Entry Section -->
-            <div>
-              <h3 class="text-lg font-medium text-gray-800 mb-4">
-                Add Question Manually
-              </h3>
-              <form id="manual-question-form" class="space-y-4">
+                <!-- Manual Entry Section -->
                 <div>
-                  <label
-                    for="question-text"
-                    class="block text-sm font-medium text-gray-700 mb-1"
-                    >Question Text</label
-                  >
-                  <textarea
-                    id="question-text"
-                    name="question_text"
-                    rows="3"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter your question here..."
-                    required
-                  ></textarea>
-                </div>
+                    <h3 class="text-lg font-medium text-gray-800 mb-4">
+                        Add Question Manually
+                    </h3>
+                    <form id="manual-question-form" class="space-y-4">
+                        <div>
+                            <label
+                                for="question-text"
+                                class="block text-sm font-medium text-gray-700 mb-1"
+                                >Question Text</label
+                            >
+                            <textarea
+                                id="question-text"
+                                name="question_text"
+                                rows="3"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="Enter your question here..."
+                                required
+                            ></textarea>
+                        </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label
-                      for="option1"
-                      class="block text-sm font-medium text-gray-700 mb-1"
-                      >Option 1</label
-                    >
-                    <input
-                      type="text"
-                      id="option1"
-                      name="option1"
-                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Option 1"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label
-                      for="option2"
-                      class="block text-sm font-medium text-gray-700 mb-1"
-                      >Option 2</label
-                    >
-                    <input
-                      type="text"
-                      id="option2"
-                      name="option2"
-                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Option 2"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label
-                      for="option3"
-                      class="block text-sm font-medium text-gray-700 mb-1"
-                      >Option 3</label
-                    >
-                    <input
-                      type="text"
-                      id="option3"
-                      name="option3"
-                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Option 3"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label
-                      for="option4"
-                      class="block text-sm font-medium text-gray-700 mb-1"
-                      >Option 4</label
-                    >
-                    <input
-                      type="text"
-                      id="option4"
-                      name="option4"
-                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Option 4"
-                      required
-                    />
-                  </div>
-                </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label
+                                    for="option1"
+                                    class="block text-sm font-medium text-gray-700 mb-1"
+                                    >Option 1</label
+                                >
+                                <input
+                                    type="text"
+                                    id="option1"
+                                    name="option1"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder="Option 1"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label
+                                    for="option2"
+                                    class="block text-sm font-medium text-gray-700 mb-1"
+                                    >Option 2</label
+                                >
+                                <input
+                                    type="text"
+                                    id="option2"
+                                    name="option2"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder="Option 2"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label
+                                    for="option3"
+                                    class="block text-sm font-medium text-gray-700 mb-1"
+                                    >Option 3</label
+                                >
+                                <input
+                                    type="text"
+                                    id="option3"
+                                    name="option3"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder="Option 3"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label
+                                    for="option4"
+                                    class="block text-sm font-medium text-gray-700 mb-1"
+                                    >Option 4</label
+                                >
+                                <input
+                                    type="text"
+                                    id="option4"
+                                    name="option4"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder="Option 4"
+                                    required
+                                />
+                            </div>
+                        </div>
 
-                <div>
-                  <label
-                    for="correct-answer"
-                    class="block text-sm font-medium text-gray-700 mb-1"
-                    >Correct Answer</label
-                  >
-                  <select
-                    id="correct-answer"
-                    name="correct_answer"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                    required
-                  >
-                    <option value="">Select the correct answer</option>
-                    <option value="1">Option 1</option>
-                    <option value="2">Option 2</option>
-                    <option value="3">Option 3</option>
-                    <option value="4">Option 4</option>
-                  </select>
-                </div>
+                        <div>
+                            <label
+                                for="correct-answer"
+                                class="block text-sm font-medium text-gray-700 mb-1"
+                                >Correct Answer</label
+                            >
+                            <select
+                                id="correct-answer"
+                                name="correct_answer"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                required
+                            >
+                                <option value="">Select the correct answer</option>
+                                <option value="1">Option 1</option>
+                                <option value="2">Option 2</option>
+                                <option value="3">Option 3</option>
+                                <option value="4">Option 4</option>
+                            </select>
+                        </div>
 
-                <div class="pt-4">
-                  <button
-                    type="submit"
-                    class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
-                  >
-                    <i class="fas fa-plus-circle mr-2"></i>Add Question
-                  </button>
+                        <div class="pt-4">
+                            <button
+                                type="submit"
+                                class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
+                            >
+                                <i class="fas fa-plus-circle mr-2"></i>Add Question
+                            </button>
+                        </div>
+                    </form>
                 </div>
-              </form>
             </div>
-          </div>
         </div>
 
         <!-- Review Tab Content -->
         <div id="review-tab" class="tab-content">
-          <div class="bg-white rounded-lg shadow-md p-6">
-            <h2 class="text-xl font-semibold text-gray-800 mb-4">
-              Review Questions
-            </h2>
-            <p class="text-gray-600 mb-6">
-              Review and approve or reject pending questions.
-            </p>
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                    Review Questions
+                </h2>
+                <p class="text-gray-600 mb-6">
+                    Review and approve or reject pending questions.
+                </p>
 
-            <div id="review-questions-container" class="space-y-4">
-              <!-- Questions will be loaded here via JavaScript -->
+                <div id="review-questions-container" class="space-y-4">
+                    <!-- Questions will be loaded here via JavaScript -->
+                </div>
             </div>
-          </div>
         </div>
 
         <!-- Manage Tab Content -->
         <div id="manage-tab" class="tab-content">
-          <div class="bg-white rounded-lg shadow-md p-6">
-            <h2 class="text-xl font-semibold text-gray-800 mb-4">
-              Manage Questions
-            </h2>
-            <p class="text-gray-600 mb-6">
-              View, edit, and delete approved questions.
-            </p>
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                    Manage Questions
+                </h2>
+                <p class="text-gray-600 mb-6">
+                    View, edit, and delete approved questions.
+                </p>
 
-            <div
-              class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6"
-            >
-              <div class="relative w-full md:w-64 mb-4 md:mb-0">
-                <input
-                  type="text"
-                  id="search-questions"
-                  placeholder="Search questions..."
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                />
-                <i
-                  class="fas fa-search absolute right-3 top-3 text-gray-400"
-                ></i>
-              </div>
-
-              <div class="flex space-x-2">
-                <select
-                  id="filter-course"
-                  class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                <div
+                    class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6"
                 >
-                  <option value="">All Courses</option>
-                  <!-- Course options will be populated via JavaScript -->
-                </select>
+                    <div class="relative w-full md:w-64 mb-4 md:mb-0">
+                        <input
+                            type="text"
+                            id="search-questions"
+                            placeholder="Search questions..."
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        />
+                        <i
+                            class="fas fa-search absolute right-3 top-3 text-gray-400"
+                        ></i>
+                    </div>
 
-                <select
-                  id="filter-semester"
-                  class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">All Semesters</option>
-                  <option value="1">Semester 1</option>
-                  <option value="2">Semester 2</option>
-                  <option value="3">Semester 3</option>
-                  <option value="4">Semester 4</option>
-                  <option value="5">Semester 5</option>
-                  <option value="6">Semester 6</option>
-                </select>
-              </div>
-            </div>
+                    <div class="flex space-x-2">
+                        <select
+                            id="filter-course"
+                            class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        >
+                            <option value="">All Courses</option>
+                            <!-- Course options will be populated via JavaScript -->
+                        </select>
 
-            <div id="questions-container" class="space-y-4">
-              <!-- Questions will be loaded here via JavaScript -->
+                        <select
+                            id="filter-semester"
+                            class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        >
+                            <option value="">All Semesters</option>
+                            <option value="1">Semester 1</option>
+                            <option value="2">Semester 2</option>
+                            <option value="3">Semester 3</option>
+                            <option value="4">Semester 4</option>
+                            <option value="5">Semester 5</option>
+                            <option value="6">Semester 6</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="questions-container" class="space-y-4">
+                    <!-- Questions will be loaded here via JavaScript -->
+                </div>
             </div>
-          </div>
         </div>
-      </div>
     </div>
+</div>
 
-    <!-- Success/Error Toast -->
-    <div
-      id="toast"
-      class="fixed top-4 right-4 p-4 rounded-lg shadow-lg bg-white border-l-4 border-green-500 transform translate-x-full transition-transform duration-300 z-50 max-w-sm"
-    >
-      <div class="flex items-start">
+<!-- Success/Error Toast -->
+<div
+    id="toast"
+    class="fixed top-4 right-4 p-4 rounded-lg shadow-lg bg-white border-l-4 border-green-500 transform translate-x-full transition-transform duration-300 z-50 max-w-sm"
+>
+    <div class="flex items-start">
         <div class="flex-shrink-0">
-          <i class="fas fa-check-circle text-green-500"></i>
+            <i class="fas fa-check-circle text-green-500"></i>
         </div>
         <div class="ml-3">
-          <p id="toast-message" class="text-sm font-medium text-gray-800">
-            Success!
-          </p>
-          <p id="toast-description" class="mt-1 text-sm text-gray-600">
-            Operation completed successfully.
-          </p>
+            <p id="toast-message" class="text-sm font-medium text-gray-800">
+                Success!
+            </p>
+            <p id="toast-description" class="mt-1 text-sm text-gray-600">
+                Operation completed successfully.
+            </p>
         </div>
         <button
-          class="ml-4 flex-shrink-0 focus:outline-none"
-          onclick="hideToast()"
+            class="ml-4 flex-shrink-0 focus:outline-none"
+            onclick="hideToast()"
         >
-          <i class="fas fa-times text-gray-400"></i>
+            <i class="fas fa-times text-gray-400"></i>
         </button>
-      </div>
     </div>
+</div>
 
-    <!-- Loading Overlay -->
-    <div
-      id="loading-overlay"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden"
-    >
-      <div class="bg-white rounded-lg p-6 flex items-center">
+<!-- Loading Overlay -->
+<div
+    id="loading-overlay"
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden"
+>
+    <div class="bg-white rounded-lg p-6 flex items-center">
         <div
-          class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4 border-t-blue-500 animate-spin"
+            class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4 border-t-blue-500 animate-spin"
         ></div>
         <p class="ml-4 text-gray-800">Processing, please wait...</p>
-      </div>
     </div>
+</div>
+{% endblock %}
 
-    <script>
-      // Tab functionality
-      document.querySelectorAll(".tab-button").forEach((button) => {
+{% block extra_js %}
+<script>
+    // Tab functionality
+    document.querySelectorAll(".tab-button").forEach((button) => {
         button.addEventListener("click", () => {
-          const tab = button.getAttribute("data-tab");
+            const tab = button.getAttribute("data-tab");
 
-          // Update active tab button
-          document.querySelectorAll(".tab-button").forEach((btn) => {
-            btn.classList.remove("active", "text-blue-600", "border-blue-600");
-            btn.classList.add("text-gray-600");
-          });
-          button.classList.add("active", "text-blue-600", "border-blue-600");
-          button.classList.remove("text-gray-600");
+            // Update active tab button
+            document.querySelectorAll(".tab-button").forEach((btn) => {
+                btn.classList.remove("active", "text-blue-600", "border-blue-600");
+                btn.classList.add("text-gray-600");
+            });
+            button.classList.add("active", "text-blue-600", "border-blue-600");
+            button.classList.remove("text-gray-600");
 
-          // Show active tab content
-          document.querySelectorAll(".tab-content").forEach((content) => {
-            content.classList.remove("active");
-          });
-          document.getElementById(`${tab}-tab`).classList.add("active");
+            // Show active tab content
+            document.querySelectorAll(".tab-content").forEach((content) => {
+                content.classList.remove("active");
+            });
+            document.getElementById(`${tab}-tab`).classList.add("active");
 
-          // Load content if needed
-          if (tab === "review") {
-            loadReviewQuestions();
-          } else if (tab === "manage") {
-            loadQuestions();
-          }
+            // Load content if needed
+            if (tab === "review") {
+                loadReviewQuestions();
+            } else if (tab === "manage") {
+                loadQuestions();
+            }
         });
-      });
+    });
 
-      // File input handlers
-      document
+    // File input handlers
+    document
         .getElementById("json-file")
         .addEventListener("change", function (e) {
-          const fileName = e.target.files[0]
-            ? e.target.files[0].name
-            : "No file chosen";
-          document.getElementById("json-file-name").textContent = fileName;
+            const fileName = e.target.files[0]
+                ? e.target.files[0].name
+                : "No file chosen";
+            document.getElementById("json-file-name").textContent = fileName;
         });
 
-      document
+    document
         .getElementById("csv-file")
         .addEventListener("change", function (e) {
-          const fileName = e.target.files[0]
-            ? e.target.files[0].name
-            : "No file chosen";
-          document.getElementById("csv-file-name").textContent = fileName;
+            const fileName = e.target.files[0]
+                ? e.target.files[0].name
+                : "No file chosen";
+            document.getElementById("csv-file-name").textContent = fileName;
         });
 
-      // File upload
-      document
+    // File upload
+    document
         .getElementById("upload-files-btn")
         .addEventListener("click", function () {
-          const jsonFile = document.getElementById("json-file").files[0];
-          const csvFile = document.getElementById("csv-file").files[0];
+            const jsonFile = document.getElementById("json-file").files[0];
+            const csvFile = document.getElementById("csv-file").files[0];
 
-          if (!jsonFile && !csvFile) {
-            showToast(
-              "Error",
-              "Please select at least one file to upload",
-              "error"
-            );
-            return;
-          }
+            if (!jsonFile && !csvFile) {
+                showToast(
+                    "Error",
+                    "Please select at least one file to upload",
+                    "error"
+                );
+                return;
+            }
 
-          const formData = new FormData();
-          if (jsonFile) formData.append("json_file", jsonFile);
-          if (csvFile) formData.append("csv_file", csvFile);
+            const formData = new FormData();
+            if (jsonFile) formData.append("json_file", jsonFile);
+            if (csvFile) formData.append("csv_file", csvFile);
 
-          showLoading();
+            showLoading();
 
-          fetch("/admin/questions/upload", {
-            method: "POST",
-            body: formData,
-          })
-            .then((response) => response.json())
-            .then((data) => {
-              hideLoading();
-              if (data.success) {
-                showToast("Success", data.message, "success");
-                // Clear file inputs
-                document.getElementById("json-file").value = "";
-                document.getElementById("csv-file").value = "";
-                document.getElementById("json-file-name").textContent =
-                  "No file chosen";
-                document.getElementById("csv-file-name").textContent =
-                  "No file chosen";
-              } else {
-                showToast("Error", data.error || "Upload failed", "error");
-              }
+            fetch("/admin/questions/upload", {
+                method: "POST",
+                body: formData,
             })
-            .catch((error) => {
-              hideLoading();
-              showToast("Error", "Upload failed: " + error, "error");
-            });
+                .then((response) => response.json())
+                .then((data) => {
+                    hideLoading();
+                    if (data.success) {
+                        showToast("Success", data.message, "success");
+                        // Clear file inputs
+                        document.getElementById("json-file").value = "";
+                        document.getElementById("csv-file").value = "";
+                        document.getElementById("json-file-name").textContent =
+                            "No file chosen";
+                        document.getElementById("csv-file-name").textContent =
+                            "No file chosen";
+                    } else {
+                        showToast("Error", data.error || "Upload failed", "error");
+                    }
+                })
+                .catch((error) => {
+                    hideLoading();
+                    showToast("Error", "Upload failed: " + error, "error");
+                });
         });
 
-      // Manual question form submission
-      document
+    // Manual question form submission
+    document
         .getElementById("manual-question-form")
         .addEventListener("submit", function (e) {
-          e.preventDefault();
+            e.preventDefault();
 
-          const formData = new FormData(this);
+            const formData = new FormData(this);
 
-          showLoading();
+            showLoading();
 
-          fetch("/admin/questions/upload", {
-            method: "POST",
-            body: formData,
-          })
-            .then((response) => response.json())
-            .then((data) => {
-              hideLoading();
-              if (data.success) {
-                showToast("Success", data.message, "success");
-                // Reset form
-                document.getElementById("manual-question-form").reset();
-              } else {
-                showToast(
-                  "Error",
-                  data.error || "Failed to add question",
-                  "error"
-                );
-              }
+            fetch("/admin/questions/upload", {
+                method: "POST",
+                body: formData,
             })
-            .catch((error) => {
-              hideLoading();
-              showToast("Error", "Failed to add question: " + error, "error");
-            });
+                .then((response) => response.json())
+                .then((data) => {
+                    hideLoading();
+                    if (data.success) {
+                        showToast("Success", data.message, "success");
+                        // Reset form
+                        document.getElementById("manual-question-form").reset();
+                    } else {
+                        showToast(
+                            "Error",
+                            data.error || "Failed to add question",
+                            "error"
+                        );
+                    }
+                })
+                .catch((error) => {
+                    hideLoading();
+                    showToast("Error", "Failed to add question: " + error, "error");
+                });
         });
 
-      // Load review questions
-      function loadReviewQuestions() {
+    // Load review questions
+    function loadReviewQuestions() {
         showLoading();
 
         fetch("/admin/questions/review")
-          .then((response) => response.json())
-          .then((data) => {
-            hideLoading();
-            const container = document.getElementById(
-              "review-questions-container"
-            );
-            container.innerHTML = "";
+            .then((response) => response.json())
+            .then((data) => {
+                hideLoading();
+                const container = document.getElementById(
+                    "review-questions-container"
+                );
+                container.innerHTML = "";
 
-            if (data.questions && data.questions.length > 0) {
-              data.questions.forEach((question) => {
-                const questionElement = document.createElement("div");
-                questionElement.className =
-                  "bg-gray-50 p-4 rounded-lg border border-gray-200";
-                questionElement.innerHTML = `
-                            <div class="flex justify-between items-start mb-2">
-                                <h3 class="font-medium text-gray-800">${
-                                  question.text
-                                }</h3>
-                                <span class="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full">Pending Review</span>
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
-                                ${question.options
-                                  .map(
-                                    (option, index) => `
-                                    <div class="flex items-center">
-                                        <span class="inline-block w-6 h-6 rounded-full ${
-                                          option === question.correct_answer
-                                            ? "bg-green-100 text-green-800"
-                                            : "bg-gray-100 text-gray-800"
-                                        } text-center mr-2">${index + 1}</span>
-                                        <span class="${
-                                          option === question.correct_answer
-                                            ? "font-medium text-green-700"
-                                            : "text-gray-700"
-                                        }">${option}</span>
+                if (data.questions && data.questions.length > 0) {
+                    data.questions.forEach((question) => {
+                        const questionElement = document.createElement("div");
+                        questionElement.className =
+                            "bg-gray-50 p-4 rounded-lg border border-gray-200";
+                        questionElement.innerHTML = `
+                                    <div class="flex justify-between items-start mb-2">
+                                        <h3 class="font-medium text-gray-800">${
+                                            question.text
+                                        }</h3>
+                                        <span class="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full">Pending Review</span>
                                     </div>
-                                `
-                                  )
-                                  .join("")}
-                            </div>
-                            <div class="flex justify-end space-x-2">
-                                <button onclick="approveQuestion('${
-                                  question.question_id
-                                }')" class="px-4 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600">Approve</button>
-                                <button onclick="rejectQuestion('${
-                                  question.question_id
-                                }')" class="px-4 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600">Reject</button>
-                            </div>
-                        `;
-                container.appendChild(questionElement);
-              });
-            } else {
-              container.innerHTML =
-                '<p class="text-center text-gray-500 py-6">No questions pending review</p>';
-            }
-          })
-          .catch((error) => {
-            hideLoading();
-            showToast("Error", "Failed to load questions: " + error, "error");
-          });
-      }
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
+                                        ${question.options
+                                            .map(
+                                                (option, index) => `
+                                            <div class="flex items-center">
+                                                <span class="inline-block w-6 h-6 rounded-full ${
+                                                    option === question.correct_answer
+                                                        ? "bg-green-100 text-green-800"
+                                                        : "bg-gray-100 text-gray-800"
+                                                } text-center mr-2">${index + 1}</span>
+                                                <span class="${
+                                                    option === question.correct_answer
+                                                        ? "font-medium text-green-700"
+                                                        : "text-gray-700"
+                                                }">${option}</span>
+                                            </div>
+                                        `
+                                            )
+                                            .join("")}
+                                    </div>
+                                    <div class="flex justify-end space-x-2">
+                                        <button onclick="approveQuestion('${
+                                            question.question_id
+                                        }')" class="px-4 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600">Approve</button>
+                                        <button onclick="rejectQuestion('${
+                                            question.question_id
+                                        }')" class="px-4 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600">Reject</button>
+                                    </div>
+                                `;
+                        container.appendChild(questionElement);
+                    });
+                } else {
+                    container.innerHTML =
+                        '<p class="text-center text-gray-500 py-6">No questions pending review</p>';
+                }
+            })
+            .catch((error) => {
+                hideLoading();
+                showToast("Error", "Failed to load questions: " + error, "error");
+            });
+    }
 
-      // Approve question
-      function approveQuestion(questionId) {
+    // Approve question
+    function approveQuestion(questionId) {
         showLoading();
 
         fetch(`/admin/questions/approve/${questionId}`, {
-          method: "POST",
+            method: "POST",
         })
-          .then((response) => response.json())
-          .then((data) => {
-            hideLoading();
-            if (data.success) {
-              showToast("Success", "Question approved", "success");
-              loadReviewQuestions();
-            } else {
-              showToast(
-                "Error",
-                data.error || "Failed to approve question",
-                "error"
-              );
-            }
-          })
-          .catch((error) => {
-            hideLoading();
-            showToast("Error", "Failed to approve question: " + error, "error");
-          });
-      }
+            .then((response) => response.json())
+            .then((data) => {
+                hideLoading();
+                if (data.success) {
+                    showToast("Success", "Question approved", "success");
+                    loadReviewQuestions();
+                } else {
+                    showToast(
+                        "Error",
+                        data.error || "Failed to approve question",
+                        "error"
+                    );
+                }
+            })
+            .catch((error) => {
+                hideLoading();
+                showToast("Error", "Failed to approve question: " + error, "error");
+            });
+    }
 
-      // Reject question
-      function rejectQuestion(questionId) {
+    // Reject question
+    function rejectQuestion(questionId) {
         showLoading();
 
         fetch(`/admin/questions/reject/${questionId}`, {
-          method: "POST",
+            method: "POST",
         })
-          .then((response) => response.json())
-          .then((data) => {
-            hideLoading();
-            if (data.success) {
-              showToast("Success", "Question rejected", "success");
-              loadReviewQuestions();
-            } else {
-              showToast(
-                "Error",
-                data.error || "Failed to reject question",
-                "error"
-              );
-            }
-          })
-          .catch((error) => {
-            hideLoading();
-            showToast("Error", "Failed to reject question: " + error, "error");
-          });
-      }
+            .then((response) => response.json())
+            .then((data) => {
+                hideLoading();
+                if (data.success) {
+                    showToast("Success", "Question rejected", "success");
+                    loadReviewQuestions();
+                } else {
+                    showToast(
+                        "Error",
+                        data.error || "Failed to reject question",
+                        "error"
+                    );
+                }
+            })
+            .catch((error) => {
+                hideLoading();
+                showToast("Error", "Failed to reject question: " + error, "error");
+            });
+    }
 
-      // Load questions for management
-      function loadQuestions() {
+    // Load questions for management
+    function loadQuestions() {
         showLoading();
 
         fetch("/admin/questions")
-          .then((response) => response.json())
-          .then((data) => {
-            hideLoading();
-            const container = document.getElementById("questions-container");
-            container.innerHTML = "";
+            .then((response) => response.json())
+            .then((data) => {
+                hideLoading();
+                const container = document.getElementById("questions-container");
+                container.innerHTML = "";
 
-            if (data.questions && data.questions.length > 0) {
-              data.questions.forEach((question) => {
-                const questionElement = document.createElement("div");
-                questionElement.className =
-                  "bg-gray-50 p-4 rounded-lg border border-gray-200";
-                questionElement.innerHTML = `
-                            <div class="flex justify-between items-start mb-2">
-                                <h3 class="font-medium text-gray-800">${
-                                  question.text
-                                }</h3>
-                                <span class="text-xs px-2 py-1 bg-green-100 text-green-800 rounded-full">Approved</span>
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
-                                ${question.options
-                                  .map(
-                                    (option, index) => `
-                                    <div class="flex items-center">
-                                        <span class="inline-block w-6 h-6 rounded-full ${
-                                          option === question.correct_answer
-                                            ? "bg-green-100 text-green-800"
-                                            : "bg-gray-100 text-gray-800"
-                                        } text-center mr-2">${index + 1}</span>
-                                        <span class="${
-                                          option === question.correct_answer
-                                            ? "font-medium text-green-700"
-                                            : "text-gray-700"
-                                        }">${option}</span>
+                if (data.questions && data.questions.length > 0) {
+                    data.questions.forEach((question) => {
+                        const questionElement = document.createElement("div");
+                        questionElement.className =
+                            "bg-gray-50 p-4 rounded-lg border border-gray-200";
+                        questionElement.innerHTML = `
+                                    <div class="flex justify-between items-start mb-2">
+                                        <h3 class="font-medium text-gray-800">${
+                                            question.text
+                                        }</h3>
+                                        <span class="text-xs px-2 py-1 bg-green-100 text-green-800 rounded-full">Approved</span>
                                     </div>
-                                `
-                                  )
-                                  .join("")}
-                            </div>
-                            <div class="flex justify-end space-x-2">
-                                <button onclick="editQuestion('${
-                                  question.question_id
-                                }')" class="px-4 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Edit</button>
-                                <button onclick="deleteQuestion('${
-                                  question.question_id
-                                }')" class="px-4 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600">Delete</button>
-                            </div>
-                        `;
-                container.appendChild(questionElement);
-              });
-            } else {
-              container.innerHTML =
-                '<p class="text-center text-gray-500 py-6">No questions found</p>';
-            }
-          })
-          .catch((error) => {
-            hideLoading();
-            showToast("Error", "Failed to load questions: " + error, "error");
-          });
-      }
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
+                                        ${question.options
+                                            .map(
+                                                (option, index) => `
+                                            <div class="flex items-center">
+                                                <span class="inline-block w-6 h-6 rounded-full ${
+                                                    option === question.correct_answer
+                                                        ? "bg-green-100 text-green-800"
+                                                        : "bg-gray-100 text-gray-800"
+                                                } text-center mr-2">${index + 1}</span>
+                                                <span class="${
+                                                    option === question.correct_answer
+                                                        ? "font-medium text-green-700"
+                                                        : "text-gray-700"
+                                                }">${option}</span>
+                                            </div>
+                                        `
+                                            )
+                                            .join("")}
+                                    </div>
+                                    <div class="flex justify-end space-x-2">
+                                        <button onclick="editQuestion('${
+                                            question.question_id
+                                        }')" class="px-4 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Edit</button>
+                                        <button onclick="deleteQuestion('${
+                                            question.question_id
+                                        }')" class="px-4 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600">Delete</button>
+                                    </div>
+                                `;
+                        container.appendChild(questionElement);
+                    });
+                } else {
+                    container.innerHTML =
+                        '<p class="text-center text-gray-500 py-6">No questions found</p>';
+                }
+            })
+            .catch((error) => {
+                hideLoading();
+                showToast("Error", "Failed to load questions: " + error, "error");
+            });
+    }
 
-      // Toast notification functions
-      function showToast(title, message, type = "success") {
+    // Toast notification functions
+    function showToast(title, message, type = "success") {
         const toast = document.getElementById("toast");
         const toastMessage = document.getElementById("toast-message");
         const toastDescription = document.getElementById("toast-description");
 
         // Set border color based on type
         toast.className = toast.className.replace(
-          /border-(red|green|yellow|blue)-500/,
-          ""
+            /border-(red|green|yellow|blue)-500/,
+            ""
         );
         toast.classList.add(
-          `border-${
-            type === "success"
-              ? "green"
-              : type === "error"
-              ? "red"
-              : type === "warning"
-              ? "yellow"
-              : "blue"
-          }-500`
+            `border-${
+                type === "success"
+                    ? "green"
+                    : type === "error"
+                    ? "red"
+                    : type === "warning"
+                    ? "yellow"
+                    : "blue"
+            }-500`
         );
 
         // Set icon based on type
         const iconElement = toast.querySelector(".flex-shrink-0 i");
         iconElement.className =
-          type === "success"
-            ? "fas fa-check-circle text-green-500"
-            : type === "error"
-            ? "fas fa-exclamation-circle text-red-500"
-            : type === "warning"
-            ? "fas fa-exclamation-triangle text-yellow-500"
-            : "fas fa-info-circle text-blue-500";
+            type === "success"
+                ? "fas fa-check-circle text-green-500"
+                : type === "error"
+                ? "fas fa-exclamation-circle text-red-500"
+                : type === "warning"
+                ? "fas fa-exclamation-triangle text-yellow-500"
+                : "fas fa-info-circle text-blue-500";
 
         toastMessage.textContent = title;
         toastDescription.textContent = message;
@@ -1101,65 +736,20 @@
 
         // Auto hide after 5 seconds
         setTimeout(hideToast, 5000);
-      }
+    }
 
-      function hideToast() {
+    function hideToast() {
         const toast = document.getElementById("toast");
         toast.classList.add("translate-x-full");
-      }
+    }
 
-      // Loading overlay functions
-      function showLoading() {
+    // Loading overlay functions
+    function showLoading() {
         document.getElementById("loading-overlay").classList.remove("hidden");
-      }
+    }
 
-      function hideLoading() {
+    function hideLoading() {
         document.getElementById("loading-overlay").classList.add("hidden");
-      }
-
-      // Mobile menu toggle
-      document
-        .getElementById("hamburger-toggle")
-        .addEventListener("click", function () {
-          const dropdownMenu = document.getElementById("dropdown-menu");
-          dropdownMenu.classList.toggle("hidden");
-        });
-
-      // User dropdown toggle
-      document
-        .getElementById("user-menu-button")
-        .addEventListener("click", function () {
-          const userDropdown = document.getElementById("user-dropdown");
-          userDropdown.classList.toggle("hidden");
-        });
-
-      // Close dropdowns when clicking outside
-      document.addEventListener("click", function (event) {
-        const userMenuButton = document.getElementById("user-menu-button");
-        const userDropdown = document.getElementById("user-dropdown");
-
-        if (
-          !userMenuButton.contains(event.target) &&
-          !userDropdown.contains(event.target)
-        ) {
-          userDropdown.classList.add("hidden");
-        }
-
-        const hamburgerToggle = document.getElementById("hamburger-toggle");
-        const dropdownMenu = document.getElementById("dropdown-menu");
-
-        if (
-          !hamburgerToggle.contains(event.target) &&
-          !dropdownMenu.contains(event.target)
-        ) {
-          dropdownMenu.classList.add("hidden");
-        }
-      });
-
-      // Initialize page
-      document.addEventListener("DOMContentLoaded", function () {
-        // Load initial data if needed
-      });
-    </script>
-  </body>
-</html>
+    }
+</script>
+{% endblock %}
