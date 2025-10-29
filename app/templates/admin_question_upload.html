@@ -1,0 +1,1972 @@
+{% extends "admin_base.html" %} {% block title %}Upload Questions - DSVV Quiz
+System{% endblock %} {% block extra_head %}
+<style>
+  .card-hover {
+    transition: all 0.3s ease;
+  }
+  .card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  }
+  .tab-content {
+    display: none;
+  }
+  .tab-content.active {
+    display: block;
+  }
+  .tab-button {
+    transition: all 0.3s ease;
+  }
+  .tab-button.active {
+    background: #3b82f6;
+    color: white;
+  }
+  .input-focus:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  }
+
+  /* Pagination styles matching admin_users.html */
+  .pagination-btn {
+    transition: all 0.2s ease;
+  }
+
+  .pagination-btn:hover:not(:disabled) {
+    background-color: #f3f4f6;
+    transform: translateY(-1px);
+  }
+
+  .pagination-info {
+    font-size: 0.875rem;
+    color: #6b7280;
+  }
+
+  .table-container {
+    overflow-x: auto;
+    max-height: calc(100vh - 300px);
+  }
+
+  .status-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+  }
+
+  .bulk-actions {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  /* Mobile optimizations */
+  @media (max-width: 768px) {
+    .mobile-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .mobile-text-sm {
+      font-size: 0.875rem;
+    }
+
+    .mobile-padding {
+      padding: 0.75rem;
+    }
+  }
+
+  /* Mobile table styles */
+  @media (max-width: 640px) {
+    .mobile-table {
+      font-size: 0.75rem;
+    }
+
+    .mobile-table th,
+    .mobile-table td {
+      padding: 0.5rem 0.25rem;
+    }
+
+    .action-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.25rem;
+    }
+
+    .action-btn {
+      padding: 0.25rem;
+    }
+  }
+
+  /* Difficulty badges */
+  .difficulty-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    text-transform: capitalize;
+  }
+
+  .difficulty-easy {
+    background-color: #d1fae5;
+    color: #065f46;
+  }
+
+  .difficulty-intermediate {
+    background-color: #fef3c7;
+    color: #92400e;
+  }
+
+  .difficulty-hard {
+    background-color: #fee2e2;
+    color: #991b1b;
+  }
+
+  /* Loading states */
+  .loading {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  .spinner {
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #3498db;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+    margin-right: 8px;
+  }
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="p-4 md:p-6">
+  <div class="max-w-9xl mx-auto">
+    <!-- Header Section -->
+    <div
+      class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 mobile-padding"
+    >
+      <div class="flex items-center mb-4 md:mb-0">
+        <div class="bg-blue-100 p-3 rounded-xl mr-4">
+          <i class="fas fa-upload text-blue-600 text-2xl"></i>
+        </div>
+        <div>
+          <h1 class="text-2xl lg:text-3xl font-bold text-gray-800">
+            Question Upload
+          </h1>
+          <p class="text-gray-600 text-sm mt-1">
+            Upload and manage quiz questions
+          </p>
+        </div>
+      </div>
+      <nav class="flex space-x-2 text-sm text-gray-500">
+        <a href="/admin" class="hover:text-blue-600">Dashboard</a>
+        <span>/</span>
+        <a href="/admin/questions/management" class="hover:text-blue-600"
+          >Questions</a
+        >
+        <span>/</span>
+        <span class="text-blue-600">Upload</span>
+      </nav>
+    </div>
+
+    <!-- Tabs -->
+    <div class="bg-white rounded-xl shadow-md mb-6 border border-gray-100">
+      <div class="flex overflow-x-auto">
+        <button
+          class="tab-button py-3 px-4 md:px-6 text-blue-600 border-b-2 border-blue-600 font-medium flex-shrink-0 text-sm md:text-base active"
+          data-tab="upload"
+        >
+          <i class="fas fa-upload mr-2"></i>Upload Questions
+        </button>
+        <button
+          class="tab-button py-3 px-4 md:px-6 text-gray-600 font-medium flex-shrink-0 text-sm md:text-base"
+          data-tab="review"
+        >
+          <i class="fas fa-check-circle mr-2"></i>Review Questions
+        </button>
+        <button
+          class="tab-button py-3 px-4 md:px-6 text-gray-600 font-medium flex-shrink-0 text-sm md:text-base"
+          data-tab="manage"
+        >
+          <i class="fas fa-cog mr-2"></i>Question Bank
+        </button>
+      </div>
+    </div>
+
+    <!-- Upload Tab Content -->
+    <div id="upload-tab" class="tab-content active">
+      <div
+        class="bg-white rounded-xl shadow-md p-4 md:p-6 mb-6 border border-gray-100"
+      >
+        <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+          <i class="fas fa-cloud-upload-alt text-blue-600 mr-2"></i>
+          Upload Questions
+        </h2>
+        <p class="text-gray-600 mb-6">
+          You can upload questions via JSON/CSV files or add them manually.
+        </p>
+
+        <!-- File Upload Section -->
+        <div class="mb-8">
+          <h3 class="text-lg font-medium text-gray-800 mb-4 flex items-center">
+            <i class="fas fa-file-import text-green-600 mr-2"></i>
+            Upload via File
+          </h3>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- JSON Upload -->
+            <div
+              class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center card-hover bg-gray-50"
+            >
+              <i class="fas fa-file-code text-4xl text-blue-500 mb-3"></i>
+              <h4 class="font-medium text-gray-800 mb-2">JSON File Upload</h4>
+              <p class="text-gray-600 text-sm mb-4">
+                Upload a JSON file with questions
+              </p>
+              <form id="json-upload-form" enctype="multipart/form-data">
+                <input
+                  type="file"
+                  id="json-file"
+                  name="json_file"
+                  accept=".json"
+                  class="hidden"
+                />
+                <label
+                  for="json-file"
+                  class="cursor-pointer bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors inline-block"
+                >
+                  Choose File
+                </label>
+                <p id="json-file-name" class="text-sm text-gray-600 mt-2">
+                  No file chosen
+                </p>
+              </form>
+            </div>
+
+            <!-- CSV Upload -->
+            <div
+              class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center card-hover bg-gray-50"
+            >
+              <i class="fas fa-file-csv text-4xl text-green-500 mb-3"></i>
+              <h4 class="font-medium text-gray-800 mb-2">CSV File Upload</h4>
+              <p class="text-gray-600 text-sm mb-4">
+                Upload a CSV file with questions
+              </p>
+              <form id="csv-upload-form" enctype="multipart/form-data">
+                <input
+                  type="file"
+                  id="csv-file"
+                  name="csv_file"
+                  accept=".csv"
+                  class="hidden"
+                />
+                <label
+                  for="csv-file"
+                  class="cursor-pointer bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors inline-block"
+                >
+                  Choose File
+                </label>
+                <p id="csv-file-name" class="text-sm text-gray-600 mt-2">
+                  No file chosen
+                </p>
+              </form>
+            </div>
+          </div>
+          <div class="mt-6 text-center">
+            <button
+              id="upload-files-btn"
+              class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors shadow-lg hover:shadow-xl"
+            >
+              <i class="fas fa-cloud-upload-alt mr-2"></i>Upload Files
+            </button>
+          </div>
+        </div>
+
+        <!-- Manual Entry Section -->
+        <div class="border-t pt-8">
+          <h3 class="text-lg font-medium text-gray-800 mb-4 flex items-center">
+            <i class="fas fa-edit text-purple-600 mr-2"></i>
+            Add Question Manually
+          </h3>
+          <form id="manual-question-form" class="space-y-6">
+            <div>
+              <label
+                for="question-text"
+                class="block text-sm font-medium text-gray-700 mb-2"
+                >Question Text</label
+              >
+              <textarea
+                id="question-text"
+                name="question_text"
+                rows="3"
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-colors"
+                placeholder="Enter your question here..."
+                required
+              ></textarea>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {% for i in range(1, 5) %}
+              <div>
+                <label
+                  for="option{{ i }}"
+                  class="block text-sm font-medium text-gray-700 mb-2"
+                  >Option {{ i }}</label
+                >
+                <input
+                  type="text"
+                  id="option{{ i }}"
+                  name="option{{ i }}"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg input-focus transition-colors"
+                  placeholder="Option {{ i }}"
+                  required
+                />
+              </div>
+              {% endfor %}
+            </div>
+
+            <div>
+              <label
+                for="correct-answer"
+                class="block text-sm font-medium text-gray-700 mb-2"
+                >Correct Answer</label
+              >
+              <select
+                id="correct-answer"
+                name="correct_answer"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg input-focus transition-colors"
+                required
+              >
+                <option value="">Select the correct answer</option>
+                {% for i in range(1, 5) %}
+                <option value="{{ i }}">Option {{ i }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="pt-4">
+              <button
+                type="submit"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors shadow-lg hover:shadow-xl"
+              >
+                <i class="fas fa-plus-circle mr-2"></i>Add Question
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Review Tab Content -->
+    <div id="review-tab" class="tab-content">
+      <div
+        class="bg-white rounded-xl shadow-md p-4 md:p-6 border border-gray-100"
+      >
+        <div
+          class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6"
+        >
+          <h2
+            class="text-xl font-semibold text-gray-800 flex items-center mb-4 md:mb-0"
+          >
+            <i class="fas fa-tasks text-yellow-600 mr-3"></i> Review Questions
+          </h2>
+          <span
+            class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm"
+          >
+            <span id="pending-count">{{ pending_count }}</span> questions
+            pending review
+          </span>
+        </div>
+        <p class="text-gray-600 mb-6">
+          Review and approve or reject pending questions.
+        </p>
+
+        <!-- Bulk Actions Section -->
+        <div class="bulk-actions mb-6">
+          <div
+            class="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+          >
+            <div class="flex items-center">
+              <input
+                type="checkbox"
+                id="select-all-checkbox-review"
+                class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mr-3"
+              />
+              <label
+                for="select-all-checkbox-review"
+                class="text-sm font-medium text-gray-700"
+              >
+                Select all questions on this page
+              </label>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button
+                id="bulk-approve-btn-review"
+                class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                disabled
+              >
+                <i class="fas fa-check mr-2"></i>Approve Selected
+              </button>
+              <button
+                id="bulk-reject-btn-review"
+                class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                disabled
+              >
+                <i class="fas fa-times mr-2"></i>Reject Selected
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Questions Table Section -->
+        <div class="bg-white p-4 md:p-6 rounded-xl shadow-md mb-6 md:mb-8">
+          <div
+            class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4"
+          >
+            <h2
+              class="text-lg md:text-xl font-semibold mb-2 md:mb-0 flex items-center text-green-700"
+            >
+              <i class="fas fa-list mr-2"></i> Pending Questions
+            </h2>
+            <div class="text-sm text-gray-600 mobile-text-sm">
+              Page <span id="review-current-page">{{ current_page }}</span> of
+              <span id="review-total-pages">{{ total_pages }}</span>
+            </div>
+          </div>
+
+          <div class="table-container" id="review-table-container">
+            <!-- Review questions table will be loaded here dynamically -->
+          </div>
+        </div>
+
+        <!-- Pagination Section -->
+        <div
+          id="review-pagination"
+          class="bg-white p-3 md:p-4 rounded-xl shadow-md"
+        >
+          <!-- Pagination will be loaded here dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Manage Tab Content -->
+    <div id="manage-tab" class="tab-content">
+      <div
+        class="bg-white rounded-xl shadow-md p-4 md:p-6 border border-gray-100"
+      >
+        <div
+          class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6"
+        >
+          <h2
+            class="text-xl font-semibold text-gray-800 flex items-center mb-4 md:mb-0"
+          >
+            <i class="fas fa-database text-green-600 mr-3"></i> Question Bank
+          </h2>
+          <span
+            class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm"
+          >
+            <span id="bank-count">{{ bank_count }}</span> questions in bank
+          </span>
+        </div>
+        <p class="text-gray-600 mb-6">
+          View, edit, and delete approved questions.
+        </p>
+
+        <!-- Bulk Actions Section -->
+        <div class="bulk-actions mb-6">
+          <div
+            class="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+          >
+            <div class="flex items-center">
+              <input
+                type="checkbox"
+                id="select-all-checkbox-bank"
+                class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mr-3"
+              />
+              <label
+                for="select-all-checkbox-bank"
+                class="text-sm font-medium text-gray-700"
+              >
+                Select all questions on this page
+              </label>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button
+                id="bulk-delete-btn-bank"
+                class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                disabled
+              >
+                <i class="fas fa-trash mr-2"></i>Delete Selected
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Questions Table Section -->
+        <div class="bg-white p-4 md:p-6 rounded-xl shadow-md mb-6 md:mb-8">
+          <div
+            class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4"
+          >
+            <h2
+              class="text-lg md:text-xl font-semibold mb-2 md:mb-0 flex items-center text-green-700"
+            >
+              <i class="fas fa-list mr-2"></i> Approved Questions
+            </h2>
+            <div class="text-sm text-gray-600 mobile-text-sm">
+              Page <span id="bank-current-page">{{ current_page }}</span> of
+              <span id="bank-total-pages">{{ total_pages }}</span>
+            </div>
+          </div>
+
+          <div class="table-container" id="bank-table-container">
+            <!-- Bank questions table will be loaded here dynamically -->
+          </div>
+        </div>
+
+        <!-- Pagination Section -->
+        <div
+          id="bank-pagination"
+          class="bg-white p-3 md:p-4 rounded-xl shadow-md"
+        >
+          <!-- Pagination will be loaded here dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Question Modal -->
+<div
+  id="edit-modal"
+  class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-2 md:p-4 z-50 hidden"
+>
+  <div
+    class="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-2 md:mx-0 max-h-[90vh] overflow-y-auto"
+  >
+    <div class="px-4 md:px-6 py-4 border-b sticky top-0 bg-white">
+      <h2 class="text-lg md:text-xl font-semibold text-gray-800">
+        Edit Question
+      </h2>
+    </div>
+    <form id="edit-form" class="px-4 md:px-6 py-4">
+      <input type="hidden" id="edit-question_id" />
+      <input type="hidden" id="edit-question-type" />
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-1"
+          >Question Text</label
+        >
+        <textarea
+          id="edit-text"
+          class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
+          rows="3"
+        ></textarea>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        {% for i in range(4) %}
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1"
+            >Option {{ i+1 }}</label
+          >
+          <input
+            type="text"
+            id="edit-option-{{ i+1 }}"
+            class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
+          />
+        </div>
+        {% endfor %}
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-1"
+          >Correct Answer</label
+        >
+        <select
+          id="edit-correct-answer"
+          class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
+        >
+          <option value="">Select Correct Answer</option>
+          {% for i in range(4) %}
+          <option value="{{ i+1 }}">Option {{ i+1 }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="mb-4" id="edit-difficulty-section">
+        <label class="block text-sm font-medium text-gray-700 mb-1"
+          >Difficulty</label
+        >
+        <select
+          id="edit-difficulty"
+          class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
+        >
+          <option value="easy">Easy</option>
+          <option value="intermediate">Intermediate</option>
+          <option value="hard">Hard</option>
+        </select>
+      </div>
+      <div class="mb-4" id="edit-tags-section">
+        <label class="block text-sm font-medium text-gray-700 mb-1"
+          >Tags (comma separated)</label
+        >
+        <input
+          type="text"
+          id="edit-tags"
+          class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
+          placeholder="tag1, tag2, tag3"
+        />
+      </div>
+    </form>
+    <div
+      class="px-4 md:px-6 py-4 border-t flex justify-end space-x-2 md:space-x-3 bg-white sticky bottom-0"
+    >
+      <button
+        type="button"
+        onclick="closeModal()"
+        class="px-3 md:px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors text-sm md:text-base"
+      >
+        Cancel
+      </button>
+      <button
+        type="button"
+        onclick="submitEdit()"
+        class="px-3 md:px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm md:text-base"
+      >
+        Save Changes
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Notification -->
+<div
+  id="toast"
+  class="fixed top-4 right-4 p-4 rounded-lg shadow-lg bg-white border-l-4 border-green-500 transform translate-x-full transition-transform duration-300 z-50 max-w-sm hidden"
+>
+  <div class="flex items-start">
+    <div class="flex-shrink-0">
+      <i class="fas fa-check-circle text-green-500"></i>
+    </div>
+    <div class="ml-3">
+      <p id="toast-message" class="text-sm font-medium text-gray-800">
+        Success!
+      </p>
+      <p id="toast-description" class="mt-1 text-sm text-gray-600">
+        Operation completed successfully.
+      </p>
+    </div>
+    <button class="ml-4 flex-shrink-0 focus:outline-none" onclick="hideToast()">
+      <i class="fas fa-times text-gray-400"></i>
+    </button>
+  </div>
+</div>
+
+<!-- Loading Overlay -->
+<div
+  id="loading-overlay"
+  class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden"
+>
+  <div class="bg-white rounded-lg p-6 flex items-center shadow-xl">
+    <div
+      class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4 border-t-blue-500 animate-spin"
+    ></div>
+    <p class="ml-4 text-gray-800">Processing, please wait...</p>
+  </div>
+</div>
+{% endblock %} {% block extra_js %}
+<script>
+  // Global state management
+  const initialState = {
+    current_page: Number('{{ current_page|default(1) }}'),
+    page_size: Number('{{ page_size|default(10) }}'),
+    total_pages: Number('{{ total_pages|default(1) }}'),
+    total_count: Number('{{ total_count|default(0) }}')
+  };
+
+  let currentState = {
+      review: {
+          currentPage: initialState.current_page,
+          pageSize: initialState.page_size,
+          totalPages: initialState.total_pages,
+          totalCount: initialState.total_count,
+          selectedQuestions: new Set()
+      },
+      bank: {
+          currentPage: initialState.current_page,
+          pageSize: initialState.page_size,
+          totalPages: initialState.total_pages,
+          totalCount: initialState.total_count,
+          selectedQuestions: new Set()
+      }
+  };
+
+  // Initialize the page
+  document.addEventListener('DOMContentLoaded', function() {
+      initializeTabs();
+      initializeFileUploads();
+      initializeManualForm();
+      loadReviewTab();
+      loadBankTab();
+  });
+
+  // Tab functionality
+  function initializeTabs() {
+      const tabButtons = document.querySelectorAll('.tab-button');
+      tabButtons.forEach(button => {
+          button.addEventListener('click', () => {
+              const tab = button.getAttribute('data-tab');
+
+              // Update active tab button
+              document.querySelectorAll('.tab-button').forEach(btn => {
+                  btn.classList.remove('active', 'text-blue-600', 'border-blue-600');
+                  btn.classList.add('text-gray-600');
+              });
+              button.classList.add('active', 'text-blue-600', 'border-blue-600');
+              button.classList.remove('text-gray-600');
+
+              // Show active tab content
+              document.querySelectorAll('.tab-content').forEach(content => {
+                  content.classList.remove('active');
+              });
+              document.getElementById(`${tab}-tab`).classList.add('active');
+
+              // Load data for the active tab if needed
+              if (tab === 'review') {
+                  loadReviewTab();
+              } else if (tab === 'manage') {
+                  loadBankTab();
+              }
+          });
+      });
+  }
+
+  // File upload functionality
+  function initializeFileUploads() {
+      const jsonFileInput = document.getElementById('json-file');
+      const csvFileInput = document.getElementById('csv-file');
+      const uploadFilesBtn = document.getElementById('upload-files-btn');
+
+      if (jsonFileInput) {
+          jsonFileInput.addEventListener('change', function(e) {
+              const fileName = e.target.files[0] ? e.target.files[0].name : 'No file chosen';
+              document.getElementById('json-file-name').textContent = fileName;
+          });
+      }
+
+      if (csvFileInput) {
+          csvFileInput.addEventListener('change', function(e) {
+              const fileName = e.target.files[0] ? e.target.files[0].name : 'No file chosen';
+              document.getElementById('csv-file-name').textContent = fileName;
+          });
+      }
+
+      if (uploadFilesBtn) {
+          uploadFilesBtn.addEventListener('click', handleFileUpload);
+      }
+  }
+
+  // Manual form functionality
+  function initializeManualForm() {
+      const manualForm = document.getElementById('manual-question-form');
+      if (manualForm) {
+          manualForm.addEventListener('submit', handleManualQuestionSubmit);
+      }
+  }
+
+  // Load review tab data
+  async function loadReviewTab() {
+      showLoading();
+      try {
+          const response = await fetch(`/admin/questions/api/review/questions?page=${currentState.review.currentPage}&page_size=${currentState.review.pageSize}`);
+          const data = await response.json();
+
+          if (data.questions) {
+              renderReviewTable(data.questions);
+              renderReviewPagination(data);
+              updateReviewCounts(data.total_count);
+              initializeReviewEventListeners();
+          }
+      } catch (error) {
+          showToast('Error', 'Failed to load review questions: ' + error.message, 'error');
+      } finally {
+          hideLoading();
+      }
+  }
+
+  // Load bank tab data
+  async function loadBankTab() {
+      showLoading();
+      try {
+          const response = await fetch(`/admin/questions/api/bank/questions?page=${currentState.bank.currentPage}&page_size=${currentState.bank.pageSize}`);
+          const data = await response.json();
+
+          if (data.questions) {
+              renderBankTable(data.questions);
+              renderBankPagination(data);
+              updateBankCounts(data.total_count);
+              initializeBankEventListeners();
+          }
+      } catch (error) {
+          showToast('Error', 'Failed to load bank questions: ' + error.message, 'error');
+      } finally {
+          hideLoading();
+      }
+  }
+
+  // Render review table
+  function renderReviewTable(questions) {
+      const container = document.getElementById('review-table-container');
+      if (!container) return;
+
+      if (questions.length === 0) {
+          container.innerHTML = `
+              <div class="text-center py-8">
+                  <i class="fas fa-check-circle text-green-400 text-3xl md:text-4xl mb-4"></i>
+                  <p class="text-gray-500 text-sm md:text-base">No questions pending review</p>
+                  <p class="text-xs md:text-sm text-gray-400 mt-2">All questions have been reviewed and processed.</p>
+              </div>
+          `;
+          return;
+      }
+
+      let tableHTML = `
+          <table class="min-w-full divide-y divide-gray-200 mobile-table">
+              <thead class="bg-gray-50">
+                  <tr>
+                      <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-8">
+                          <input type="checkbox" id="select-all-checkbox-review" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                      </th>
+                      <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">S no.</th>
+                      <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Question</th>
+                      <th class="hidden md:table-cell px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Options</th>
+                      <th class="hidden lg:table-cell px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Correct Answer</th>
+                      <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                      <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+      `;
+
+      questions.forEach((question, index) => {
+          const serialNo = (currentState.review.currentPage - 1) * currentState.review.pageSize + index + 1;
+          const optionsString = question.options ? question.options.join(', ') : '';
+
+          tableHTML += `
+              <tr class="hover:bg-gray-50">
+                  <td class="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap">
+                      <input type="checkbox" class="question-checkbox-review h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" data-question-id="${question.question_id}">
+                  </td>
+                  <td class="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm mobile-text-sm font-mono">
+                      ${serialNo}
+                  </td>
+                  <td class="px-3 py-2 md:px-6 md:py-4 text-sm mobile-text-sm">
+                      <span class="truncate max-w-[200px] md:max-w-[300px] block" title="${question.text}">
+                          ${question.text ? question.text.substring(0, 100) + (question.text.length > 100 ? '...' : '') : 'No text'}
+                      </span>
+                  </td>
+                  <td class="hidden md:table-cell px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm mobile-text-sm">
+                      <span class="truncate max-w-[150px] block" title="${optionsString}">
+                          ${optionsString.substring(0, 50)}${optionsString.length > 50 ? '...' : ''}
+                      </span>
+                  </td>
+                  <td class="hidden lg:table-cell px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm mobile-text-sm">
+                      <span class="truncate max-w-[120px] block" title="${question.correct_answer}">
+                          ${question.correct_answer ? question.correct_answer.substring(0, 30) + (question.correct_answer.length > 30 ? '...' : '') : 'No answer'}
+                      </span>
+                  </td>
+                  <td class="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm">
+                      <span class="status-badge bg-yellow-100 text-yellow-800 text-xs">Pending</span>
+                  </td>
+                  <td class="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm">
+                      <div class="action-buttons">
+                          <button data-action="edit"
+                                  data-question-id="${question.question_id}"
+                                  data-text="${question.text || ''}"
+                                  data-options="${question.options ? question.options.join('|||') : ''}"
+                                  data-correct-answer="${question.correct_answer || ''}"
+                                  class="action-btn text-blue-600 hover:text-blue-800 p-1 md:p-0"
+                                  title="Edit Question">
+                              <i class="fas fa-edit text-sm md:text-base"></i>
+                          </button>
+                          <button data-action="approve"
+                                  data-question-id="${question.question_id}"
+                                  class="action-btn text-green-600 hover:text-green-800 p-1 md:p-0"
+                                  title="Approve">
+                              <i class="fas fa-check text-sm md:text-base"></i>
+                          </button>
+                          <button data-action="reject"
+                                  data-question-id="${question.question_id}"
+                                  class="action-btn text-red-600 hover:text-red-800 p-1 md:p-0"
+                                  title="Reject">
+                              <i class="fas fa-times text-sm md:text-base"></i>
+                          </button>
+                      </div>
+                  </td>
+              </tr>
+          `;
+      });
+
+      tableHTML += `</tbody></table>`;
+      container.innerHTML = tableHTML;
+  }
+
+  // Render bank table
+  function renderBankTable(questions) {
+      const container = document.getElementById('bank-table-container');
+      if (!container) return;
+
+      if (questions.length === 0) {
+          container.innerHTML = `
+              <div class="text-center py-8">
+                  <i class="fas fa-database text-gray-400 text-3xl md:text-4xl mb-4"></i>
+                  <p class="text-gray-500 text-sm md:text-base">No questions in bank</p>
+                  <p class="text-xs md:text-sm text-gray-400 mt-2">Questions will appear here after they are approved.</p>
+              </div>
+          `;
+          return;
+      }
+
+      let tableHTML = `
+          <table class="min-w-full divide-y divide-gray-200 mobile-table">
+              <thead class="bg-gray-50">
+                  <tr>
+                      <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-8">
+                          <input type="checkbox" id="select-all-checkbox-bank" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                      </th>
+                      <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">S no.</th>
+                      <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Question</th>
+                      <th class="hidden md:table-cell px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Difficulty</th>
+                      <th class="hidden lg:table-cell px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tags</th>
+                      <th class="hidden lg:table-cell px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Correct Answer</th>
+                      <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                      <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+      `;
+
+      questions.forEach((question, index) => {
+          const serialNo = (currentState.bank.currentPage - 1) * currentState.bank.pageSize + index + 1;
+          const tagsString = question.tags ? question.tags.join(', ') : '';
+
+          tableHTML += `
+              <tr class="hover:bg-gray-50">
+                  <td class="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap">
+                      <input type="checkbox" class="question-checkbox-bank h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" data-question-id="${question.question_id}">
+                  </td>
+                  <td class="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm mobile-text-sm font-mono">
+                      ${serialNo}
+                  </td>
+                  <td class="px-3 py-2 md:px-6 md:py-4 text-sm mobile-text-sm">
+                      <span class="truncate max-w-[200px] md:max-w-[300px] block" title="${question.text}">
+                          ${question.text ? question.text.substring(0, 100) + (question.text.length > 100 ? '...' : '') : 'No text'}
+                      </span>
+                  </td>
+                  <td class="hidden md:table-cell px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm">
+                      <span class="difficulty-badge difficulty-${question.difficulty || 'intermediate'}">
+                          ${(question.difficulty || 'intermediate').charAt(0).toUpperCase() + (question.difficulty || 'intermediate').slice(1)}
+                      </span>
+                  </td>
+                  <td class="hidden lg:table-cell px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm mobile-text-sm">
+                      ${tagsString ? `
+                      <span class="truncate max-w-[150px] block" title="${tagsString}">
+                          ${tagsString.substring(0, 30)}${tagsString.length > 30 ? '...' : ''}
+                      </span>
+                      ` : '<span class="text-gray-400">No tags</span>'}
+                  </td>
+                  <td class="hidden lg:table-cell px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm mobile-text-sm">
+                      <span class="truncate max-w-[120px] block" title="${question.correct_answer}">
+                          ${question.correct_answer ? question.correct_answer.substring(0, 30) + (question.correct_answer.length > 30 ? '...' : '') : 'No answer'}
+                      </span>
+                  </td>
+                  <td class="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm">
+                      <span class="status-badge bg-green-100 text-green-800 text-xs">Approved</span>
+                  </td>
+                  <td class="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm">
+                      <div class="action-buttons">
+                          <button data-action="edit"
+                                  data-question-id="${question.question_id}"
+                                  data-text="${question.text || ''}"
+                                  data-options="${question.options ? question.options.join('|||') : ''}"
+                                  data-correct-answer="${question.correct_answer || ''}"
+                                  data-difficulty="${question.difficulty || 'intermediate'}"
+                                  data-tags="${question.tags ? question.tags.join(',') : ''}"
+                                  class="action-btn text-blue-600 hover:text-blue-800 p-1 md:p-0"
+                                  title="Edit Question">
+                              <i class="fas fa-edit text-sm md:text-base"></i>
+                          </button>
+                          <button data-action="delete"
+                                  data-question-id="${question.question_id}"
+                                  class="action-btn text-red-600 hover:text-red-800 p-1 md:p-0"
+                                  title="Delete">
+                              <i class="fas fa-trash text-sm md:text-base"></i>
+                          </button>
+                      </div>
+                  </td>
+              </tr>
+          `;
+      });
+
+      tableHTML += `</tbody></table>`;
+      container.innerHTML = tableHTML;
+  }
+
+  // Initialize event listeners for review tab
+  function initializeReviewEventListeners() {
+      // Select all functionality
+      const selectAllReview = document.getElementById('select-all-checkbox-review');
+      const reviewCheckboxes = document.querySelectorAll('.question-checkbox-review');
+      const bulkApproveBtn = document.getElementById('bulk-approve-btn-review');
+      const bulkRejectBtn = document.getElementById('bulk-reject-btn-review');
+
+      if (selectAllReview) {
+          selectAllReview.addEventListener('change', function() {
+              reviewCheckboxes.forEach(checkbox => {
+                  checkbox.checked = this.checked;
+                  if (this.checked) {
+                      currentState.review.selectedQuestions.add(checkbox.dataset.questionId);
+                  } else {
+                      currentState.review.selectedQuestions.delete(checkbox.dataset.questionId);
+                  }
+              });
+              updateBulkActionButtonsReview();
+          });
+      }
+
+      // Individual checkbox events
+      reviewCheckboxes.forEach(checkbox => {
+          checkbox.addEventListener('change', function() {
+              if (this.checked) {
+                  currentState.review.selectedQuestions.add(this.dataset.questionId);
+              } else {
+                  currentState.review.selectedQuestions.delete(this.dataset.questionId);
+              }
+              updateSelectAllCheckboxReview();
+              updateBulkActionButtonsReview();
+          });
+      });
+
+      // Bulk action buttons
+      if (bulkApproveBtn) {
+          bulkApproveBtn.addEventListener('click', bulkApproveQuestions);
+      }
+      if (bulkRejectBtn) {
+          bulkRejectBtn.addEventListener('click', bulkRejectQuestions);
+      }
+
+      // Individual action buttons
+      document.querySelectorAll('#review-table-container button[data-action]').forEach(button => {
+          button.addEventListener('click', handleReviewAction);
+      });
+  }
+
+  // Initialize event listeners for bank tab
+  function initializeBankEventListeners() {
+      // Select all functionality
+      const selectAllBank = document.getElementById('select-all-checkbox-bank');
+      const bankCheckboxes = document.querySelectorAll('.question-checkbox-bank');
+      const bulkDeleteBtn = document.getElementById('bulk-delete-btn-bank');
+
+      if (selectAllBank) {
+          selectAllBank.addEventListener('change', function() {
+              bankCheckboxes.forEach(checkbox => {
+                  checkbox.checked = this.checked;
+                  if (this.checked) {
+                      currentState.bank.selectedQuestions.add(checkbox.dataset.questionId);
+                  } else {
+                      currentState.bank.selectedQuestions.delete(checkbox.dataset.questionId);
+                  }
+              });
+              updateBulkActionButtonsBank();
+          });
+      }
+
+      // Individual checkbox events
+      bankCheckboxes.forEach(checkbox => {
+          checkbox.addEventListener('change', function() {
+              if (this.checked) {
+                  currentState.bank.selectedQuestions.add(this.dataset.questionId);
+              } else {
+                  currentState.bank.selectedQuestions.delete(this.dataset.questionId);
+              }
+              updateSelectAllCheckboxBank();
+              updateBulkActionButtonsBank();
+          });
+      });
+
+      // Bulk action buttons
+      if (bulkDeleteBtn) {
+          bulkDeleteBtn.addEventListener('click', bulkDeleteQuestions);
+      }
+
+      // Individual action buttons
+      document.querySelectorAll('#bank-table-container button[data-action]').forEach(button => {
+          button.addEventListener('click', handleBankAction);
+      });
+  }
+
+  // Handle review actions
+  function handleReviewAction(event) {
+      const button = event.currentTarget;
+      const action = button.getAttribute('data-action');
+      const questionId = button.getAttribute('data-question-id');
+
+      switch (action) {
+          case 'approve':
+              approveQuestion(questionId);
+              break;
+          case 'reject':
+              rejectQuestion(questionId);
+              break;
+          case 'edit':
+              const text = button.getAttribute('data-text');
+              const options = button.getAttribute('data-options').split('|||');
+              const correctAnswer = button.getAttribute('data-correct-answer');
+              editQuestion(questionId, text, options, correctAnswer, 'intermediate', '', 'review');
+              break;
+      }
+  }
+
+  // Handle bank actions
+  function handleBankAction(event) {
+      const button = event.currentTarget;
+      const action = button.getAttribute('data-action');
+      const questionId = button.getAttribute('data-question-id');
+
+      switch (action) {
+          case 'delete':
+              deleteQuestion(questionId);
+              break;
+          case 'edit':
+              const text = button.getAttribute('data-text');
+              const options = button.getAttribute('data-options').split('|||');
+              const correctAnswer = button.getAttribute('data-correct-answer');
+              const difficulty = button.getAttribute('data-difficulty');
+              const tags = button.getAttribute('data-tags');
+              editQuestion(questionId, text, options, correctAnswer, difficulty, tags, 'bank');
+              break;
+      }
+  }
+
+  // Update counts
+  function updateReviewCounts(totalCount) {
+      const pendingCountEl = document.getElementById('pending-count');
+      if (pendingCountEl) {
+          pendingCountEl.textContent = totalCount;
+      }
+  }
+
+  function updateBankCounts(totalCount) {
+      const bankCountEl = document.getElementById('bank-count');
+      if (bankCountEl) {
+          bankCountEl.textContent = totalCount;
+      }
+  }
+
+  // The rest of your existing functions (handleFileUpload, handleManualQuestionSubmit, editQuestion, submitEdit, etc.)
+  // ... [Keep all your existing functions from the previous code]
+
+  // Only update the functions that cause page reloads to use AJAX instead
+
+  // Example of updated approveQuestion function:
+  async function approveQuestion(questionId) {
+      if (confirm('Are you sure you want to approve this question?')) {
+          showLoading();
+          try {
+              const response = await fetch(`/admin/questions/api/questions/approve/${questionId}`, {
+                  method: 'POST',
+                  headers: {'Content-Type': 'application/json'}
+              });
+              const data = await response.json();
+
+              if (data.success) {
+                  showToast('Success', 'Question approved successfully', 'success');
+                  // Reload the current tab data instead of entire page
+                  loadReviewTab();
+                  loadBankTab(); // Also reload bank to reflect new count
+              } else {
+                  showToast('Error', data.error || 'Failed to approve question', 'error');
+              }
+          } catch (error) {
+              showToast('Error', 'Error approving question: ' + error.message, 'error');
+          } finally {
+              hideLoading();
+          }
+      }
+  }
+
+  // Similarly update rejectQuestion, deleteQuestion, bulk operations to use AJAX
+
+  // Pagination functions (update to use AJAX)
+  function goToPageReview(page) {
+      currentState.review.currentPage = page;
+      loadReviewTab();
+  }
+
+  function goToPageBank(page) {
+      currentState.bank.currentPage = page;
+      loadBankTab();
+  }
+
+  function changePerPageReview(perPage) {
+      currentState.review.pageSize = parseInt(perPage);
+      currentState.review.currentPage = 1;
+      loadReviewTab();
+  }
+
+  function changePerPageBank(perPage) {
+      currentState.bank.pageSize = parseInt(perPage);
+      currentState.bank.currentPage = 1;
+      loadBankTab();
+  }
+
+  // Render pagination functions (similar to your existing ones but using the new AJAX functions)
+  function renderReviewPagination(data) {
+      const container = document.getElementById('review-pagination');
+      if (!container || data.total_pages <= 1) {
+          container.innerHTML = '';
+          return;
+      }
+
+      container.innerHTML = createPaginationHTML('review', data);
+
+      // Add event listeners for pagination
+      container.querySelectorAll('button').forEach(button => {
+          if (button.onclick) return; // Skip if already has onclick
+
+          const page = button.getAttribute('data-page');
+          if (page) {
+              button.addEventListener('click', () => goToPageReview(parseInt(page)));
+          }
+      });
+
+      // Add event listener for per page selector
+      const perPageSelect = container.querySelector('#per-page-select-review');
+      if (perPageSelect) {
+          perPageSelect.addEventListener('change', (e) => changePerPageReview(e.target.value));
+      }
+  }
+
+  function renderBankPagination(data) {
+      const container = document.getElementById('bank-pagination');
+      if (!container || data.total_pages <= 1) {
+          container.innerHTML = '';
+          return;
+      }
+
+      container.innerHTML = createPaginationHTML('bank', data);
+
+      // Add event listeners for pagination
+      container.querySelectorAll('button').forEach(button => {
+          if (button.onclick) return; // Skip if already has onclick
+
+          const page = button.getAttribute('data-page');
+          if (page) {
+              button.addEventListener('click', () => goToPageBank(parseInt(page)));
+          }
+      });
+
+      // Add event listener for per page selector
+      const perPageSelect = container.querySelector('#per-page-select-bank');
+      if (perPageSelect) {
+          perPageSelect.addEventListener('change', (e) => changePerPageBank(e.target.value));
+      }
+  }
+
+  // Helper function to create pagination HTML
+  function createPaginationHTML(type, data) {
+      const currentPage = type === 'review' ? currentState.review.currentPage : currentState.bank.currentPage;
+      const totalPages = data.total_pages;
+      const totalCount = data.total_count;
+      const pageSize = type === 'review' ? currentState.review.pageSize : currentState.bank.pageSize;
+
+      let html = `
+          <div class="flex flex-col md:flex-row justify-between items-center space-y-3 md:space-y-0">
+              <!-- Page Info -->
+              <div class="text-xs md:text-sm text-gray-600 pagination-info text-center md:text-left">
+                  Showing ${((currentPage - 1) * pageSize) + 1} to
+                  ${Math.min(currentPage * pageSize, totalCount)} of
+                  ${totalCount} entries
+              </div>
+
+              <!-- Page Size Selector -->
+              <div class="flex items-center space-x-2">
+                  <span class="text-xs md:text-sm text-gray-600 hidden sm:inline">Show:</span>
+                  <select id="per-page-select-${type}" class="form-select input-focus p-1 border border-gray-300 rounded text-xs md:text-sm">
+                      <option value="5" ${pageSize == 5 ? 'selected' : ''}>5</option>
+                      <option value="10" ${pageSize == 10 ? 'selected' : ''}>10</option>
+                      <option value="25" ${pageSize == 25 ? 'selected' : ''}>25</option>
+                      <option value="50" ${pageSize == 50 ? 'selected' : ''}>50</option>
+                      <option value="100" ${pageSize == 100 ? 'selected' : ''}>100</option>
+                  </select>
+                  <span class="text-xs md:text-sm text-gray-600 hidden sm:inline">per page</span>
+              </div>
+
+              <!-- Pagination Controls -->
+              <div class="flex items-center space-x-1">
+                  <!-- First Page -->
+                  <button data-page="1"
+                          class="px-2 py-1 md:px-3 md:py-1 text-xs md:text-sm border border-gray-300 rounded pagination-btn ${currentPage == 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700'}"
+                          ${currentPage == 1 ? 'disabled' : ''}
+                          title="First Page">
+                      <i class="fas fa-angle-double-left"></i>
+                  </button>
+
+                  <!-- Previous Page -->
+                  <button data-page="${currentPage - 1}"
+                          class="px-2 py-1 md:px-3 md:py-1 text-xs md:text-sm border border-gray-300 rounded pagination-btn ${currentPage == 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700'}"
+                          ${currentPage == 1 ? 'disabled' : ''}
+                          title="Previous Page">
+                      <i class="fas fa-angle-left"></i>
+                  </button>
+      `;
+
+      // Page Numbers
+      const startPage = Math.max(currentPage - 2, 1);
+      const endPage = Math.min(currentPage + 2, totalPages);
+
+      for (let p = startPage; p <= endPage; p++) {
+          if (p == currentPage) {
+              html += `<button class="px-2 py-1 md:px-3 md:py-1 text-xs md:text-sm border border-blue-500 bg-blue-500 text-white rounded pagination-btn">${p}</button>`;
+          } else {
+              html += `<button data-page="${p}" class="px-2 py-1 md:px-3 md:py-1 text-xs md:text-sm border border-gray-300 bg-white text-gray-700 rounded pagination-btn">${p}</button>`;
+          }
+      }
+
+      html += `
+                  <!-- Next Page -->
+                  <button data-page="${currentPage + 1}"
+                          class="px-2 py-1 md:px-3 md:py-1 text-xs md:text-sm border border-gray-300 rounded pagination-btn ${currentPage == totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700'}"
+                          ${currentPage == totalPages ? 'disabled' : ''}
+                          title="Next Page">
+                      <i class="fas fa-angle-right"></i>
+                  </button>
+
+                  <!-- Last Page -->
+                  <button data-page="${totalPages}"
+                          class="px-2 py-1 md:px-3 md:py-1 text-xs md:text-sm border border-gray-300 rounded pagination-btn ${currentPage == totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700'}"
+                          ${currentPage == totalPages ? 'disabled' : ''}
+                          title="Last Page">
+                      <i class="fas fa-angle-double-right"></i>
+                  </button>
+              </div>
+          </div>
+      `;
+
+      return html;
+  }
+
+  // Keep all your existing utility functions (showToast, hideToast, showLoading, hideLoading, etc.)
+  // ... [Your existing utility functions]
+</script>
+
+<!-- Include all your existing JavaScript functions here -->
+<script>
+  // File upload handler
+  async function handleFileUpload() {
+    const jsonFile = document.getElementById("json-file").files[0];
+    const csvFile = document.getElementById("csv-file").files[0];
+
+    if (!jsonFile && !csvFile) {
+      showToast("Error", "Please select at least one file to upload", "error");
+      return;
+    }
+
+    const formData = new FormData();
+    if (jsonFile) formData.append("json_file", jsonFile);
+    if (csvFile) formData.append("csv_file", csvFile);
+
+    showLoading();
+
+    try {
+      const response = await fetch("/admin/questions/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        showToast("Success", data.message, "success");
+        // Clear file inputs
+        document.getElementById("json-file").value = "";
+        document.getElementById("csv-file").value = "";
+        document.getElementById("json-file-name").textContent =
+          "No file chosen";
+        document.getElementById("csv-file-name").textContent = "No file chosen";
+        // Reload review tab to show new questions
+        loadReviewTab();
+      } else {
+        showToast("Error", data.error || "Upload failed", "error");
+      }
+    } catch (error) {
+      showToast("Error", "Upload failed: " + error.message, "error");
+    } finally {
+      hideLoading();
+    }
+  }
+
+  // Manual question form submission handler
+  async function handleManualQuestionSubmit(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+    const questionText = formData.get("question_text");
+    const options = [
+      formData.get("option1"),
+      formData.get("option2"),
+      formData.get("option3"),
+      formData.get("option4"),
+    ];
+    const correctAnswer = formData.get("correct_answer");
+
+    // Validation
+    if (!questionText || !options.every((opt) => opt) || !correctAnswer) {
+      showToast("Error", "All fields are required", "error");
+      return;
+    }
+
+    showLoading();
+
+    try {
+      const response = await fetch("/admin/questions/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        showToast("Success", data.message, "success");
+        // Reset form
+        document.getElementById("manual-question-form").reset();
+        // Reload review tab to show new question
+        loadReviewTab();
+      } else {
+        showToast("Error", data.error || "Failed to add question", "error");
+      }
+    } catch (error) {
+      showToast("Error", "Failed to add question: " + error.message, "error");
+    } finally {
+      hideLoading();
+    }
+  }
+
+  // Edit question functionality
+  function editQuestion(
+    questionId,
+    text,
+    options,
+    correctAnswer,
+    difficulty = "intermediate",
+    tags = "",
+    questionType = "review"
+  ) {
+    document.getElementById("edit-question_id").value = questionId;
+    document.getElementById("edit-text").value = text;
+    document.getElementById("edit-question-type").value = questionType;
+
+    // Fill options
+    for (let i = 0; i < 4; i++) {
+      document.getElementById(`edit-option-${i + 1}`).value = options[i] || "";
+    }
+
+    // Set correct answer (find which option matches)
+    let correctAnswerIndex = -1;
+    for (let i = 0; i < options.length; i++) {
+      if (options[i] === correctAnswer) {
+        correctAnswerIndex = i + 1;
+        break;
+      }
+    }
+    document.getElementById("edit-correct-answer").value = correctAnswerIndex;
+
+    // Show/hide additional fields based on question type
+    const difficultySection = document.getElementById(
+      "edit-difficulty-section"
+    );
+    const tagsSection = document.getElementById("edit-tags-section");
+
+    if (questionType === "bank") {
+      difficultySection.style.display = "block";
+      tagsSection.style.display = "block";
+      document.getElementById("edit-difficulty").value = difficulty;
+      document.getElementById("edit-tags").value = tags;
+    } else {
+      difficultySection.style.display = "none";
+      tagsSection.style.display = "none";
+    }
+
+    // Show modal
+    const modal = document.getElementById("edit-modal");
+    modal.classList.remove("hidden");
+  }
+
+  async function submitEdit() {
+    const questionId = document.getElementById("edit-question_id").value;
+    const questionType = document.getElementById("edit-question-type").value;
+    const text = document.getElementById("edit-text").value;
+    const options = [
+      document.getElementById("edit-option-1").value,
+      document.getElementById("edit-option-2").value,
+      document.getElementById("edit-option-3").value,
+      document.getElementById("edit-option-4").value,
+    ];
+    const correctAnswerIndex = document.getElementById(
+      "edit-correct-answer"
+    ).value;
+    const correctAnswer = options[parseInt(correctAnswerIndex) - 1];
+
+    // Validation
+    if (!text || !options.every((opt) => opt) || !correctAnswer) {
+      showToast("Error", "All fields are required", "error");
+      return;
+    }
+
+    showLoading();
+
+    const endpoint =
+      questionType === "bank"
+        ? "/admin/questions/api/bank/update"
+        : "/admin/questions/api/review/update";
+
+    const requestData = {
+      question_id: questionId,
+      action: "update",
+      text: text,
+      options: options,
+      correct_answer: correctAnswer,
+    };
+
+    // Add additional fields for bank questions
+    if (questionType === "bank") {
+      requestData.difficulty = document.getElementById("edit-difficulty").value;
+      const tagsInput = document.getElementById("edit-tags").value;
+      requestData.tags = tagsInput
+        ? tagsInput
+            .split(",")
+            .map((tag) => tag.trim())
+            .filter((tag) => tag)
+        : [];
+    }
+
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestData),
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        showToast("Success", "Question updated successfully", "success");
+        closeModal();
+        // Reload the appropriate tab
+        if (questionType === "review") {
+          loadReviewTab();
+        } else {
+          loadBankTab();
+        }
+      } else {
+        showToast("Error", data.error || "Failed to update question", "error");
+      }
+    } catch (error) {
+      showToast("Error", "Error updating question: " + error.message, "error");
+    } finally {
+      hideLoading();
+    }
+  }
+
+  function closeModal() {
+    const modal = document.getElementById("edit-modal");
+    modal.classList.add("hidden");
+  }
+
+  // Individual question actions
+  async function approveQuestion(questionId) {
+    if (confirm("Are you sure you want to approve this question?")) {
+      showLoading();
+      try {
+        const response = await fetch(
+          `/admin/questions/api/questions/approve/${questionId}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+        const data = await response.json();
+
+        if (data.success) {
+          showToast("Success", "Question approved successfully", "success");
+          // Reload both tabs to reflect changes
+          loadReviewTab();
+          loadBankTab();
+        } else {
+          showToast(
+            "Error",
+            data.error || "Failed to approve question",
+            "error"
+          );
+        }
+      } catch (error) {
+        showToast(
+          "Error",
+          "Error approving question: " + error.message,
+          "error"
+        );
+      } finally {
+        hideLoading();
+      }
+    }
+  }
+
+  async function rejectQuestion(questionId) {
+    if (confirm("Are you sure you want to reject this question?")) {
+      showLoading();
+      try {
+        const response = await fetch(
+          `/admin/questions/api/questions/reject/${questionId}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+        const data = await response.json();
+
+        if (data.success) {
+          showToast("Success", "Question rejected successfully", "success");
+          loadReviewTab();
+        } else {
+          showToast(
+            "Error",
+            data.error || "Failed to reject question",
+            "error"
+          );
+        }
+      } catch (error) {
+        showToast(
+          "Error",
+          "Error rejecting question: " + error.message,
+          "error"
+        );
+      } finally {
+        hideLoading();
+      }
+    }
+  }
+
+  async function deleteQuestion(questionId) {
+    if (
+      confirm(
+        "Are you sure you want to delete this question? This action cannot be undone."
+      )
+    ) {
+      showLoading();
+      try {
+        const response = await fetch(
+          `/admin/questions/api/questions/delete/${questionId}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+        const data = await response.json();
+
+        if (data.success) {
+          showToast("Success", "Question deleted successfully", "success");
+          loadBankTab();
+        } else {
+          showToast(
+            "Error",
+            data.error || "Failed to delete question",
+            "error"
+          );
+        }
+      } catch (error) {
+        showToast(
+          "Error",
+          "Error deleting question: " + error.message,
+          "error"
+        );
+      } finally {
+        hideLoading();
+      }
+    }
+  }
+
+  // Bulk operations
+  async function bulkApproveQuestions() {
+    const questionIds = Array.from(currentState.review.selectedQuestions);
+    if (questionIds.length === 0) return;
+
+    if (
+      confirm(
+        `Are you sure you want to approve ${questionIds.length} question(s)?`
+      )
+    ) {
+      showLoading();
+      try {
+        const response = await fetch(
+          "/admin/questions/api/review/bulk-approve",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ question_ids: questionIds }),
+          }
+        );
+        const data = await response.json();
+
+        if (data.success) {
+          showToast("Success", data.message, "success");
+          currentState.review.selectedQuestions.clear();
+          loadReviewTab();
+          loadBankTab();
+        } else {
+          showToast(
+            "Error",
+            data.error || "Failed to approve questions",
+            "error"
+          );
+        }
+      } catch (error) {
+        showToast(
+          "Error",
+          "Error approving questions: " + error.message,
+          "error"
+        );
+      } finally {
+        hideLoading();
+      }
+    }
+  }
+
+  async function bulkRejectQuestions() {
+    const questionIds = Array.from(currentState.review.selectedQuestions);
+    if (questionIds.length === 0) return;
+
+    if (
+      confirm(
+        `Are you sure you want to reject ${questionIds.length} question(s)? This action cannot be undone.`
+      )
+    ) {
+      showLoading();
+      try {
+        const response = await fetch(
+          "/admin/questions/api/review/bulk-reject",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ question_ids: questionIds }),
+          }
+        );
+        const data = await response.json();
+
+        if (data.success) {
+          showToast("Success", data.message, "success");
+          currentState.review.selectedQuestions.clear();
+          loadReviewTab();
+        } else {
+          showToast(
+            "Error",
+            data.error || "Failed to reject questions",
+            "error"
+          );
+        }
+      } catch (error) {
+        showToast(
+          "Error",
+          "Error rejecting questions: " + error.message,
+          "error"
+        );
+      } finally {
+        hideLoading();
+      }
+    }
+  }
+
+  async function bulkDeleteQuestions() {
+    const questionIds = Array.from(currentState.bank.selectedQuestions);
+    if (questionIds.length === 0) return;
+
+    if (
+      confirm(
+        `Are you sure you want to delete ${questionIds.length} question(s)? This action cannot be undone.`
+      )
+    ) {
+      showLoading();
+      try {
+        const response = await fetch("/admin/questions/api/bank/bulk-delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question_ids: questionIds }),
+        });
+        const data = await response.json();
+
+        if (data.success) {
+          showToast("Success", data.message, "success");
+          currentState.bank.selectedQuestions.clear();
+          loadBankTab();
+        } else {
+          showToast(
+            "Error",
+            data.error || "Failed to delete questions",
+            "error"
+          );
+        }
+      } catch (error) {
+        showToast(
+          "Error",
+          "Error deleting questions: " + error.message,
+          "error"
+        );
+      } finally {
+        hideLoading();
+      }
+    }
+  }
+
+  // Helper functions for bulk operations
+  function updateSelectAllCheckboxReview() {
+    const reviewCheckboxes = document.querySelectorAll(
+      ".question-checkbox-review"
+    );
+    const selectAllReview = document.getElementById(
+      "select-all-checkbox-review"
+    );
+
+    if (reviewCheckboxes.length > 0 && selectAllReview) {
+      const allChecked = Array.from(reviewCheckboxes).every(
+        (checkbox) => checkbox.checked
+      );
+      const someChecked = Array.from(reviewCheckboxes).some(
+        (checkbox) => checkbox.checked
+      );
+
+      selectAllReview.checked = allChecked;
+      selectAllReview.indeterminate = someChecked && !allChecked;
+    }
+  }
+
+  function updateBulkActionButtonsReview() {
+    const hasSelected = currentState.review.selectedQuestions.size > 0;
+    const bulkApproveBtn = document.getElementById("bulk-approve-btn-review");
+    const bulkRejectBtn = document.getElementById("bulk-reject-btn-review");
+
+    if (bulkApproveBtn) {
+      bulkApproveBtn.disabled = !hasSelected;
+    }
+    if (bulkRejectBtn) {
+      bulkRejectBtn.disabled = !hasSelected;
+    }
+  }
+
+  function updateSelectAllCheckboxBank() {
+    const bankCheckboxes = document.querySelectorAll(".question-checkbox-bank");
+    const selectAllBank = document.getElementById("select-all-checkbox-bank");
+
+    if (bankCheckboxes.length > 0 && selectAllBank) {
+      const allChecked = Array.from(bankCheckboxes).every(
+        (checkbox) => checkbox.checked
+      );
+      const someChecked = Array.from(bankCheckboxes).some(
+        (checkbox) => checkbox.checked
+      );
+
+      selectAllBank.checked = allChecked;
+      selectAllBank.indeterminate = someChecked && !allChecked;
+    }
+  }
+
+  function updateBulkActionButtonsBank() {
+    const hasSelected = currentState.bank.selectedQuestions.size > 0;
+    const bulkDeleteBtn = document.getElementById("bulk-delete-btn-bank");
+
+    if (bulkDeleteBtn) {
+      bulkDeleteBtn.disabled = !hasSelected;
+    }
+  }
+
+  // Toast notification functions
+  function showToast(title, message, type = "success") {
+    const toast = document.getElementById("toast");
+    const toastMessage = document.getElementById("toast-message");
+    const toastDescription = document.getElementById("toast-description");
+
+    if (!toast || !toastMessage || !toastDescription) {
+      console.error("Toast elements not found");
+      return;
+    }
+
+    // Set border color based on type
+    toast.className = toast.className.replace(
+      /border-(red|green|yellow|blue)-500/,
+      ""
+    );
+    toast.classList.add(
+      `border-${
+        type === "success"
+          ? "green"
+          : type === "error"
+          ? "red"
+          : type === "warning"
+          ? "yellow"
+          : "blue"
+      }-500`
+    );
+
+    // Set icon based on type
+    const iconElement = toast.querySelector(".flex-shrink-0 i");
+    if (iconElement) {
+      iconElement.className =
+        type === "success"
+          ? "fas fa-check-circle text-green-500"
+          : type === "error"
+          ? "fas fa-exclamation-circle text-red-500"
+          : type === "warning"
+          ? "fas fa-exclamation-triangle text-yellow-500"
+          : "fas fa-info-circle text-blue-500";
+    }
+
+    toastMessage.textContent = title;
+    toastDescription.textContent = message;
+
+    // Show toast
+    toast.classList.remove("hidden", "translate-x-full");
+    setTimeout(() => {
+      toast.classList.remove("translate-x-full");
+    }, 10);
+
+    // Auto hide after 5 seconds
+    setTimeout(hideToast, 5000);
+  }
+
+  function hideToast() {
+    const toast = document.getElementById("toast");
+    if (toast) {
+      toast.classList.add("translate-x-full");
+      setTimeout(() => {
+        toast.classList.add("hidden");
+      }, 300);
+    }
+  }
+
+  // Loading overlay functions
+  function showLoading() {
+    const overlay = document.getElementById("loading-overlay");
+    if (overlay) {
+      overlay.classList.remove("hidden");
+    }
+  }
+
+  function hideLoading() {
+    const overlay = document.getElementById("loading-overlay");
+    if (overlay) {
+      overlay.classList.add("hidden");
+    }
+  }
+</script>
+{% endblock %}

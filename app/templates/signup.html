@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign Up - DSVV Quiz System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+    />
+
+    <style>
+      body {
+        font-family: "Poppins", sans-serif;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        min-height: 100vh;
+      }
+      .card-hover {
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      }
+      .card-hover:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.15);
+      }
+      .input-focus:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+      }
+      .gradient-text {
+        background: linear-gradient(90deg, #1e40af 0%, #1e3a8a 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .glow-on-hover {
+        transition: box-shadow 0.3s ease;
+      }
+      .glow-on-hover:hover {
+        box-shadow: 0 0 15px rgba(37, 99, 235, 0.3);
+      }
+      .form-select {
+        background-repeat: no-repeat;
+        background-size: 1.5em 1.5em;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .progress-bar {
+        height: 4px;
+        background: linear-gradient(90deg, #2563eb 0%, #1e40af 100%);
+        border-radius: 2px;
+        transition: width 0.3s ease;
+      }
+    </style>
+  </head>
+  <body
+    class="min-h-screen flex items-center justify-center p-4 bg-gray-50 py-8"
+  >
+    <div class="w-full max-w-4xl animate__animated animate__fadeIn">
+      <!-- DSVV Logo Header -->
+      <div class="flex flex-col items-center mb-8">
+        <div class="flex items-center mb-2">
+          <div
+            class="w-12 h-12 bg-blue-800 rounded-full flex items-center justify-center mr-3"
+          >
+            <i class="fas fa-graduation-cap text-white text-xl"></i>
+          </div>
+          <span class="text-3xl font-bold gradient-text">DSVV Quiz Portal</span>
+        </div>
+        <p class="text-gray-500 text-sm">Department of Computer Science</p>
+      </div>
+
+      <!-- Progress Steps -->
+      <div class="mb-8 bg-white rounded-xl shadow-sm p-4">
+        <div class="flex items-center justify-between relative">
+          <div
+            class="absolute top-1/2 left-0 right-0 h-0.5 bg-gray-200 -translate-y-1/2 -z-10"
+          ></div>
+          <div
+            class="progress-bar absolute top-1/2 left-0 -translate-y-1/2 -z-10"
+            id="progressBar"
+            style="width: 0%"
+          ></div>
+
+          <div class="step flex flex-col items-center relative" data-step="1">
+            <div
+              class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold mb-2 step-number"
+            >
+              1
+            </div>
+            <span class="text-xs font-medium text-blue-600">Personal Info</span>
+          </div>
+
+          <div class="step flex flex-col items-center relative" data-step="2">
+            <div
+              class="w-8 h-8 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center font-bold mb-2 step-number"
+            >
+              2
+            </div>
+            <span class="text-xs font-medium text-gray-500">Academic Info</span>
+          </div>
+
+          <div class="step flex flex-col items-center relative" data-step="3">
+            <div
+              class="w-8 h-8 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center font-bold mb-2 step-number"
+            >
+              3
+            </div>
+            <span class="text-xs font-medium text-gray-500">Account Setup</span>
+          </div>
+
+          <div class="step flex flex-col items-center relative" data-step="4">
+            <div
+              class="w-8 h-8 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center font-bold mb-2 step-number"
+            >
+              4
+            </div>
+            <span class="text-xs font-medium text-gray-500">Complete</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Signup Card -->
+      <div class="bg-white rounded-2xl shadow-lg overflow-hidden card-hover">
+        <!-- Card Header with Gradient -->
+        <div
+          class="bg-gradient-to-r from-blue-800 to-blue-900 py-5 px-6 text-center"
+        >
+          <h1 class="text-2xl font-bold text-white">Create Your Account</h1>
+          <p class="text-blue-100 text-sm mt-1 opacity-90">
+            Join our quiz community today
+          </p>
+        </div>
+
+        <!-- Card Body -->
+        <div class="p-6 sm:p-8">
+          {% if error %}
+          <div
+            class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg flex items-start"
+          >
+            <svg
+              class="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                clip-rule="evenodd"
+              />
+            </svg>
+            <div class="ml-3">
+              <p class="text-sm text-red-700">{{ error }}</p>
+            </div>
+          </div>
+          {% endif %} {% with messages =
+          get_flashed_messages(with_categories=true) %} {% if messages %}
+          <div class="mb-6 space-y-3">
+            {% for category, message in messages %}
+            <div
+              class="p-4 rounded-lg flex items-start {% if category == 'error' %} bg-red-50 border-l-4 border-red-500 text-red-700 {% elif category == 'success' %} bg-green-50 border-l-4 border-green-500 text-green-700 {% else %} bg-blue-50 border-l-4 border-blue-500 text-blue-700 {% endif %}"
+            >
+              <i
+                class="fas {% if category == 'error' %} fa-times-circle text-red-500 {% elif category == 'success' %} fa-check-circle text-green-500 {% else %} fa-info-circle text-blue-500 {% endif %} mr-2 mt-0.5"
+              ></i>
+              <span class="text-sm">{{ message }}</span>
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %} {% endwith %}
+
+          <form
+            method="POST"
+            action="/signup"
+            class="space-y-6"
+            id="signupForm"
+          >
+            <!-- Step 1: Personal Information -->
+            <div class="step-content" data-step="1">
+              <h3
+                class="text-lg font-semibold text-gray-800 mb-4 flex items-center"
+              >
+                <span
+                  class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mr-2"
+                >
+                  <i class="fas fa-user text-xs"></i>
+                </span>
+                Personal Information
+              </h3>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Scholar ID -->
+                <div>
+                  <label
+                    for="scholar_id"
+                    class="block text-sm font-medium text-gray-700 mb-2"
+                    >Scholar ID <span class="text-red-500">*</span></label
+                  >
+                  <input
+                    type="number"
+                    id="scholar_id"
+                    name="scholar_id"
+                    class="input-focus block w-full px-4 py-2.5 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 placeholder-gray-400"
+                    placeholder="Enter your scholar id"
+                    required
+                  />
+                </div>
+
+                <!-- Name -->
+                <div>
+                  <label
+                    for="name"
+                    class="block text-sm font-medium text-gray-700 mb-2"
+                    >Full Name <span class="text-red-500">*</span></label
+                  >
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    class="input-focus block w-full px-4 py-2.5 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 placeholder-gray-400"
+                    placeholder="Enter your full name"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div class="flex justify-end mt-6">
+                <button
+                  type="button"
+                  class="next-step bg-blue-600 text-white px-5 py-2 rounded-xl font-medium hover:bg-blue-700 transition-colors"
+                >
+                  Next <i class="fas fa-arrow-right ml-2 text-xs"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Step 2: Academic Information -->
+            <div class="step-content hidden" data-step="2">
+              <h3
+                class="text-lg font-semibold text-gray-800 mb-4 flex items-center"
+              >
+                <span
+                  class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mr-2"
+                >
+                  <i class="fas fa-graduation-cap text-xs"></i>
+                </span>
+                Academic Information
+              </h3>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- School -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2"
+                    >School <span class="text-red-500">*</span></label
+                  >
+                  <select
+                    class="form-select input-focus block w-full px-4 py-2.5 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
+                    name="school"
+                    id="schoolSelect"
+                    required
+                  >
+                    <option value="">Select School</option>
+                    {% for school in school_departments.keys() %}
+                    <option value="{{ school }}">{{ school }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <!-- Department -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2"
+                    >Department <span class="text-red-500">*</span></label
+                  >
+                  <select
+                    class="form-select input-focus block w-full px-4 py-2.5 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
+                    name="department"
+                    id="departmentSelect"
+                    required
+                    disabled
+                  >
+                    <option value="">Select Department</option>
+                  </select>
+                </div>
+
+                <!-- Course -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2"
+                    >Course <span class="text-red-500">*</span></label
+                  >
+                  <select
+                    class="form-select input-focus block w-full px-4 py-2.5 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
+                    name="course"
+                    id="courseSelect"
+                    required
+                    disabled
+                  >
+                    <option value="">Select Course</option>
+                  </select>
+                </div>
+
+                <!-- Semester -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2"
+                    >Semester <span class="text-red-500">*</span></label
+                  >
+                  <select
+                    class="form-select input-focus block w-full px-4 py-2.5 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
+                    name="semester"
+                    required
+                  >
+                    <option value="">Select Semester</option>
+                    {% for i in range(1, 9) %}
+                    <option value="{{ i }}">Semester {{ i }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+
+              <div class="flex justify-between mt-6">
+                <button
+                  type="button"
+                  class="prev-step text-gray-600 px-5 py-2 rounded-xl font-medium hover:bg-gray-100 transition-colors"
+                >
+                  <i class="fas fa-arrow-left mr-2 text-xs"></i> Back
+                </button>
+                <button
+                  type="button"
+                  class="next-step bg-blue-600 text-white px-5 py-2 rounded-xl font-medium hover:bg-blue-700 transition-colors"
+                >
+                  Next <i class="fas fa-arrow-right ml-2 text-xs"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Step 3: Account Setup -->
+            <div class="step-content hidden" data-step="3">
+              <h3
+                class="text-lg font-semibold text-gray-800 mb-4 flex items-center"
+              >
+                <span
+                  class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mr-2"
+                >
+                  <i class="fas fa-calendar-alt text-xs"></i>
+                </span>
+                Account Setup
+              </h3>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Email -->
+                <div>
+                  <label
+                    for="email"
+                    class="block text-sm font-medium text-gray-700 mb-2"
+                    >Email <span class="text-red-500">*</span></label
+                  >
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    class="input-focus block w-full px-4 py-2.5 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 placeholder-gray-400"
+                    placeholder="Enter your email"
+                    required
+                  />
+                </div>
+
+                <!-- Date of Birth -->
+                <div>
+                  <label
+                    for="dob"
+                    class="block text-sm font-medium text-gray-700 mb-2"
+                    >Date of Birth <span class="text-red-500">*</span></label
+                  >
+                  <input
+                    type="text"
+                    id="dob"
+                    name="dob"
+                    class="input-focus block w-full px-4 py-2.5 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 placeholder-gray-400"
+                    placeholder="DD/MM/YYYY"
+                    required
+                    maxlength="10"
+                  />
+                  <div class="mt-1 text-xs text-gray-500">
+                    Format: DD/MM/YYYY (e.g., 15/08/2000)
+                  </div>
+                  <div
+                    class="mt-1 text-xs text-red-500 dob-format-error hidden"
+                  >
+                    <i class="fas fa-times-circle mr-1"></i> Please enter date
+                    in DD/MM/YYYY format
+                  </div>
+                  <div
+                    class="mt-1 text-xs text-green-500 dob-format-success hidden"
+                  >
+                    <i class="fas fa-check-circle mr-1"></i> Valid date format
+                  </div>
+                </div>
+
+                <!-- Confirm Date of Birth -->
+                <div class="md:col-span-2">
+                  <label
+                    for="confirm-dob"
+                    class="block text-sm font-medium text-gray-700 mb-2"
+                    >Confirm Date of Birth
+                    <span class="text-red-500">*</span></label
+                  >
+                  <input
+                    type="text"
+                    id="confirm-dob"
+                    name="confirm-dob"
+                    class="input-focus block w-full px-4 py-2.5 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 placeholder-gray-400"
+                    placeholder="DD/MM/YYYY"
+                    required
+                    maxlength="10"
+                  />
+                  <div class="mt-1 text-xs text-red-500 dob-match-error hidden">
+                    <i class="fas fa-times-circle mr-1"></i> Date of Birth does
+                    not match
+                  </div>
+                  <div
+                    class="mt-1 text-xs text-green-500 dob-match-success hidden"
+                  >
+                    <i class="fas fa-check-circle mr-1"></i> Date of Birth
+                    matches
+                  </div>
+                </div>
+              </div>
+
+              <!-- Terms Checkbox -->
+              <div class="flex items-start mt-4">
+                <div class="flex items-center h-5">
+                  <input
+                    id="terms"
+                    name="terms"
+                    type="checkbox"
+                    class="input-focus h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    required
+                  />
+                </div>
+                <div class="ml-3">
+                  <label for="terms" class="text-sm text-gray-700"
+                    >I agree to the
+                    <a href="#" class="text-blue-600 hover:underline"
+                      >Terms of Service</a
+                    >
+                    and
+                    <a href="#" class="text-blue-600 hover:underline"
+                      >Privacy Policy</a
+                    ></label
+                  >
+                </div>
+              </div>
+
+              <div class="flex justify-between mt-6">
+                <button
+                  type="button"
+                  class="prev-step text-gray-600 px-5 py-2 rounded-xl font-medium hover:bg-gray-100 transition-colors"
+                >
+                  <i class="fas fa-arrow-left mr-2 text-xs"></i> Back
+                </button>
+                <button
+                  type="submit"
+                  class="bg-blue-600 text-white px-5 py-2 rounded-xl font-medium hover:bg-blue-700 transition-colors glow-on-hover"
+                >
+                  Create Account <i class="fas fa-check ml-2 text-xs"></i>
+                </button>
+              </div>
+            </div>
+          </form>
+
+          <!-- Divider -->
+          <div class="relative my-6">
+            <div class="absolute inset-0 flex items-center">
+              <div class="w-full border-t border-gray-200"></div>
+            </div>
+            <div class="relative flex justify-center text-sm">
+              <span class="px-2 bg-white text-gray-500"
+                >Already registered?</span
+              >
+            </div>
+          </div>
+
+          <!-- Sign In Link -->
+          <div class="text-center">
+            <a
+              href="/login"
+              class="w-full inline-flex justify-center py-2.5 px-4 border border-gray-200 rounded-xl shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+            >
+              <i class="fas fa-sign-in-alt mr-2"></i> Sign in to your account
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer Note -->
+      <div class="mt-8 text-center text-sm text-gray-500">
+        <p>© 2023 Dev Sanskriti Vishwavidyalaya. All rights reserved.</p>
+        <p class="mt-1">Version 2.1.0</p>
+      </div>
+    </div>
+
+    <script>
+      // School and department data passed from Flask
+      const schoolDepartments = {
+        "School of Technology, Communication and Management": [
+          "Department of Computer Sciences",
+          "Department of Tourism Management",
+          "Department of Journalism & Mass Communication",
+          "Department of Animation and Visual Effects",
+        ],
+        "School of Biological Sciences and Sustainability": [
+          "Department of Rural Studies and Sustainability",
+        ],
+        "School of Indology": [
+          "Department of Sanskrit and Vedic Studies",
+          "Department of Hindi",
+          "Department of Indian Classical Music",
+          "Department of History and Indian Culture",
+        ],
+        "School of Humanities, Social Sciences and Foundation Courses": [
+          "Department of English",
+          "Department of Education",
+          "Department of Psychology",
+          "Department of Life Management",
+          "Department of Scientific Spirituality",
+          "Department of Oriental Studies, Religious Studies & Philosophy",
+          "Department of Yogic Sciences and Human Consciousness",
+        ],
+      };
+
+      // Define department-course mapping
+      const departmentCourses = {
+        "Department of Computer Sciences": [
+          "B.Sc. Information Technology (Honors)",
+          "Bachelor of Computer Application (Honors)",
+          "Master of Computer Application (Data Science)",
+        ],
+        "Department of Tourism Management": [
+          "B.B.A Tourism & Travel Management (Honors)",
+          "M.B.A. Tourism & Travel Management",
+        ],
+        "Department of Journalism & Mass Communication": [
+          "B.A. Journalism and Mass Communication (Honors)",
+          "M. A. Journalism and Mass Communication",
+          "M. A. Spiritual Journalism",
+        ],
+        "Department of Animation and Visual Effects": [
+          "B.Voc. (Bachelor of Vocation) in 3D Animation and VFX (Honors)",
+        ],
+        "Department of Rural Studies and Sustainability": [
+          "Bachelor of Rural Studies (Honors)",
+        ],
+        "Department of English": ["B.A. English (Honors)"],
+        "Department of Education": ["B.Ed. (Bachelor of Education)"],
+        "Department of Psychology": [
+          "B.A. Psychology (Honors)",
+          "M.A. Counselling Psychology",
+          "M.Sc. Counselling Psychology",
+        ],
+        "Department of Life Management": [
+          "Life Management - Compulsory Program for PG and UG",
+        ],
+        "Department of Scientific Spirituality": [
+          "M.Sc. Herbal Medicine and Natural Product Chemistry",
+          "M.Sc. Molecular Physiology and Traditional Health Sciences",
+          "M.Sc. Indigenous Approaches for Child Development & Generational Dynamics",
+          "M.Sc. Indian Knowledge Systems",
+          "M.A. Indian Knowledge Systems",
+        ],
+        "Department of Oriental Studies, Religious Studies & Philosophy": [
+          "M.A. Hindu Studies",
+          "M.A. Philosophy",
+        ],
+        "Department of Yogic Sciences and Human Consciousness": [
+          "B.Sc. Yogic Science (Honors)",
+          "M.Sc. Yoga Therapy",
+          "M.A. Human Consciousness & Yogic Science",
+          "M.Sc. Human Consciousness & Yogic Science",
+          "P. G. Diploma Human Consciousness, Yoga & Alternative Therapy",
+          "Certificate In Yoga And Alternative Therapy",
+        ],
+        "Department of Sanskrit and Vedic Studies": [
+          "B.A. Sanskrit (Honors)",
+          "M.A. Sanskrit",
+        ],
+        "Department of Hindi": ["B.A. Hindi (Honors)", "M.A. Hindi"],
+        "Department of Indian Classical Music": [
+          "B.A. Music (Vocal) (Honors)",
+          "M.A. Music (Vocal)",
+          "B.A. Music Instrumental Mridang/Tabla (Honors)",
+          "M.A. Music (Tabla, Pakhaawaj)",
+        ],
+        "Department of History and Indian Culture": [
+          "B.A. History (Honors)",
+          "M. A. History and Indian Culture",
+        ],
+      };
+
+      // Date format validation
+      function isValidDateFormat(dateString) {
+        const pattern = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+        return pattern.test(dateString);
+      }
+
+      // Date validation
+      function isValidDate(dateString) {
+        if (!isValidDateFormat(dateString)) return false;
+
+        const parts = dateString.split("/");
+        const day = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10);
+        const year = parseInt(parts[2], 10);
+
+        // Check if date is valid
+        const date = new Date(year, month - 1, day);
+        return (
+          date.getFullYear() === year &&
+          date.getMonth() === month - 1 &&
+          date.getDate() === day
+        );
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        // Multi-step form functionality
+        const form = document.getElementById("signupForm");
+        const steps = document.querySelectorAll(".step-content");
+        const stepButtons = document.querySelectorAll(".step");
+        const progressBar = document.getElementById("progressBar");
+        let currentStep = 1;
+
+        // Show the first step
+        showStep(currentStep);
+
+        // Next button click handler
+        document.querySelectorAll(".next-step").forEach((button) => {
+          button.addEventListener("click", function () {
+            if (validateStep(currentStep)) {
+              currentStep++;
+              showStep(currentStep);
+              updateProgressBar();
+            }
+          });
+        });
+
+        // Previous button click handler
+        document.querySelectorAll(".prev-step").forEach((button) => {
+          button.addEventListener("click", function () {
+            currentStep--;
+            showStep(currentStep);
+            updateProgressBar();
+          });
+        });
+
+        function showStep(stepNumber) {
+          // Hide all steps
+          steps.forEach((step) => {
+            step.classList.add("hidden");
+          });
+
+          // Show the current step
+          document
+            .querySelector(`.step-content[data-step="${stepNumber}"]`)
+            .classList.remove("hidden");
+
+          // Update step indicators
+          stepButtons.forEach((step) => {
+            const stepNum = parseInt(step.getAttribute("data-step"));
+            const stepNumberEl = step.querySelector(".step-number");
+
+            if (stepNum < stepNumber) {
+              stepNumberEl.classList.remove("bg-gray-300", "text-gray-600");
+              stepNumberEl.classList.add("bg-green-500", "text-white");
+            } else if (stepNum === stepNumber) {
+              stepNumberEl.classList.remove(
+                "bg-gray-300",
+                "text-gray-600",
+                "bg-green-500",
+                "text-white"
+              );
+              stepNumberEl.classList.add("bg-blue-600", "text-white");
+            } else {
+              stepNumberEl.classList.remove(
+                "bg-blue-600",
+                "text-white",
+                "bg-green-500",
+                "text-white"
+              );
+              stepNumberEl.classList.add("bg-gray-300", "text-gray-600");
+            }
+          });
+        }
+
+        function validateStep(step) {
+          let isValid = true;
+
+          if (step === 1) {
+            const scholarId = document.getElementById("scholar_id");
+            const name = document.getElementById("name");
+
+            if (!scholarId.value.trim()) {
+              scholarId.classList.add("border-red-500");
+              isValid = false;
+            } else {
+              scholarId.classList.remove("border-red-500");
+            }
+
+            if (!name.value.trim()) {
+              name.classList.add("border-red-500");
+              isValid = false;
+            } else {
+              name.classList.remove("border-red-500");
+            }
+          } else if (step === 2) {
+            const school = document.getElementById("schoolSelect");
+            const department = document.getElementById("departmentSelect");
+            const course = document.getElementById("courseSelect");
+            const semester = document.querySelector("select[name='semester']");
+
+            if (!school.value) {
+              school.classList.add("border-red-500");
+              isValid = false;
+            } else {
+              school.classList.remove("border-red-500");
+            }
+
+            if (!department.value) {
+              department.classList.add("border-red-500");
+              isValid = false;
+            } else {
+              department.classList.remove("border-red-500");
+            }
+
+            if (!course.value) {
+              course.classList.add("border-red-500");
+              isValid = false;
+            } else {
+              course.classList.remove("border-red-500");
+            }
+
+            if (!semester.value) {
+              semester.classList.add("border-red-500");
+              isValid = false;
+            } else {
+              semester.classList.remove("border-red-500");
+            }
+          } else if (step === 3) {
+            const email = document.getElementById("email");
+            const dob = document.getElementById("dob");
+            const confirmDob = document.getElementById("confirm-dob");
+
+            // Email validation
+            if (!email.value.trim()) {
+              email.classList.add("border-red-500");
+              isValid = false;
+            } else {
+              email.classList.remove("border-red-500");
+            }
+
+            // Date of Birth validation
+            if (!dob.value.trim()) {
+              dob.classList.add("border-red-500");
+              isValid = false;
+            } else if (!isValidDate(dob.value)) {
+              dob.classList.add("border-red-500");
+              isValid = false;
+            } else {
+              dob.classList.remove("border-red-500");
+            }
+
+            // Confirm Date of Birth validation
+            if (!confirmDob.value.trim()) {
+              confirmDob.classList.add("border-red-500");
+              isValid = false;
+            } else if (dob.value !== confirmDob.value) {
+              confirmDob.classList.add("border-red-500");
+              isValid = false;
+            } else {
+              confirmDob.classList.remove("border-red-500");
+            }
+          }
+
+          return isValid;
+        }
+
+        function updateProgressBar() {
+          const progress = ((currentStep - 1) / (steps.length - 1)) * 100;
+          progressBar.style.width = `${progress}%`;
+        }
+
+        // School and department dropdown functionality
+        const schoolSelect = document.getElementById("schoolSelect");
+        const departmentSelect = document.getElementById("departmentSelect");
+        const courseSelect = document.getElementById("courseSelect");
+
+        schoolSelect.addEventListener("change", function () {
+          const selectedSchool = this.value;
+
+          // Reset and disable dependent dropdowns
+          departmentSelect.innerHTML =
+            '<option value="">Select Department</option>';
+          courseSelect.innerHTML = '<option value="">Select Course</option>';
+          courseSelect.disabled = true;
+          departmentSelect.disabled = true;
+
+          if (selectedSchool) {
+            // Enable department dropdown
+            departmentSelect.disabled = false;
+
+            // Populate departments based on selected school
+            const departments = schoolDepartments[selectedSchool] || [];
+            departments.forEach((dept) => {
+              const option = document.createElement("option");
+              option.value = dept;
+              option.textContent = dept;
+              departmentSelect.appendChild(option);
+            });
+          }
+        });
+
+        departmentSelect.addEventListener("change", function () {
+          const selectedDepartment = this.value;
+
+          // Reset course dropdown
+          courseSelect.innerHTML = '<option value="">Select Course</option>';
+          courseSelect.disabled = true;
+
+          if (selectedDepartment) {
+            // Enable course dropdown
+            courseSelect.disabled = false;
+
+            // Populate courses based on selected department
+            const courses = departmentCourses[selectedDepartment] || [];
+            courses.forEach((course) => {
+              const option = document.createElement("option");
+              option.value = course;
+              option.textContent = course;
+              courseSelect.appendChild(option);
+            });
+          }
+        });
+
+        // Date of Birth validation
+        const dobInput = document.getElementById("dob");
+        const confirmDobInput = document.getElementById("confirm-dob");
+        const dobFormatError = document.querySelector(".dob-format-error");
+        const dobFormatSuccess = document.querySelector(".dob-format-success");
+        const dobMatchError = document.querySelector(".dob-match-error");
+        const dobMatchSuccess = document.querySelector(".dob-match-success");
+
+        dobInput.addEventListener("input", function () {
+          const dobValue = this.value.trim();
+
+          if (dobValue.length === 0) {
+            dobFormatError.classList.add("hidden");
+            dobFormatSuccess.classList.add("hidden");
+            return;
+          }
+
+          if (isValidDate(dobValue)) {
+            dobFormatError.classList.add("hidden");
+            dobFormatSuccess.classList.remove("hidden");
+            this.classList.remove("border-red-500");
+            this.classList.add("border-green-500");
+          } else {
+            dobFormatError.classList.remove("hidden");
+            dobFormatSuccess.classList.add("hidden");
+            this.classList.add("border-red-500");
+            this.classList.remove("border-green-500");
+          }
+
+          // Check if DOB matches confirmation
+          if (
+            confirmDobInput.value.trim() &&
+            dobValue === confirmDobInput.value.trim()
+          ) {
+            dobMatchError.classList.add("hidden");
+            dobMatchSuccess.classList.remove("hidden");
+            confirmDobInput.classList.remove("border-red-500");
+            confirmDobInput.classList.add("border-green-500");
+          } else if (confirmDobInput.value.trim()) {
+            dobMatchError.classList.remove("hidden");
+            dobMatchSuccess.classList.add("hidden");
+            confirmDobInput.classList.add("border-red-500");
+            confirmDobInput.classList.remove("border-green-500");
+          }
+        });
+
+        confirmDobInput.addEventListener("input", function () {
+          const confirmDobValue = this.value.trim();
+          const dobValue = dobInput.value.trim();
+
+          if (confirmDobValue.length === 0) {
+            dobMatchError.classList.add("hidden");
+            dobMatchSuccess.classList.add("hidden");
+            return;
+          }
+
+          if (confirmDobValue === dobValue) {
+            dobMatchError.classList.add("hidden");
+            dobMatchSuccess.classList.remove("hidden");
+            this.classList.remove("border-red-500");
+            this.classList.add("border-green-500");
+          } else {
+            dobMatchError.classList.remove("hidden");
+            dobMatchSuccess.classList.add("hidden");
+            this.classList.add("border-red-500");
+            this.classList.remove("border-green-500");
+          }
+        });
+
+        // Auto-format date input (add slashes automatically)
+        dobInput.addEventListener("keyup", function (e) {
+          let value = this.value.replace(/\D/g, "");
+          if (value.length >= 2) {
+            value = value.substring(0, 2) + "/" + value.substring(2);
+          }
+          if (value.length >= 5) {
+            value = value.substring(0, 5) + "/" + value.substring(5, 9);
+          }
+          this.value = value;
+        });
+
+        confirmDobInput.addEventListener("keyup", function (e) {
+          let value = this.value.replace(/\D/g, "");
+          if (value.length >= 2) {
+            value = value.substring(0, 2) + "/" + value.substring(2);
+          }
+          if (value.length >= 5) {
+            value = value.substring(0, 5) + "/" + value.substring(5, 9);
+          }
+          this.value = value;
+        });
+      });
+    </script>
+  </body>
+</html>

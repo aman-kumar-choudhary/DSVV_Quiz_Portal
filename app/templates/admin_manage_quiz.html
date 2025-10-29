@@ -1,0 +1,1042 @@
+{% extends "admin_base.html" %} {% block title %}Manage Quiz - DSVV Quiz
+System{% endblock %} {% block extra_css %}
+<style>
+  .question-item,
+  .student-item {
+    transition: all 0.2s ease;
+  }
+  .question-item:hover,
+  .student-item:hover {
+    background: #f8fafc;
+    transform: translateY(-1px);
+  }
+  .filter-tag {
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .filter-tag:hover {
+    transform: scale(1.05);
+  }
+  .filter-tag.selected {
+    background: #3b82f6;
+    color: white;
+  }
+  .quiz-card {
+    transition: all 0.3s ease;
+  }
+  .quiz-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="min-h-screen bg-gray-50 p-4 md:p-6 lg:p-8">
+  <div class="max-w-9xl mx-auto">
+    <!-- Add this hidden div to store quiz data -->
+    <div
+      id="quiz-data"
+      data-school="{{ quiz.school }}"
+      data-department="{{ quiz.department }}"
+      data-course="{{ quiz.course }}"
+      data-semester="{{ quiz.semester }}"
+      style="display: none"
+    ></div>
+
+    <!-- Header Section -->
+    <div class="mb-8 fade-in">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+        <div class="mb-4 lg:mb-0">
+          <h1
+            class="text-3xl lg:text-4xl font-bold text-gray-900 mb-2 flex items-center"
+          >
+            <i class="fas fa-cog text-blue-600 mr-4 text-3xl"></i>
+            Manage Quiz: {{ quiz.title }}
+          </h1>
+          <p class="text-lg text-gray-600 max-w-3xl">
+            Configure questions, participants, and quiz settings
+          </p>
+        </div>
+        <nav
+          class="flex space-x-2 text-sm text-gray-500 bg-white px-4 py-2 rounded-xl border"
+        >
+          <a href="/admin" class="hover:text-blue-600 transition-colors"
+            >Dashboard</a
+          >
+          <span>/</span>
+          <a href="/admin/quizzes" class="hover:text-blue-600 transition-colors"
+            >Quizzes</a
+          >
+          <span>/</span>
+          <span class="text-blue-600 font-medium">Manage</span>
+        </nav>
+      </div>
+    </div>
+
+    <!-- Quiz Info Card -->
+    <div
+      class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8 quiz-card"
+    >
+      <div class="flex items-center mb-4">
+        <div class="bg-blue-100 p-3 rounded-xl mr-4">
+          <i class="fas fa-info-circle text-blue-600 text-xl"></i>
+        </div>
+        <h2 class="text-2xl font-semibold text-gray-800">Quiz Information</h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="space-y-2">
+          <div class="flex items-center text-sm text-gray-600">
+            <i class="fas fa-heading mr-2 text-blue-500"></i>
+            <span class="font-medium">Name:</span>
+          </div>
+          <p class="text-lg font-semibold text-gray-900">{{ quiz.title }}</p>
+        </div>
+
+        <div class="space-y-2">
+          <div class="flex items-center text-sm text-gray-600">
+            <i class="fas fa-graduation-cap mr-2 text-blue-500"></i>
+            <span class="font-medium">Course:</span>
+          </div>
+          <p class="text-lg font-semibold text-gray-900">
+            {{ quiz.course|title }}
+          </p>
+        </div>
+
+        <div class="space-y-2">
+          <div class="flex items-center text-sm text-gray-600">
+            <i class="fas fa-calendar-alt mr-2 text-blue-500"></i>
+            <span class="font-medium">Semester:</span>
+          </div>
+          <p class="text-lg font-semibold text-gray-900">
+            {{ quiz.semester|title }}
+          </p>
+        </div>
+
+        <div class="space-y-2">
+          <div class="flex items-center text-sm text-gray-600">
+            <i class="fas fa-clock mr-2 text-blue-500"></i>
+            <span class="font-medium">Duration:</span>
+          </div>
+          <p class="text-lg font-semibold text-gray-900">
+            {{ quiz.duration }} minutes
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-4 pt-4 border-t border-gray-200">
+        <div class="flex flex-wrap items-center gap-4">
+          <div class="flex items-center">
+            <span class="text-sm font-medium text-gray-600 mr-2">Status:</span>
+            <span
+              class="{% if quiz.status == 'active' %}bg-green-100 text-green-800{% elif quiz.status == 'draft' %}bg-yellow-100 text yellow-800{% else %}bg-gray-100 text-gray-800{% endif %} px-3 py-1 rounded-full text-sm font-medium"
+            >
+              {{ quiz.status|title if quiz.status else 'Inactive' }}
+            </span>
+          </div>
+          <div class="flex items-center">
+            <span class="text-sm font-medium text-gray-600 mr-2"
+              >Pass Percentage:</span
+            >
+            <span
+              class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium"
+            >
+              {{ quiz.pass_percentage }}%
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
+      <!-- Questions Selection -->
+      <div
+        class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden quiz-card"
+      >
+        <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
+          <h2 class="text-xl font-semibold text-white flex items-center">
+            <i class="fas fa-question-circle mr-3"></i>
+            Select Questions
+          </h2>
+        </div>
+
+        <div class="p-6">
+          <!-- Questions List -->
+          <div
+            class="max-h-96 overflow-y-auto border border-gray-200 rounded-xl"
+          >
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th
+                    class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-16"
+                  >
+                    S.No
+                  </th>
+                  <th
+                    class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-32"
+                  >
+                    <input
+                      type="checkbox"
+                      id="select-all-questions"
+                      class="mr-2 rounded text-blue-600 focus:ring-blue-500"
+                    />
+                    <label for="select-all-questions" class="text-sm"
+                      >Select All</label
+                    >
+                  </th>
+                  <th
+                    class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider"
+                  >
+                    Question
+                  </th>
+                  <th
+                    class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-32"
+                  >
+                    Difficulty
+                  </th>
+                </tr>
+              </thead>
+              <tbody
+                id="questions-table-body"
+                class="bg-white divide-y divide-gray-200"
+              >
+                {% for question in questions %}
+                <tr
+                  class="question-item hover:bg-gray-50 transition-colors duration-200"
+                >
+                  <td class="px-4 py-3 text-sm text-gray-500 font-medium">
+                    {{ loop.index }}
+                  </td>
+                  <td class="px-4 py-3">
+                    <input
+                      type="checkbox"
+                      name="question"
+                      value="{{ question.question_id }}"
+                      class="question-checkbox rounded text-blue-600 focus:ring-blue-500"
+                      data-tags="{{ question.tags|join(',') if question.tags else '' }}"
+                      data-initially-checked="{% if question.question_id in quiz.questions %}true{% else %}false{% endif %}"
+                      {%
+                      if
+                      question.question_id
+                      in
+                      quiz.questions
+                      %}checked{%
+                      endif
+                      %}
+                    />
+                  </td>
+                  <td class="px-4 py-3">
+                    <div class="text-sm font-medium text-gray-900 mb-1">
+                      {{ question.text[:100] if question.text else 'No question
+                      text' }}{% if question.text and question.text|length > 100
+                      %}...{% endif %}
+                    </div>
+                    <div class="flex flex-wrap gap-1">
+                      {% if question.tags %} {% for tag in question.tags %}
+                      <span
+                        class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium"
+                      >
+                        {{ tag }}
+                      </span>
+                      {% endfor %} {% endif %}
+                    </div>
+                  </td>
+                  <td class="px-4 py-3">
+                    <span
+                      class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
+                    >
+                      {{ question.difficulty if question.difficulty else 'Not
+                      set' }}
+                    </span>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <button
+            onclick="manageSelectedQuestions()"
+            class="mt-6 w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center"
+          >
+            <i class="fas fa-sync-alt mr-3 text-lg"></i>
+            Update Questions Selection
+          </button>
+        </div>
+      </div>
+
+      <!-- Students Selection -->
+      <div
+        class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden quiz-card"
+      >
+        <div class="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4">
+          <h2 class="text-xl font-semibold text-white flex items-center">
+            <i class="fas fa-users mr-3"></i>
+            Select Participants
+          </h2>
+        </div>
+
+        <div class="p-6">
+          <!-- All Participants Toggle -->
+          <div class="mb-4 p-4 bg-gray-50 rounded-lg">
+            <div class="flex items-center">
+              <input type="checkbox" id="select-all-participants" class="mr-3
+              rounded text-green-600 focus:ring-green-500" {% if 'all' in
+              quiz.participants %}checked{% endif %} />
+              <label
+                for="select-all-participants"
+                class="text-sm font-medium text-gray-700"
+              >
+                Enroll All Students
+              </label>
+            </div>
+            <p class="text-xs text-gray-500 mt-1 ml-6">
+              When enabled, all students matching the course criteria will be
+              automatically enrolled
+            </p>
+          </div>
+
+          <!-- Students List -->
+          <div
+            class="max-h-96 overflow-y-auto border border-gray-200 rounded-xl mb-6"
+          >
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th
+                    class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-16"
+                  >
+                    S.No
+                  </th>
+                  <th
+                    class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-32"
+                  >
+                    <input
+                      type="checkbox"
+                      id="select-all-students"
+                      class="mr-2 rounded text-green-600 focus:ring-green-500"
+                    />
+                    <label for="select-all-students" class="text-sm"
+                      >Select All</label
+                    >
+                  </th>
+                  <th
+                    class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider"
+                  >
+                    Student
+                  </th>
+                  <th
+                    class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-48"
+                  >
+                    Course Info
+                  </th>
+                </tr>
+              </thead>
+              <tbody
+                id="students-table-body"
+                class="bg-white divide-y divide-gray-200"
+              >
+                {% for student in students %}
+                <tr
+                  class="student-item hover:bg-gray-50 transition-colors duration-200"
+                >
+                  <td class="px-4 py-3 text-sm text-gray-500 font-medium">
+                    {{ loop.index }}
+                  </td>
+                  <td class="px-4 py-3">
+                    <input type="checkbox" name="student" value="{{
+                    student.scholar_id }}" class="student-checkbox rounded
+                    text-green-600 focus:ring-green-500"
+                    data-initially-checked="{% if student.scholar_id in
+                    quiz.participants or 'all' in quiz.participants %}true{%
+                    else %}false{% endif %}" {% if student.scholar_id in
+                    quiz.participants or 'all' in quiz.participants %}checked{%
+                    endif %} />
+                  </td>
+                  <td class="px-4 py-3">
+                    <div class="text-sm font-semibold text-gray-900">
+                      {{ student.name }}
+                    </div>
+                    <div class="text-xs text-gray-500 font-medium">
+                      {{ student.scholar_id }}
+                    </div>
+                  </td>
+                  <td class="px-4 py-3 text-sm text-gray-600">
+                    <div class="font-medium">{{ student.course }}</div>
+                    <div class="text-xs">Semester {{ student.semester }}</div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <button
+            onclick="manageSelectedStudents()"
+            class="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center"
+          >
+            <i class="fas fa-sync-alt mr-3 text-lg"></i>
+            Update Participants Selection
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quiz Actions -->
+    <div
+      class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden quiz-card"
+    >
+      <div class="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-4">
+        <h2 class="text-xl font-semibold text-white flex items-center">
+          <i class="fas fa-play-circle mr-3"></i>
+          Quiz Actions
+        </h2>
+      </div>
+
+      <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {% if quiz.status == 'active' %}
+          <button
+            onclick="updateQuizStatus('stop')"
+            class="bg-red-600 hover:bg-red-700 text-white px-6 py-4 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center"
+          >
+            <i class="fas fa-stop mr-3 text-lg"></i>
+            Stop Quiz
+          </button>
+          {% else %}
+          <button
+            onclick="updateQuizStatus('start')"
+            class="bg-green-600 hover:bg-green-700 text-white px-6 py-4 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center"
+          >
+            <i class="fas fa-play mr-3 text-lg"></i>
+            Start Quiz
+          </button>
+          {% endif %}
+
+          <button
+            onclick="extendQuizTime()"
+            class="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-4 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center"
+          >
+            <i class="fas fa-clock mr-3 text-lg"></i>
+            Extend Time
+          </button>
+
+          <a
+            href="/admin/quizzes/preview/{{ quiz.quiz_id }}"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center text-center"
+          >
+            <i class="fas fa-eye mr-3 text-lg"></i>
+            Preview Quiz
+          </a>
+
+          <button
+            onclick="deleteQuiz()"
+            class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-4 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center"
+          >
+            <i class="fas fa-trash mr-3 text-lg"></i>
+            Delete Quiz
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Success/Error Toast -->
+<div
+  id="toast"
+  class="fixed top-4 right-4 p-4 rounded-xl shadow-2xl bg-white border-l-4 border-green-500 transform translate-x-full transition-all duration-300 z-50 max-w-sm fade-in"
+>
+  <div class="flex items-start">
+    <div class="flex-shrink-0 pt-0.5">
+      <i class="fas fa-check-circle text-green-500 text-lg"></i>
+    </div>
+    <div class="ml-3 flex-1">
+      <p id="toast-message" class="text-sm font-semibold text-gray-900">
+        Success!
+      </p>
+      <p id="toast-description" class="mt-1 text-sm text-gray-600">
+        Operation completed successfully.
+      </p>
+    </div>
+    <button
+      class="ml-4 flex-shrink-0 focus:outline-none hover:bg-gray-100 rounded-full p-1 transition-colors"
+      onclick="hideToast()"
+    >
+      <i class="fas fa-times text-gray-400"></i>
+    </button>
+  </div>
+</div>
+
+<!-- Loading Overlay -->
+<div
+  id="loading-overlay"
+  class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden"
+>
+  <div class="bg-white rounded-2xl p-8 flex items-center shadow-2xl">
+    <div
+      class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mr-4"
+    ></div>
+    <div>
+      <p class="text-lg font-semibold text-gray-900">Processing</p>
+      <p class="text-gray-600">Please wait...</p>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extra_js %}
+<script>
+  // Toast notification functions
+  function showToast(title, message, type = "success") {
+    const toast = document.getElementById("toast");
+    const toastMessage = document.getElementById("toast-message");
+    const toastDescription = document.getElementById("toast-description");
+
+    // Set border color based on type
+    const borderColors = {
+      success: "border-green-500",
+      error: "border-red-500",
+      warning: "border-yellow-500",
+      info: "border-blue-500",
+    };
+
+    // Remove all border color classes
+    Object.values(borderColors).forEach((color) => {
+      toast.classList.remove(color);
+    });
+
+    // Add the appropriate border color
+    toast.classList.add(borderColors[type] || borderColors.success);
+
+    // Set icon based on type
+    const iconElement = toast.querySelector(".flex-shrink-0 i");
+    const icons = {
+      success: "fa-check-circle text-green-500",
+      error: "fa-exclamation-circle text-red-500",
+      warning: "fa-exclamation-triangle text-yellow-500",
+      info: "fa-info-circle text-blue-500",
+    };
+
+    iconElement.className = `fas ${icons[type] || icons.success} text-lg`;
+
+    toastMessage.textContent = title;
+    toastDescription.textContent = message;
+
+    // Show toast
+    toast.classList.remove("translate-x-full");
+
+    // Auto hide after 5 seconds
+    setTimeout(hideToast, 5000);
+  }
+
+  function hideToast() {
+    const toast = document.getElementById("toast");
+    toast.classList.add("translate-x-full");
+  }
+
+  // Loading overlay functions
+  function showLoading() {
+    document.getElementById("loading-overlay").classList.remove("hidden");
+  }
+
+  function hideLoading() {
+    document.getElementById("loading-overlay").classList.add("hidden");
+  }
+
+  // Update initial states when page loads
+  function updateInitialQuestionStates() {
+    document.querySelectorAll(".question-checkbox").forEach((checkbox) => {
+      checkbox.setAttribute("data-initially-checked", checkbox.checked);
+    });
+  }
+
+  function updateInitialStudentStates() {
+    document.querySelectorAll(".student-checkbox").forEach((checkbox) => {
+      checkbox.setAttribute("data-initially-checked", checkbox.checked);
+    });
+  }
+
+  // Select all checkboxes functionality
+  document.addEventListener("DOMContentLoaded", function () {
+    // Initialize checkbox states
+    updateInitialQuestionStates();
+    updateInitialStudentStates();
+
+    // Questions select all
+    const selectAllQuestions = document.getElementById("select-all-questions");
+    if (selectAllQuestions) {
+      selectAllQuestions.addEventListener("change", function () {
+        const checkboxes = document.querySelectorAll(".question-checkbox");
+        checkboxes.forEach((checkbox) => {
+          checkbox.checked = this.checked;
+        });
+      });
+    }
+
+    // Students select all
+    const selectAllStudents = document.getElementById("select-all-students");
+    if (selectAllStudents) {
+      selectAllStudents.addEventListener("change", function () {
+        const checkboxes = document.querySelectorAll(".student-checkbox");
+        checkboxes.forEach((checkbox) => {
+          checkbox.checked = this.checked;
+        });
+      });
+    }
+
+    // All participants toggle
+    const selectAllParticipants = document.getElementById(
+      "select-all-participants"
+    );
+    if (selectAllParticipants) {
+      selectAllParticipants.addEventListener("change", function () {
+        if (this.checked) {
+          // Uncheck all individual students and enroll all
+          const studentCheckboxes =
+            document.querySelectorAll(".student-checkbox");
+          studentCheckboxes.forEach((checkbox) => {
+            checkbox.checked = false;
+          });
+          addAllParticipants();
+        } else {
+          removeAllParticipants();
+        }
+      });
+    }
+
+    // Tag filtering with multiple selection
+    document.querySelectorAll(".filter-tag").forEach((tag) => {
+      tag.addEventListener("click", function () {
+        this.classList.toggle("selected");
+        filterQuestions();
+      });
+    });
+
+    // Update individual checkbox states
+    const questionCheckboxes = document.querySelectorAll(".question-checkbox");
+    questionCheckboxes.forEach((checkbox) => {
+      checkbox.addEventListener("change", function () {
+        const allSelected = Array.from(questionCheckboxes).every(
+          (cb) => cb.checked
+        );
+        if (document.getElementById("select-all-questions")) {
+          document.getElementById("select-all-questions").checked = allSelected;
+        }
+      });
+    });
+
+    const studentCheckboxes = document.querySelectorAll(".student-checkbox");
+    studentCheckboxes.forEach((checkbox) => {
+      checkbox.addEventListener("change", function () {
+        const allSelected = Array.from(studentCheckboxes).every(
+          (cb) => cb.checked
+        );
+        if (document.getElementById("select-all-students")) {
+          document.getElementById("select-all-students").checked = allSelected;
+        }
+
+        // If any individual student is selected, uncheck "all participants"
+        if (
+          this.checked &&
+          document.getElementById("select-all-participants")
+        ) {
+          document.getElementById("select-all-participants").checked = false;
+        }
+      });
+    });
+  });
+
+  function filterQuestions() {
+    const selectedTags = Array.from(
+      document.querySelectorAll(".filter-tag.selected")
+    ).map((tag) => tag.dataset.tag);
+    const questions = document.querySelectorAll(".question-item");
+
+    questions.forEach((question) => {
+      const checkbox = question.querySelector(".question-checkbox");
+      const questionTags = checkbox.dataset.tags
+        ? checkbox.dataset.tags.split(",")
+        : [];
+
+      // Show question if no tags selected OR if question has at least one selected tag
+      if (
+        selectedTags.length === 0 ||
+        selectedTags.some((tag) => questionTags.includes(tag))
+      ) {
+        question.style.display = "";
+      } else {
+        question.style.display = "none";
+      }
+    });
+  }
+
+  // Add or remove selected questions from quiz
+  async function manageSelectedQuestions() {
+    const selectedCheckboxes = Array.from(
+      document.querySelectorAll(".question-checkbox:checked")
+    );
+    const unselectedCheckboxes = Array.from(
+      document.querySelectorAll(".question-checkbox:not(:checked)")
+    );
+
+    const selectedQuestions = selectedCheckboxes.map(
+      (checkbox) => checkbox.value
+    );
+    const unselectedQuestions = unselectedCheckboxes.map(
+      (checkbox) => checkbox.value
+    );
+
+    // Get current quiz questions from the checkboxes that were initially checked
+    const initialCheckedQuestions = Array.from(
+      document.querySelectorAll(
+        '.question-checkbox[data-initially-checked="true"]'
+      )
+    ).map((cb) => cb.value);
+
+    // Determine which questions to add and which to remove
+    const questionsToAdd = selectedQuestions.filter(
+      (q) => !initialCheckedQuestions.includes(q)
+    );
+    const questionsToRemove = unselectedQuestions.filter((q) =>
+      initialCheckedQuestions.includes(q)
+    );
+
+    if (questionsToAdd.length === 0 && questionsToRemove.length === 0) {
+      showToast("Info", "No changes made to questions", "info");
+      return;
+    }
+
+    showLoading();
+
+    try {
+      // Add new questions
+      if (questionsToAdd.length > 0) {
+        const addResponse = await fetch(
+          `/admin/quizzes/api/{{ quiz.quiz_id }}/questions`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              question_ids: questionsToAdd,
+              action: "add",
+            }),
+          }
+        );
+
+        const addData = await addResponse.json();
+        if (!addData.success) {
+          throw new Error(addData.error || "Failed to add questions");
+        }
+      }
+
+      // Remove unselected questions
+      if (questionsToRemove.length > 0) {
+        const removeResponse = await fetch(
+          `/admin/quizzes/api/{{ quiz.quiz_id }}/questions`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              question_ids: questionsToRemove,
+              action: "remove",
+            }),
+          }
+        );
+
+        const removeData = await removeResponse.json();
+        if (!removeData.success) {
+          throw new Error(removeData.error || "Failed to remove questions");
+        }
+      }
+
+      hideLoading();
+
+      const addedMsg =
+        questionsToAdd.length > 0
+          ? `Added ${questionsToAdd.length} questions`
+          : "";
+      const removedMsg =
+        questionsToRemove.length > 0
+          ? `Removed ${questionsToRemove.length} questions`
+          : "";
+      const message = [addedMsg, removedMsg].filter((msg) => msg).join(" and ");
+
+      showToast("Success", message, "success");
+
+      // Update initial state
+      updateInitialQuestionStates();
+    } catch (error) {
+      hideLoading();
+      showToast(
+        "Error",
+        "Failed to update questions: " + error.message,
+        "error"
+      );
+    }
+  }
+
+  // Add or remove selected students from quiz
+  async function manageSelectedStudents() {
+    const selectedCheckboxes = Array.from(
+      document.querySelectorAll(".student-checkbox:checked")
+    );
+    const unselectedCheckboxes = Array.from(
+      document.querySelectorAll(".student-checkbox:not(:checked)")
+    );
+
+    const selectedStudents = selectedCheckboxes.map(
+      (checkbox) => checkbox.value
+    );
+    const unselectedStudents = unselectedCheckboxes.map(
+      (checkbox) => checkbox.value
+    );
+
+    // Get current quiz participants from the checkboxes that were initially checked
+    const initialCheckedStudents = Array.from(
+      document.querySelectorAll(
+        '.student-checkbox[data-initially-checked="true"]'
+      )
+    ).map((cb) => cb.value);
+
+    // Determine which students to add and which to remove
+    const studentsToAdd = selectedStudents.filter(
+      (s) => !initialCheckedStudents.includes(s)
+    );
+    const studentsToRemove = unselectedStudents.filter((s) =>
+      initialCheckedStudents.includes(s)
+    );
+
+    if (studentsToAdd.length === 0 && studentsToRemove.length === 0) {
+      showToast("Info", "No changes made to participants", "info");
+      return;
+    }
+
+    showLoading();
+
+    try {
+      // Add new students
+      if (studentsToAdd.length > 0) {
+        const addResponse = await fetch(
+          `/admin/quizzes/api/{{ quiz.quiz_id }}/participants`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              scholar_ids: studentsToAdd,
+              action: "add",
+            }),
+          }
+        );
+
+        const addData = await addResponse.json();
+        if (!addData.success) {
+          throw new Error(addData.error || "Failed to add participants");
+        }
+      }
+
+      // Remove unselected students
+      if (studentsToRemove.length > 0) {
+        const removeResponse = await fetch(
+          `/admin/quizzes/api/{{ quiz.quiz_id }}/participants`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              scholar_ids: studentsToRemove,
+              action: "remove",
+            }),
+          }
+        );
+
+        const removeData = await removeResponse.json();
+        if (!removeData.success) {
+          throw new Error(removeData.error || "Failed to remove participants");
+        }
+      }
+
+      hideLoading();
+
+      const addedMsg =
+        studentsToAdd.length > 0
+          ? `Added ${studentsToAdd.length} participants`
+          : "";
+      const removedMsg =
+        studentsToRemove.length > 0
+          ? `Removed ${studentsToRemove.length} participants`
+          : "";
+      const message = [addedMsg, removedMsg].filter((msg) => msg).join(" and ");
+
+      showToast("Success", message, "success");
+
+      // Update initial state
+      updateInitialStudentStates();
+    } catch (error) {
+      hideLoading();
+      showToast(
+        "Error",
+        "Failed to update participants: " + error.message,
+        "error"
+      );
+    }
+  }
+
+  // Handle all participants
+  async function addAllParticipants() {
+    showLoading();
+
+    try {
+      const response = await fetch(
+        `/admin/quizzes/api/{{ quiz.quiz_id }}/participants/all`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+
+      const data = await response.json();
+      hideLoading();
+
+      if (data.success) {
+        showToast("Success", "All students enrolled in this quiz", "success");
+        // Update initial states
+        updateInitialStudentStates();
+      } else {
+        showToast(
+          "Error",
+          data.error || "Failed to enroll all students",
+          "error"
+        );
+      }
+    } catch (error) {
+      hideLoading();
+      showToast(
+        "Error",
+        "Failed to enroll all students: " + error.message,
+        "error"
+      );
+    }
+  }
+
+  async function removeAllParticipants() {
+    showLoading();
+
+    try {
+      const response = await fetch(
+        `/admin/quizzes/api/{{ quiz.quiz_id }}/participants/all`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+
+      const data = await response.json();
+      hideLoading();
+
+      if (data.success) {
+        showToast("Success", "Removed all enrollment from quiz", "success");
+        // Update initial states
+        updateInitialStudentStates();
+      } else {
+        showToast(
+          "Error",
+          data.error || "Failed to remove all enrollment",
+          "error"
+        );
+      }
+    } catch (error) {
+      hideLoading();
+      showToast(
+        "Error",
+        "Failed to remove all enrollment: " + error.message,
+        "error"
+      );
+    }
+  }
+
+  // Update quiz status
+  async function updateQuizStatus(action) {
+    showLoading();
+
+    try {
+      const response = await fetch(
+        `/admin/quizzes/api/{{ quiz.quiz_id }}/status`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: action }),
+        }
+      );
+
+      const data = await response.json();
+      hideLoading();
+
+      if (data.success) {
+        showToast("Success", data.message, "success");
+        setTimeout(() => {
+          location.reload();
+        }, 1500);
+      } else {
+        showToast(
+          "Error",
+          data.error || "Failed to update quiz status",
+          "error"
+        );
+      }
+    } catch (error) {
+      hideLoading();
+      showToast(
+        "Error",
+        "Failed to update quiz status: " + error.message,
+        "error"
+      );
+    }
+  }
+
+  // Extend quiz time
+  function extendQuizTime() {
+    const extraMinutes = prompt("Enter extra minutes to add:");
+    if (extraMinutes && !isNaN(extraMinutes) && extraMinutes > 0) {
+      showToast(
+        "Info",
+        `Quiz time extended by ${extraMinutes} minutes`,
+        "info"
+      );
+      // You can implement the actual time extension logic here
+    } else if (extraMinutes !== null) {
+      showToast("Error", "Please enter a valid number of minutes", "error");
+    }
+  }
+
+  // Delete quiz
+  async function deleteQuiz() {
+    if (
+      confirm(
+        "Are you sure you want to delete this quiz? This action cannot be undone."
+      )
+    ) {
+      showLoading();
+
+      try {
+        const response = await fetch(`/admin/quizzes/api/{{ quiz.quiz_id }}`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+        });
+
+        const data = await response.json();
+        hideLoading();
+
+        if (data.success) {
+          showToast("Success", "Quiz deleted successfully", "success");
+          setTimeout(() => {
+            window.location.href = "/admin/quizzes";
+          }, 1500);
+        } else {
+          showToast("Error", data.error || "Failed to delete quiz", "error");
+        }
+      } catch (error) {
+        hideLoading();
+        showToast("Error", "Failed to delete quiz: " + error.message, "error");
+      }
+    }
+  }
+</script>
+{% endblock %}

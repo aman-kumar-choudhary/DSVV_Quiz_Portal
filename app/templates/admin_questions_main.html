@@ -1,0 +1,387 @@
+{% extends "admin_base.html" %} {% block title %}Question Management - DSVV Quiz
+System{% endblock %} {% block content %}
+<!-- Dashboard Content -->
+<main class="p-4 lg:p-6 mt-0">
+  <!-- Header Section -->
+  <div
+    class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8"
+  >
+    <div class="flex items-center mb-4 lg:mb-0">
+      <div class="bg-blue-100 p-3 rounded-xl mr-4">
+        <i class="fas fa-book text-blue-600 text-2xl"></i>
+      </div>
+      <div>
+        <h1 class="text-2xl lg:text-3xl font-bold text-gray-800">
+          Question Management
+        </h1>
+        <p class="text-gray-600 text-sm mt-1">
+          Manage and organize your question bank
+        </p>
+      </div>
+    </div>
+    <button
+      class="w-full lg:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl flex items-center justify-center transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
+    >
+      <i class="fas fa-plus-circle mr-2"></i> Add New Question
+    </button>
+  </div>
+
+  <!-- Stats Cards Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
+    <div
+      class="stats-card bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-2xl shadow-lg border-l-4 border-blue-500 card-hover transform transition-all duration-300 hover:-translate-y-1"
+    >
+      <a href="/admin/questions/upload" class="block">
+        <div class="flex items-center">
+          <div class="p-4 bg-white rounded-2xl mr-4 shadow-md">
+            <i class="fas fa-upload text-blue-600 text-2xl"></i>
+          </div>
+          <div class="flex-1">
+            <p class="text-sm font-medium text-gray-600">Upload Questions</p>
+            <p class="text-2xl font-bold text-gray-800 mt-1">Bulk Upload</p>
+            <div class="flex items-center mt-2">
+              <span
+                class="text-xs text-gray-500 bg-white px-2 py-1 rounded-full"
+                >JSON or CSV format</span
+              >
+            </div>
+          </div>
+          <i class="fas fa-chevron-right text-gray-400 text-lg"></i>
+        </div>
+      </a>
+    </div>
+
+    <div
+      class="stats-card bg-gradient-to-br from-yellow-50 to-yellow-100 p-6 rounded-2xl shadow-lg border-l-4 border-yellow-500 card-hover transform transition-all duration-300 hover:-translate-y-1"
+    >
+      <a href="/admin/questions/review" class="block">
+        <div class="flex items-center">
+          <div class="p-4 bg-white rounded-2xl mr-4 shadow-md">
+            <i class="fas fa-tasks text-yellow-600 text-2xl"></i>
+          </div>
+          <div class="flex-1">
+            <p class="text-sm font-medium text-gray-600">Pending Review</p>
+            <p class="text-2xl font-bold text-gray-800 mt-1">
+              {{pending_count}}
+            </p>
+            <div class="flex items-center mt-2">
+              <span
+                class="text-xs text-gray-500 bg-white px-2 py-1 rounded-full"
+                >Questions awaiting approval</span
+              >
+            </div>
+          </div>
+          <i class="fas fa-chevron-right text-gray-400 text-lg"></i>
+        </div>
+      </a>
+    </div>
+
+    <div
+      class="stats-card bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-2xl shadow-lg border-l-4 border-green-500 card-hover transform transition-all duration-300 hover:-translate-y-1"
+    >
+      <a href="/admin/questions/bank" class="block">
+        <div class="flex items-center">
+          <div class="p-4 bg-white rounded-2xl mr-4 shadow-md">
+            <i class="fas fa-database text-green-600 text-2xl"></i>
+          </div>
+          <div class="flex-1">
+            <p class="text-sm font-medium text-gray-600">Question Bank</p>
+            <p class="text-2xl font-bold text-gray-800 mt-1">
+              {{ bank_count }}
+            </p>
+            <div class="flex items-center mt-2">
+              <span
+                class="text-xs text-gray-500 bg-white px-2 py-1 rounded-full"
+                >Approved questions</span
+              >
+            </div>
+          </div>
+          <i class="fas fa-chevron-right text-gray-400 text-lg"></i>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <!-- Quick Actions Section -->
+  <div class="bg-white p-6 rounded-2xl shadow-lg mb-8 border border-gray-100">
+    <div class="flex items-center mb-6">
+      <div class="bg-blue-100 p-2 rounded-lg mr-3">
+        <i class="fas fa-bolt text-blue-600"></i>
+      </div>
+      <h2 class="text-xl font-semibold text-gray-800">Quick Actions</h2>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <a
+        href="/admin/questions/upload"
+        class="group bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white p-5 rounded-xl text-center transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl"
+      >
+        <div
+          class="bg-white/20 p-3 rounded-lg inline-flex mb-3 group-hover:scale-110 transition-transform duration-300"
+        >
+          <i class="fas fa-upload text-xl"></i>
+        </div>
+        <p class="font-semibold text-lg">Upload Questions</p>
+        <p class="text-sm opacity-90 mt-2">Bulk upload JSON/CSV files</p>
+      </a>
+
+      <a
+        href="/admin/questions/review"
+        class="group bg-gradient-to-br from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white p-5 rounded-xl text-center transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl"
+      >
+        <div
+          class="bg-white/20 p-3 rounded-lg inline-flex mb-3 group-hover:scale-110 transition-transform duration-300"
+        >
+          <i class="fas fa-tasks text-xl"></i>
+        </div>
+        <p class="font-semibold text-lg">Review Questions</p>
+        <p class="text-sm opacity-90 mt-2">Approve or reject submissions</p>
+      </a>
+
+      <a
+        href="/admin/questions/bank"
+        class="group bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white p-5 rounded-xl text-center transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl"
+      >
+        <div
+          class="bg-white/20 p-3 rounded-lg inline-flex mb-3 group-hover:scale-110 transition-transform duration-300"
+        >
+          <i class="fas fa-database text-xl"></i>
+        </div>
+        <p class="font-semibold text-lg">Question Bank</p>
+        <p class="text-sm opacity-90 mt-2">Manage approved questions</p>
+      </a>
+
+      <a
+        href="/admin/quizzes"
+        class="group bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white p-5 rounded-xl text-center transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl"
+      >
+        <div
+          class="bg-white/20 p-3 rounded-lg inline-flex mb-3 group-hover:scale-110 transition-transform duration-300"
+        >
+          <i class="fas fa-rocket text-xl"></i>
+        </div>
+        <p class="font-semibold text-lg">Create Quiz</p>
+        <p class="text-sm opacity-90 mt-2">Start a new quiz</p>
+      </a>
+    </div>
+  </div>
+
+  <!-- Recent Activity Section -->
+  <div
+    class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden"
+  >
+    <div class="p-6 border-b border-gray-100">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between">
+        <div class="flex items-center mb-4 sm:mb-0">
+          <div class="bg-blue-100 p-2 rounded-lg mr-3">
+            <i class="fas fa-history text-blue-600"></i>
+          </div>
+          <h2 class="text-xl font-semibold text-gray-800">Recent Activity</h2>
+        </div>
+        <div class="flex space-x-2">
+          <button
+            class="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+          >
+            <i class="fas fa-filter mr-2"></i>Filter
+          </button>
+          <button
+            class="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+          >
+            <i class="fas fa-sort mr-2"></i>Sort
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th
+              class="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Question
+            </th>
+            <th
+              class="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell"
+            >
+              Subject
+            </th>
+            <th
+              class="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell"
+            >
+              Date
+            </th>
+            <th
+              class="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Status
+            </th>
+            <th
+              class="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Actions
+            </th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <tr class="hover:bg-gray-50 transition-colors">
+            <td class="px-4 lg:px-6 py-4">
+              <div class="text-sm font-medium text-gray-900">
+                What is the capital of France?
+              </div>
+              <div class="text-xs text-gray-500 sm:hidden mt-1">
+                Geography • 2023-10-15
+              </div>
+            </td>
+            <td
+              class="px-4 lg:px-6 py-4 whitespace-nowrap hidden sm:table-cell"
+            >
+              <div class="text-sm text-gray-500">Geography</div>
+            </td>
+            <td
+              class="px-4 lg:px-6 py-4 whitespace-nowrap hidden md:table-cell"
+            >
+              <div class="text-sm text-gray-500">2023-10-15</div>
+            </td>
+            <td class="px-4 lg:px-6 py-4 whitespace-nowrap">
+              <span
+                class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800"
+              >
+                Approved
+              </span>
+            </td>
+            <td
+              class="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+            >
+              <div class="flex space-x-2">
+                <button
+                  class="text-blue-600 hover:text-blue-900 p-1 rounded transition-colors"
+                  title="Edit"
+                >
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button
+                  class="text-red-600 hover:text-red-900 p-1 rounded transition-colors"
+                  title="Delete"
+                >
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <tr class="hover:bg-gray-50 transition-colors">
+            <td class="px-4 lg:px-6 py-4">
+              <div class="text-sm font-medium text-gray-900">
+                Solve the equation: 2x + 5 = 15
+              </div>
+              <div class="text-xs text-gray-500 sm:hidden mt-1">
+                Mathematics • 2023-10-14
+              </div>
+            </td>
+            <td
+              class="px-4 lg:px-6 py-4 whitespace-nowrap hidden sm:table-cell"
+            >
+              <div class="text-sm text-gray-500">Mathematics</div>
+            </td>
+            <td
+              class="px-4 lg:px-6 py-4 whitespace-nowrap hidden md:table-cell"
+            >
+              <div class="text-sm text-gray-500">2023-10-14</div>
+            </td>
+            <td class="px-4 lg:px-6 py-4 whitespace-nowrap">
+              <span
+                class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800"
+              >
+                Pending
+              </span>
+            </td>
+            <td
+              class="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+            >
+              <button
+                class="text-blue-600 hover:text-blue-900 p-1 rounded transition-colors"
+                title="Review"
+              >
+                <i class="fas fa-eye"></i>
+              </button>
+            </td>
+          </tr>
+
+          <tr class="hover:bg-gray-50 transition-colors">
+            <td class="px-4 lg:px-6 py-4">
+              <div class="text-sm font-medium text-gray-900">
+                Who wrote 'Romeo and Juliet'?
+              </div>
+              <div class="text-xs text-gray-500 sm:hidden mt-1">
+                Literature • 2023-10-13
+              </div>
+            </td>
+            <td
+              class="px-4 lg:px-6 py-4 whitespace-nowrap hidden sm:table-cell"
+            >
+              <div class="text-sm text-gray-500">Literature</div>
+            </td>
+            <td
+              class="px-4 lg:px-6 py-4 whitespace-nowrap hidden md:table-cell"
+            >
+              <div class="text-sm text-gray-500">2023-10-13</div>
+            </td>
+            <td class="px-4 lg:px-6 py-4 whitespace-nowrap">
+              <span
+                class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800"
+              >
+                Approved
+              </span>
+            </td>
+            <td
+              class="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+            >
+              <div class="flex space-x-2">
+                <button
+                  class="text-blue-600 hover:text-blue-900 p-1 rounded transition-colors"
+                  title="Edit"
+                >
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button
+                  class="text-red-600 hover:text-red-900 p-1 rounded transition-colors"
+                  title="Delete"
+                >
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="px-4 lg:px-6 py-4 bg-gray-50 border-t border-gray-200">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div class="text-sm text-gray-500 mb-4 sm:mb-0">
+          Showing <span class="font-medium">1-3</span> of
+          <span class="font-medium">3</span> activities
+        </div>
+        <div class="flex space-x-2">
+          <button
+            class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            Previous
+          </button>
+          <button
+            class="px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            1
+          </button>
+          <button
+            class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+{% endblock %}

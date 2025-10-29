@@ -1,0 +1,624 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Leaderboard - DSVV Quiz System{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Leaderboard row styles */
+    .leaderboard-row { 
+        transition: all 0.3s ease; 
+    }
+    .leaderboard-row:hover { 
+        background: #f8fafc; 
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    .rank-1 { 
+        background: linear-gradient(90deg, #fef3c7 0%, #fde68a 100%); 
+        border-left: 4px solid #f59e0b; 
+    }
+    .rank-2 { 
+        background: linear-gradient(90deg, #f3f4f6 0%, #e5e7eb 100%); 
+        border-left: 4px solid #9ca3af; 
+    }
+    .rank-3 { 
+        background: linear-gradient(90deg, #fed7aa 0%, #fdba74 100%); 
+        border-left: 4px solid #f97316; 
+    }
+    
+    /* Medal styles */
+    .medal-gold { color: #f59e0b; }
+    .medal-silver { color: #9ca3af; }
+    .medal-bronze { color: #f97316; }
+    
+    /* Mobile table container with vertical scroll */
+    .mobile-table-container {
+        max-height: 60vh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Custom scrollbar for mobile table */
+    .mobile-table-container::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .mobile-table-container::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 3px;
+    }
+    
+    .mobile-table-container::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 3px;
+    }
+    
+    .mobile-table-container::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+    
+    /* Mobile table styles */
+    .mobile-table {
+        min-width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .mobile-table th,
+    .mobile-table td {
+        padding: 0.75rem;
+        text-align: left;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .desktop-only {
+            display: none;
+        }
+        
+        .mobile-expand {
+            display: table-cell;
+        }
+        
+        /* Compact table for mobile */
+        .mobile-table td {
+            padding: 0.5rem 0.25rem;
+            font-size: 0.875rem;
+        }
+        
+        .mobile-table th {
+            padding: 0.5rem 0.25rem;
+            font-size: 0.75rem;
+        }
+        
+        /* Student info compact */
+        .student-avatar {
+            width: 32px;
+            height: 32px;
+            font-size: 0.75rem;
+        }
+        
+        .student-info {
+            margin-left: 0.5rem;
+        }
+        
+        .student-name {
+            font-size: 0.875rem;
+            line-height: 1.2;
+        }
+        
+        .student-id {
+            font-size: 0.75rem;
+            line-height: 1.2;
+        }
+        
+        /* Button grid for mobile */
+        .button-grid-mobile {
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+        }
+    }
+    
+    @media (min-width: 769px) {
+        .mobile-only {
+            display: none;
+        }
+        
+        /* Button grid for desktop */
+        .button-grid-desktop {
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 p-4 md:p-6">
+    <div class="max-w-9xl mx-auto">
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 md:mb-8">
+            <div class="flex items-center mb-4 md:mb-0">
+                <div class="bg-yellow-100 p-3 rounded-xl mr-4">
+                    <i class="fas fa-trophy text-yellow-600 text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Leaderboard</h1>
+                    <p class="text-gray-600 text-sm md:text-base">Track top performing students across different criteria</p>
+                </div>
+            </div>
+            <nav class="flex space-x-2 text-sm text-gray-500">
+                <a href="/admin" class="hover:text-blue-600 transition-colors">Dashboard</a>
+                <span>/</span>
+                <span class="text-blue-600 font-medium">Leaderboard</span>
+            </nav>
+        </div>
+
+        <!-- Filters Card -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 md:p-6 mb-6">
+            <div class="flex items-center mb-4">
+                <i class="fas fa-filter text-blue-600 mr-2"></i>
+                <h2 class="text-lg md:text-xl font-semibold text-gray-800">Filter Results</h2>
+            </div>
+            
+            <form method="GET" id="filter-form" class="space-y-4 md:space-y-0">
+                <!-- First Row of Filters -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- School Filter -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-university mr-1 text-gray-400"></i>
+                            School
+                        </label>
+                        <select name="school" id="school-filter" 
+                                class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white">
+                            <option value="">All Schools</option>
+                            {% for school in schools %}
+                            <option value="{{ school }}" {% if selected_school == school %}selected{% endif %}>{{ school }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Department Filter -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-building mr-1 text-gray-400"></i>
+                            Department
+                        </label>
+                        <select name="department" id="department-filter" 
+                                class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white">
+                            <option value="">All Departments</option>
+                            {% for department in departments %}
+                            <option value="{{ department }}" {% if selected_department == department %}selected{% endif %}>{{ department }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Course Filter -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-graduation-cap mr-1 text-gray-400"></i>
+                            Course
+                        </label>
+                        <select name="course" id="course-filter" 
+                                class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white">
+                            <option value="">All Courses</option>
+                            {% for course in courses %}
+                            <option value="{{ course }}" {% if selected_course == course %}selected{% endif %}>{{ course }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Semester Filter -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-calendar-alt mr-1 text-gray-400"></i>
+                            Semester
+                        </label>
+                        <select name="semester" id="semester-filter"
+                                class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white">
+                            <option value="">All Semesters</option>
+                            {% for semester in semesters %}
+                            <option value="{{ semester }}" {% if selected_semester == semester %}selected{% endif %}>{{ semester }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Second Row of Filters -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
+                    <!-- Quiz Filter -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-file-alt mr-1 text-gray-400"></i>
+                            Quiz
+                        </label>
+                        <select name="quiz_id" id="quiz-filter"
+                                class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white">
+                            <option value="">All Quizzes</option>
+                            {% for quiz in quizzes %}
+                            <option value="{{ quiz.quiz_id }}" {% if selected_quiz == quiz.quiz_id %}selected{% endif %}>{{ quiz.title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Limit Filter -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-chart-bar mr-1 text-gray-400"></i>
+                            Top Results
+                        </label>
+                        <select name="limit" id="limit-filter"
+                                class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white">
+                            <option value="10" {% if limit == 10 %}selected{% endif %}>Top 10</option>
+                            <option value="20" {% if limit == 20 %}selected{% endif %}>Top 20</option>
+                            <option value="50" {% if limit == 50 %}selected{% endif %}>Top 50</option>
+                            <option value="100" {% if limit == 100 %}selected{% endif %}>Top 100</option>
+                        </select>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex items-end space-x-3">
+                        <!-- Apply Filters Button -->
+                        <button type="submit" 
+                                class="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl">
+                            <i class="fas fa-search mr-2"></i>
+                            Apply Filters
+                        </button>
+                        
+                        <!-- Clear Filters Button -->
+                        <button type="button" onclick="clearFilters()"
+                                class="flex-1 bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl">
+                            <i class="fas fa-refresh mr-2"></i>
+                            Clear Filters
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Results Section -->
+        {% if leaderboard %}
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <!-- Table Header -->
+            <div class="px-4 md:px-6 py-4 bg-gray-50 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-800">
+                        <i class="fas fa-list-ol mr-2 text-blue-600"></i>
+                        Top {{ limit }} Performers
+                    </h3>
+                    <span class="text-sm text-gray-500 bg-white px-3 py-1 rounded-full border">
+                        {{ leaderboard|length }} results
+                    </span>
+                </div>
+            </div>
+
+            <!-- Desktop Table -->
+            <div class="desktop-only">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                    Rank
+                                </th>
+                                <th class="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                    Student
+                                </th>
+                                <th class="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                    Score
+                                </th>
+                                <th class="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                    Percentage
+                                </th>
+                                <th class="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                    Time
+                                </th>
+                                <th class="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                    Date
+                                </th>
+                                <th class="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                    Course
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for student in leaderboard %}
+                            <tr class="leaderboard-row {% if loop.index <= 3 %}rank-{{ loop.index }}{% endif %}">
+                                <!-- Rank -->
+                                <td class="px-4 md:px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        {% if loop.index == 1 %}
+                                            <i class="fas fa-trophy medal-gold text-xl mr-2"></i>
+                                        {% elif loop.index == 2 %}
+                                            <i class="fas fa-trophy medal-silver text-xl mr-2"></i>
+                                        {% elif loop.index == 3 %}
+                                            <i class="fas fa-trophy medal-bronze text-xl mr-2"></i>
+                                        {% else %}
+                                            <div class="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center mr-2">
+                                                <span class="text-xs font-bold text-gray-600">{{ loop.index }}</span>
+                                            </div>
+                                        {% endif %}
+                                        <span class="text-sm font-bold text-gray-900 {% if loop.index <= 3 %}text-lg{% endif %}">
+                                            {{ loop.index }}
+                                        </span>
+                                    </div>
+                                </td>
+                                
+                                <!-- Student Info -->
+                                <td class="px-4 md:px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                                            {{ student.user_name[0] if student.user_name else 'U' }}
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-semibold text-gray-900">{{ student.user_name }}</div>
+                                            <div class="text-sm text-gray-500">{{ student.scholar_id }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                
+                                <!-- Score -->
+                                <td class="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    <span class="font-mono">{{ student.score }}/{{ student.total }}</span>
+                                </td>
+                                
+                                <!-- Percentage -->
+                                <td class="px-4 md:px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="w-16 bg-gray-200 rounded-full h-2 mr-3 overflow-hidden">
+                                            <div class="h-full rounded-full transition-all duration-300 
+                                                {% if student.percentage >= 90 %}w-full bg-green-500
+                                                {% elif student.percentage >= 80 %}w-4/5 bg-green-400
+                                                {% elif student.percentage >= 70 %}w-3/4 bg-yellow-500
+                                                {% elif student.percentage >= 60 %}w-3/5 bg-yellow-400
+                                                {% elif student.percentage >= 50 %}w-1/2 bg-orange-500
+                                                {% elif student.percentage >= 40 %}w-2/5 bg-orange-400
+                                                {% elif student.percentage >= 30 %}w-1/3 bg-red-500
+                                                {% elif student.percentage >= 20 %}w-1/4 bg-red-400
+                                                {% else %}w-1/5 bg-red-300{% endif %}">
+                                            </div>
+                                        </div>
+                                        <span class="text-sm font-bold min-w-12 {% if student.percentage >= 80 %}text-green-600{% elif student.percentage >= 60 %}text-yellow-600{% else %}text-red-600{% endif %}">
+                                            {{ student.percentage|round(1) }}%
+                                        </span>
+                                    </div>
+                                </td>
+                                
+                                <!-- Time -->
+                                <td class="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ (student.completion_time / 60)|round(1) }} mins
+                                </td>
+                                
+                                <!-- Date -->
+                                <td class="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ student.formatted_date }}
+                                </td>
+                                
+                                <!-- Course -->
+                                <td class="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <div class="bg-blue-50 text-blue-700 px-2 py-1 rounded-full text-xs font-medium">
+                                        {{ student.course }} Sem {{ student.semester }}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        
+        </div>
+        {% else %}
+        <!-- Empty State -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 md:p-12 text-center">
+            <div class="max-w-md mx-auto">
+                <div class="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-chart-line text-gray-400 text-3xl"></i>
+                </div>
+                <h2 class="text-xl md:text-2xl font-semibold text-gray-800 mb-2">No Leaderboard Data</h2>
+                <p class="text-gray-600 mb-6">No quiz results available for the selected filters. Try adjusting your search criteria.</p>
+                <button onclick="clearFilters()" 
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl font-medium transition-colors duration-200">
+                    <i class="fas fa-refresh mr-2"></i>
+                    Clear Filters
+                </button>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // School and department data
+    const schoolDepartments = {
+        "School of Technology, Communication and Management": [
+            "Department of Computer Sciences",
+            "Department of Tourism Management",
+            "Department of Journalism & Mass Communication",
+            "Department of Animation and Visual Effects",
+        ],
+        "School of Biological Sciences and Sustainability": [
+            "Department of Rural Studies and Sustainability",
+        ],
+        "School of Indology": [
+            "Department of Sanskrit and Vedic Studies",
+            "Department of Hindi",
+            "Department of Indian Classical Music",
+            "Department of History and Indian Culture",
+        ],
+        "School of Humanities, Social Sciences and Foundation Courses": [
+            "Department of English",
+            "Department of Education",
+            "Department of Psychology",
+            "Department of Life Management",
+            "Department of Scientific Spirituality",
+            "Department of Oriental Studies, Religious Studies & Philosophy",
+            "Department of Yogic Sciences and Human Consciousness",
+        ],
+    };
+
+    const departmentCourses = {
+        "Department of Computer Sciences": [
+            "B.Sc. Information Technology (Honors)",
+            "Bachelor of Computer Application (Honors)",
+            "Master of Computer Application (Data Science)",
+        ],
+        "Department of Tourism Management": [
+            "B.B.A Tourism & Travel Management (Honors)",
+            "M.B.A. Tourism & Travel Management",
+        ],
+        "Department of Journalism & Mass Communication": [
+            "B.A. Journalism and Mass Communication (Honors)",
+            "M. A. Journalism and Mass Communication",
+            "M. A. Spiritual Journalism",
+        ],
+        "Department of Animation and Visual Effects": [
+            "B.Voc. (Bachelor of Vocation) in 3D Animation and VFX (Honors)",
+        ],
+        "Department of Rural Studies and Sustainability": [
+            "Bachelor of Rural Studies (Honors)",
+        ],
+        "Department of English": ["B.A. English (Honors)"],
+        "Department of Education": ["B.Ed. (Bachelor of Education)"],
+        "Department of Psychology": [
+            "B.A. Psychology (Honors)",
+            "M.A. Counselling Psychology",
+            "M.Sc. Counselling Psychology",
+        ],
+        "Department of Life Management": [
+            "Life Management - Compulsory Program for PG and UG",
+        ],
+        "Department of Scientific Spirituality": [
+            "M.Sc. Herbal Medicine and Natural Product Chemistry",
+            "M.Sc. Molecular Physiology and Traditional Health Sciences",
+            "M.Sc. Indigenous Approaches for Child Development & Generational Dynamics",
+            "M.Sc. Indian Knowledge Systems",
+            "M.A. Indian Knowledge Systems",
+        ],
+        "Department of Oriental Studies, Religious Studies & Philosophy": [
+            "M.A. Hindu Studies",
+            "M.A. Philosophy",
+        ],
+        "Department of Yogic Sciences and Human Consciousness": [
+            "B.Sc. Yogic Science (Honors)",
+            "M.Sc. Yoga Therapy",
+            "M.A. Human Consciousness & Yogic Science",
+            "M.Sc. Human Consciousness & Yogic Science",
+            "P. G. Diploma Human Consciousness, Yoga & Alternative Therapy",
+            "Certificate In Yoga And Alternative Therapy",
+        ],
+        "Department of Sanskrit and Vedic Studies": [
+            "B.A. Sanskrit (Honors)",
+            "M.A. Sanskrit",
+        ],
+        "Department of Hindi": ["B.A. Hindi (Honors)", "M.A. Hindi"],
+        "Department of Indian Classical Music": [
+            "B.A. Music (Vocal) (Honors)",
+            "M.A. Music (Vocal)",
+            "B.A. Music Instrumental Mridang/Tabla (Honors)",
+            "M.A. Music (Tabla, Pakhaawaj)",
+        ],
+        "Department of History and Indian Culture": [
+            "B.A. History (Honors)",
+            "M. A. History and Indian Culture",
+        ],
+    };
+
+    // Filter dropdown functionality
+    function updateDepartmentOptions() {
+        const schoolSelect = document.getElementById('school-filter');
+        const departmentSelect = document.getElementById('department-filter');
+        const selectedSchool = schoolSelect ? schoolSelect.value : '';
+        
+        if (departmentSelect) {
+            // Reset and disable dependent dropdowns
+            departmentSelect.innerHTML = '<option value="">All Departments</option>';
+            const courseSelect = document.getElementById('course-filter');
+            if (courseSelect) {
+                courseSelect.innerHTML = '<option value="">All Courses</option>';
+            }
+            
+            if (selectedSchool) {
+                // Populate departments based on selected school
+                const departments = schoolDepartments[selectedSchool] || [];
+                departments.forEach(dept => {
+                    const option = document.createElement('option');
+                    option.value = dept;
+                    option.textContent = dept;
+                    departmentSelect.appendChild(option);
+                });
+            }
+        }
+    }
+
+    function updateCourseOptions() {
+        const departmentSelect = document.getElementById('department-filter');
+        const courseSelect = document.getElementById('course-filter');
+        const selectedDepartment = departmentSelect ? departmentSelect.value : '';
+        
+        if (courseSelect) {
+            // Reset course dropdown
+            courseSelect.innerHTML = '<option value="">All Courses</option>';
+            
+            if (selectedDepartment) {
+                // Populate courses based on selected department
+                const courses = departmentCourses[selectedDepartment] || [];
+                courses.forEach(course => {
+                    const option = document.createElement('option');
+                    option.value = course;
+                    option.textContent = course;
+                    courseSelect.appendChild(option);
+                });
+            }
+        }
+    }
+
+    // Clear filters function - resets all filters to default
+    function clearFilters() {
+        // Reset all select elements to their default values
+        document.getElementById('school-filter').value = '';
+        document.getElementById('department-filter').value = '';
+        document.getElementById('course-filter').value = '';
+        document.getElementById('semester-filter').value = '';
+        document.getElementById('quiz-filter').value = '';
+        document.getElementById('limit-filter').value = '10';
+        
+        // Reset dependent dropdowns
+        updateDepartmentOptions();
+        updateCourseOptions();
+        
+        // Submit the form to reload the page with default filters
+        document.getElementById('filter-form').submit();
+    }
+
+    // Initialize dropdowns on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        updateDepartmentOptions();
+        updateCourseOptions();
+        
+        // Set initial values if filters are already applied
+        const schoolFilter = document.getElementById('school-filter');
+        const departmentFilter = document.getElementById('department-filter');
+        const courseFilter = document.getElementById('course-filter');
+        
+        if (schoolFilter && schoolFilter.value) {
+            updateDepartmentOptions();
+            if (departmentFilter && departmentFilter.value) {
+                updateCourseOptions();
+            }
+        }
+
+        // Add event listeners for dynamic dropdown updates
+        if (schoolFilter) {
+            schoolFilter.addEventListener('change', updateDepartmentOptions);
+        }
+        if (departmentFilter) {
+            departmentFilter.addEventListener('change', updateCourseOptions);
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,475 @@
+{% extends "admin_base.html" %} {% block title %}Preview Quiz - DSVV Quiz
+System{% endblock %} {% block extra_css %}
+<style>
+  .question-card {
+    transition: all 0.3s ease;
+  }
+  .question-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  }
+  .option-item {
+    transition: all 0.2s ease;
+  }
+  .option-item:hover {
+    background: #f8fafc;
+  }
+  .correct-answer {
+    background: #dcfce7 !important;
+    border-color: #22c55e !important;
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="min-h-screen bg-gray-50 p-4 md:p-6 lg:p-8">
+  <div class="max-w-4xl mx-auto">
+    <!-- Header Section -->
+    <div class="mb-8 fade-in">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+        <div class="mb-4 lg:mb-0">
+          <h1
+            class="text-3xl lg:text-4xl font-bold text-gray-900 mb-2 flex items-center"
+          >
+            <i class="fas fa-eye text-blue-600 mr-4 text-3xl"></i>
+            Quiz Preview: {{ quiz.title }}
+          </h1>
+          <p class="text-lg text-gray-600">
+            Review quiz questions and answers before starting
+          </p>
+        </div>
+        <nav
+          class="flex space-x-2 text-sm text-gray-500 bg-white px-4 py-2 rounded-xl border"
+        >
+          <a href="/admin" class="hover:text-blue-600 transition-colors"
+            >Dashboard</a
+          >
+          <span>/</span>
+          <a href="/admin/quizzes" class="hover:text-blue-600 transition-colors"
+            >Quizzes</a
+          >
+          <span>/</span>
+          <a
+            href="/admin/quizzes/manage/{{ quiz.quiz_id }}"
+            class="hover:text-blue-600 transition-colors"
+            >Manage</a
+          >
+          <span>/</span>
+          <span class="text-blue-600 font-medium">Preview</span>
+        </nav>
+      </div>
+    </div>
+
+    <!-- Quiz Info Card -->
+    <div
+      class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8 question-card"
+    >
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="space-y-2">
+          <div class="flex items-center text-sm text-gray-600">
+            <i class="fas fa-heading mr-2 text-blue-500"></i>
+            <span class="font-medium">Quiz Title:</span>
+          </div>
+          <p class="text-lg font-semibold text-gray-900">{{ quiz.title }}</p>
+        </div>
+
+        <div class="space-y-2">
+          <div class="flex items-center text-sm text-gray-600">
+            <i class="fas fa-graduation-cap mr-2 text-blue-500"></i>
+            <span class="font-medium">Course:</span>
+          </div>
+          <p class="text-lg font-semibold text-gray-900">
+            {{ quiz.course|title }}
+          </p>
+        </div>
+
+        <div class="space-y-2">
+          <div class="flex items-center text-sm text-gray-600">
+            <i class="fas fa-clock mr-2 text-blue-500"></i>
+            <span class="font-medium">Duration:</span>
+          </div>
+          <p class="text-lg font-semibold text-gray-900">
+            {{ quiz.duration }} minutes
+          </p>
+        </div>
+
+        <div class="space-y-2">
+          <div class="flex items-center text-sm text-gray-600">
+            <i class="fas fa-percentage mr-2 text-blue-500"></i>
+            <span class="font-medium">Pass Percentage:</span>
+          </div>
+          <p class="text-lg font-semibold text-gray-900">
+            {{ quiz.pass_percentage }}%
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-4 pt-4 border-t border-gray-200">
+        <div class="flex flex-wrap items-center gap-4">
+          <div class="flex items-center">
+            <span class="text-sm font-medium text-gray-600 mr-2"
+              >Total Questions:</span
+            >
+            <span
+              class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium"
+            >
+              {{ questions|length }}
+            </span>
+          </div>
+          <div class="flex items-center">
+            <span class="text-sm font-medium text-gray-600 mr-2">Status:</span>
+            <span
+              class="{% if quiz.status == 'active' %}bg-green-100 text-green-800{% elif quiz.status == 'draft' %}bg-yellow-100 text-yellow-800{% else %}bg-gray-100 text-gray-800{% endif %} px-3 py-1 rounded-full text-sm font-medium"
+            >
+              {{ quiz.status|title if quiz.status else 'Inactive' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Questions List -->
+    <div class="space-y-6">
+      {% if questions %} {% for question in questions %}
+      <div
+        class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden question-card"
+      >
+        <div class="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-white flex items-center">
+              <i class="fas fa-question-circle mr-3"></i>
+              Question {{ loop.index }}
+            </h3>
+            <div class="flex items-center space-x-3">
+              {% if question.difficulty %}
+              <span
+                class="bg-purple-500 text-white px-3 py-1 rounded-full text-xs font-medium"
+              >
+                {{ question.difficulty|title }}
+              </span>
+              {% endif %} {% if question.tags %}
+              <div class="flex space-x-1">
+                {% for tag in question.tags %}
+                <span
+                  class="bg-white bg-opacity-20 text-white px-2 py-1 rounded text-xs"
+                >
+                  {{ tag }}
+                </span>
+                {% endfor %}
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="p-6">
+          <!-- Question Text -->
+          <div class="mb-6">
+            <h4 class="text-lg font-semibold text-gray-800 mb-3">Question:</h4>
+            <p class="text-gray-700 text-lg bg-gray-50 p-4 rounded-xl border">
+              {{ question.text if question.text else 'No question text
+              available' }}
+            </p>
+          </div>
+
+          <!-- Options -->
+          <div class="mb-6">
+            <h4 class="text-lg font-semibold text-gray-800 mb-3">Options:</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {% for option in question.options %}
+              <div
+                class="option-item p-4 border-2 border-gray-200 rounded-xl flex items-start space-x-3 {% if option.is_correct %}correct-answer{% endif %}"
+              >
+                <div
+                  class="flex-shrink-0 w-6 h-6 rounded-full border-2 border-gray-300 flex items-center justify-center mt-1 {% if option.is_correct %}bg-green-500 border-green-500{% endif %}"
+                >
+                  {% if option.is_correct %}
+                  <i class="fas fa-check text-white text-xs"></i>
+                  {% else %}
+                  <span class="text-gray-400 text-xs"
+                    >{{ loop.index0|string }}</span
+                  >
+                  {% endif %}
+                </div>
+                <div class="flex-1">
+                  <p
+                    class="text-gray-800 {% if option.is_correct %}font-semibold{% endif %}"
+                  >
+                    {{ option.text if option.text else 'No option text' }}
+                  </p>
+                  {% if option.is_correct %}
+                  <p class="text-green-600 text-sm mt-1 font-medium">
+                    <i class="fas fa-check-circle mr-1"></i>Correct Answer
+                  </p>
+                  {% endif %}
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- Explanation -->
+          {% if question.explanation %}
+          <div class="mb-4">
+            <h4 class="text-lg font-semibold text-gray-800 mb-2">
+              Explanation:
+            </h4>
+            <p
+              class="text-gray-700 bg-blue-50 p-4 rounded-xl border border-blue-200"
+            >
+              {{ question.explanation }}
+            </p>
+          </div>
+          {% endif %}
+
+          <!-- Question Metadata -->
+          <div class="pt-4 border-t border-gray-200">
+            <div class="flex flex-wrap gap-4 text-sm text-gray-600">
+              {% if question.marks %}
+              <div class="flex items-center">
+                <i class="fas fa-star mr-2 text-yellow-500"></i>
+                <span>Marks: {{ question.marks }}</span>
+              </div>
+              {% endif %} {% if question.question_type %}
+              <div class="flex items-center">
+                <i class="fas fa-tag mr-2 text-blue-500"></i>
+                <span>Type: {{ question.question_type|title }}</span>
+              </div>
+              {% endif %} {% if question.category %}
+              <div class="flex items-center">
+                <i class="fas fa-folder mr-2 text-green-500"></i>
+                <span>Category: {{ question.category }}</span>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %} {% else %}
+      <!-- No Questions State -->
+      <div
+        class="bg-white rounded-2xl shadow-lg border border-gray-100 p-12 text-center"
+      >
+        <div class="max-w-md mx-auto">
+          <div
+            class="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
+          >
+            <i class="fas fa-question-circle text-gray-400 text-3xl"></i>
+          </div>
+          <h3 class="text-2xl font-semibold text-gray-900 mb-3">
+            No Questions Added
+          </h3>
+          <p class="text-gray-600 mb-6">
+            This quiz doesn't have any questions yet. Add questions to enable
+            the preview.
+          </p>
+          <a
+            href="/admin/quizzes/manage/{{ quiz.quiz_id }}"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors duration-200 inline-flex items-center"
+          >
+            <i class="fas fa-plus-circle mr-2"></i>
+            Add Questions
+          </a>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Action Buttons -->
+    {% if questions %}
+    <div class="mt-8 bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+      <div
+        class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6"
+      >
+        <a
+          href="/admin/quizzes/manage/{{ quiz.quiz_id }}"
+          class="bg-gray-600 hover:bg-gray-700 text-white px-8 py-3 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center"
+        >
+          <i class="fas fa-arrow-left mr-3"></i>
+          Back to Management
+        </a>
+
+        {% if quiz.status != 'active' %}
+        <button
+          onclick="startQuiz()"
+          class="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center"
+        >
+          <i class="fas fa-play mr-3"></i>
+          Start Quiz Now
+        </button>
+        {% else %}
+        <button
+          onclick="stopQuiz()"
+          class="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center"
+        >
+          <i class="fas fa-stop mr-3"></i>
+          Stop Quiz
+        </button>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Success/Error Toast -->
+<div
+  id="toast"
+  class="fixed top-4 right-4 p-4 rounded-xl shadow-2xl bg-white border-l-4 border-green-500 transform translate-x-full transition-all duration-300 z-50 max-w-sm fade-in"
+>
+  <div class="flex items-start">
+    <div class="flex-shrink-0 pt-0.5">
+      <i class="fas fa-check-circle text-green-500 text-lg"></i>
+    </div>
+    <div class="ml-3 flex-1">
+      <p id="toast-message" class="text-sm font-semibold text-gray-900">
+        Success!
+      </p>
+      <p id="toast-description" class="mt-1 text-sm text-gray-600">
+        Operation completed successfully.
+      </p>
+    </div>
+    <button
+      class="ml-4 flex-shrink-0 focus:outline-none hover:bg-gray-100 rounded-full p-1 transition-colors"
+      onclick="hideToast()"
+    >
+      <i class="fas fa-times text-gray-400"></i>
+    </button>
+  </div>
+</div>
+
+<!-- Loading Overlay -->
+<div
+  id="loading-overlay"
+  class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden"
+>
+  <div class="bg-white rounded-2xl p-8 flex items-center shadow-2xl">
+    <div
+      class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mr-4"
+    ></div>
+    <div>
+      <p class="text-lg font-semibold text-gray-900">Processing</p>
+      <p class="text-gray-600">Please wait...</p>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extra_js %}
+<script>
+  // Toast notification functions
+  function showToast(title, message, type = "success") {
+    const toast = document.getElementById("toast");
+    const toastMessage = document.getElementById("toast-message");
+    const toastDescription = document.getElementById("toast-description");
+
+    // Set border color based on type
+    const borderColors = {
+      success: "border-green-500",
+      error: "border-red-500",
+      warning: "border-yellow-500",
+      info: "border-blue-500",
+    };
+
+    // Remove all border color classes
+    Object.values(borderColors).forEach((color) => {
+      toast.classList.remove(color);
+    });
+
+    // Add the appropriate border color
+    toast.classList.add(borderColors[type] || borderColors.success);
+
+    // Set icon based on type
+    const iconElement = toast.querySelector(".flex-shrink-0 i");
+    const icons = {
+      success: "fa-check-circle text-green-500",
+      error: "fa-exclamation-circle text-red-500",
+      warning: "fa-exclamation-triangle text-yellow-500",
+      info: "fa-info-circle text-blue-500",
+    };
+
+    iconElement.className = `fas ${icons[type] || icons.success} text-lg`;
+
+    toastMessage.textContent = title;
+    toastDescription.textContent = message;
+
+    // Show toast
+    toast.classList.remove("translate-x-full");
+
+    // Auto hide after 5 seconds
+    setTimeout(hideToast, 5000);
+  }
+
+  function hideToast() {
+    const toast = document.getElementById("toast");
+    toast.classList.add("translate-x-full");
+  }
+
+  // Loading overlay functions
+  function showLoading() {
+    document.getElementById("loading-overlay").classList.remove("hidden");
+  }
+
+  function hideLoading() {
+    document.getElementById("loading-overlay").classList.add("hidden");
+  }
+
+  // Start quiz function
+  async function startQuiz() {
+    showLoading();
+
+    try {
+      const response = await fetch(
+        `/admin/quizzes/api/{{ quiz.quiz_id }}/status`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "start" }),
+        }
+      );
+
+      const data = await response.json();
+      hideLoading();
+
+      if (data.success) {
+        showToast("Success", "Quiz started successfully!", "success");
+        setTimeout(() => {
+          location.reload();
+        }, 2000);
+      } else {
+        showToast("Error", data.error || "Failed to start quiz", "error");
+      }
+    } catch (error) {
+      hideLoading();
+      showToast("Error", "Failed to start quiz: " + error.message, "error");
+    }
+  }
+
+  // Stop quiz function
+  async function stopQuiz() {
+    showLoading();
+
+    try {
+      const response = await fetch(
+        `/admin/quizzes/api/{{ quiz.quiz_id }}/status`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "stop" }),
+        }
+      );
+
+      const data = await response.json();
+      hideLoading();
+
+      if (data.success) {
+        showToast("Success", "Quiz stopped successfully!", "success");
+        setTimeout(() => {
+          location.reload();
+        }, 2000);
+      } else {
+        showToast("Error", data.error || "Failed to stop quiz", "error");
+      }
+    } catch (error) {
+      hideLoading();
+      showToast("Error", "Failed to stop quiz: " + error.message, "error");
+    }
+  }
+</script>
+{% endblock %}

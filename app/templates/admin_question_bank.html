@@ -1,0 +1,752 @@
+admin_question_bank.html
+
+{% extends "admin_base.html" %}
+
+{% block title %}Question Bank - DSVV Quiz System{% endblock %}
+
+{% block extra_head %}
+<style>
+    .question-card {
+        transition: all 0.3s ease;
+        border: 1px solid #e5e7eb;
+    }
+    .question-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    .input-focus:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+    .action-btn {
+        transition: all 0.2s ease;
+    }
+    .action-btn:hover {
+        transform: scale(1.05);
+    }
+    .difficulty-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+    }
+    .difficulty-beginner { background: #dcfce7; color: #166534; }
+    .difficulty-easy { background: #bbf7d0; color: #15803d; }
+    .difficulty-intermediate { background: #86efac; color: #15803d; }
+    .difficulty-advanced { background: #4ade80; color: #166534; }
+    .difficulty-expert { background: #22c55e; color: #14532d; }
+    .bulk-actions {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    /* Pagination styles matching admin_users.html */
+    .pagination-btn {
+        transition: all 0.2s ease;
+    }
+    
+    .pagination-btn:hover:not(:disabled) {
+        background-color: #f3f4f6;
+        transform: translateY(-1px);
+    }
+    
+    .pagination-info {
+        font-size: 0.875rem;
+        color: #6b7280;
+    }
+
+    .table-container {
+        overflow-x: auto;
+        max-height: calc(100vh - 300px);
+    }
+    
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+    }
+
+    /* Mobile optimizations */
+    @media (max-width: 768px) {
+        .mobile-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .mobile-text-sm {
+            font-size: 0.875rem;
+        }
+        
+        .mobile-padding {
+            padding: 0.75rem;
+        }
+    }
+
+    /* Mobile table styles */
+    @media (max-width: 640px) {
+        .mobile-table {
+            font-size: 0.75rem;
+        }
+        
+        .mobile-table th,
+        .mobile-table td {
+            padding: 0.5rem 0.25rem;
+        }
+        
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+        }
+        
+        .action-btn {
+            padding: 0.25rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-4 md:p-6">
+    <div class="max-w-9xl mx-auto">
+        <!-- Header Section -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 mobile-padding">
+            <div class="flex items-center mb-4 md:mb-0">
+                <div class="bg-green-100 p-3 rounded-xl mr-4">
+                    <i class="fas fa-database text-green-600 text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl lg:text-3xl font-bold text-gray-800">Question Bank</h1>
+                    <p class="text-gray-600 text-sm mt-1">Manage approved questions</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
+                    {{ total_count }} questions
+                </span>
+                <nav class="flex space-x-2 text-sm text-gray-500">
+                    <a href="/admin" class="hover:text-blue-600">Dashboard</a>
+                    <span>/</span>
+                    <a href="/admin/questions/management" class="hover:text-blue-600">Questions</a>
+                    <span>/</span>
+                    <span class="text-blue-600">Bank</span>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Filters Section -->
+        <div class="bg-white p-4 md:p-6 rounded-xl shadow-md mb-6 border border-gray-100">
+            <h2 class="text-lg md:text-xl font-semibold mb-4 flex items-center text-blue-700">
+                <i class="fas fa-filter mr-2"></i> Filter Questions
+            </h2>
+            <form method="GET" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="mobile-stack">
+                    <label class="block text-sm font-medium text-gray-700 mb-1 md:mb-2">Difficulty Level</label>
+                    <select name="difficulty" class="form-select input-focus w-full p-2 border border-gray-300 rounded-lg text-sm md:text-base">
+                        <option value="">All Difficulties</option>
+                        <option value="beginner" {% if request.args.get('difficulty') == 'beginner' %}selected{% endif %}>Beginner</option>
+                        <option value="easy" {% if request.args.get('difficulty') == 'easy' %}selected{% endif %}>Easy</option>
+                        <option value="intermediate" {% if request.args.get('difficulty') == 'intermediate' %}selected{% endif %}>Intermediate</option>
+                        <option value="advanced" {% if request.args.get('difficulty') == 'advanced' %}selected{% endif %}>Advanced</option>
+                        <option value="expert" {% if request.args.get('difficulty') == 'expert' %}selected{% endif %}>Expert</option>
+                    </select>
+                </div>
+                <div class="mobile-stack">
+                    <label class="block text-sm font-medium text-gray-700 mb-1 md:mb-2">Tag</label>
+                    <select name="tag" class="form-select input-focus w-full p-2 border border-gray-300 rounded-lg text-sm md:text-base">
+                        <option value="">All Tags</option>
+                        {% for tag in tags %}
+                        <option value="{{ tag }}" {% if request.args.get('tag') == tag %}selected{% endif %}>{{ tag }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 md:py-3 rounded-lg transition-colors text-sm md:text-base">
+                        Apply Filters
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        
+
+        <!-- Questions Table Section -->
+        <div class="bg-white p-4 md:p-6 rounded-xl shadow-md mb-6 md:mb-8">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
+                <h2 class="text-lg md:text-xl font-semibold mb-2 md:mb-0 flex items-center text-green-700">
+                    <i class="fas fa-list mr-2"></i> Approved Questions
+                </h2>
+                <div class="text-sm text-gray-600 mobile-text-sm">
+                    Page {{ current_page }} of {{ total_pages }}
+                </div>
+            </div>
+            
+            <div class="table-container">
+                {% if questions %}
+                <table class="min-w-full divide-y divide-gray-200 mobile-table">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">S no.</th>
+                            <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Question</th>
+                            <th class="hidden md:table-cell px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Difficulty</th>
+                            <th class="hidden lg:table-cell px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tags</th>
+                            <th class="hidden lg:table-cell px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Correct Answer</th>
+                            <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for question in questions %}
+                        {% set serial_no = (current_page - 1) * page_size + loop.index %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm mobile-text-sm font-mono">
+                                {{ serial_no }}
+                            </td>
+                            <td class="px-3 py-2 md:px-6 md:py-4 text-sm mobile-text-sm">
+                                <span class="truncate max-w-[200px] md:max-w-[300px] block" title="{{ question.text }}">
+                                    {{ question.text[:100] }}{% if question.text|length > 100 %}...{% endif %}
+                                </span>
+                            </td>
+                            <td class="hidden md:table-cell px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm">
+                                <span class="difficulty-badge difficulty-{{ question.difficulty|default('intermediate') }}">
+                                    {{ question.difficulty|default('intermediate')|title }}
+                                </span>
+                            </td>
+                            <td class="hidden lg:table-cell px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm mobile-text-sm">
+                                {% if question.tags and question.tags|length > 0 %}
+                                    {% set tags_string = question.tags|join(', ') %}
+                                    <span class="truncate max-w-[150px] block" title="{{ tags_string }}">
+                                        {{ tags_string[:30] }}{% if tags_string|length > 30 %}...{% endif %}
+                                    </span>
+                                {% else %}
+                                    <span class="text-gray-400">No tags</span>
+                                {% endif %}
+                            </td>
+                            <td class="hidden lg:table-cell px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm mobile-text-sm">
+                                {% set answer = question.correct_answer %}
+                                <span class="truncate max-w-[120px] block" title="{{ answer }}">
+                                    {{ answer[:30] }}{% if answer|length > 30 %}...{% endif %}
+                                </span>
+                            </td>
+                            <td class="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm">
+                                <span class="status-badge bg-green-100 text-green-800 text-xs">Approved</span>
+                            </td>
+                            <td class="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm">
+                                <div class="action-buttons">
+                                    <button data-action="edit" 
+                                            data-question-id="{{ question.question_id }}"
+                                            data-text="{{ question.text }}"
+                                            data-options="{{ question.options|join('|||') }}"
+                                            data-correct-answer="{{ question.correct_answer }}"
+                                            data-difficulty="{{ question.difficulty|default('intermediate') }}"
+                                            data-tags="{{ question.tags|join(',') if question.tags else '' }}"
+                                            class="action-btn text-blue-600 hover:text-blue-800 p-1 md:p-0" 
+                                            title="Edit Question">
+                                        <i class="fas fa-edit text-sm md:text-base"></i>
+                                    </button>
+                                    <button data-action="delete" 
+                                            data-question-id="{{ question.question_id }}"
+                                            class="action-btn text-red-600 hover:text-red-800 p-1 md:p-0" 
+                                            title="Delete">
+                                        <i class="fas fa-trash text-sm md:text-base"></i>
+                                    </button>
+                                    <button data-action="view" 
+                                            data-question-id="{{ question.question_id }}"
+                                            class="action-btn text-purple-600 hover:text-purple-800 p-1 md:p-0" 
+                                            title="View Details">
+                                        <i class="fas fa-eye text-sm md:text-base"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="text-center py-8">
+                    <i class="fas fa-database text-gray-400 text-3xl md:text-4xl mb-4"></i>
+                    <p class="text-gray-500 text-sm md:text-base">No questions in bank</p>
+                    <p class="text-xs md:text-sm text-gray-400 mt-2">Questions will appear here after they are approved.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Pagination Section -->
+        {% if total_pages > 1 %}
+        <div class="bg-white p-3 md:p-4 rounded-xl shadow-md">
+            <div class="flex flex-col md:flex-row justify-between items-center space-y-3 md:space-y-0">
+                <!-- Page Info -->
+                <div class="text-xs md:text-sm text-gray-600 pagination-info text-center md:text-left">
+                    Showing {{ ((current_page - 1) * page_size) + 1 }} to 
+                    {{ [current_page * page_size, total_count] | min }} of 
+                    {{ total_count }} entries
+                </div>
+                
+                <!-- Page Size Selector -->
+                <div class="flex items-center space-x-2">
+                    <span class="text-xs md:text-sm text-gray-600 hidden sm:inline">Show:</span>
+                    <select id="per-page-select" class="form-select input-focus p-1 border border-gray-300 rounded text-xs md:text-sm">
+                        <option value="5" {% if page_size == 5 %}selected{% endif %}>5</option>
+                        <option value="10" {% if page_size == 10 %}selected{% endif %}>10</option>
+                        <option value="25" {% if page_size == 25 %}selected{% endif %}>25</option>
+                        <option value="50" {% if page_size == 50 %}selected{% endif %}>50</option>
+                        <option value="100" {% if page_size == 100 %}selected{% endif %}>100</option>
+                    </select>
+                    <span class="text-xs md:text-sm text-gray-600 hidden sm:inline">per page</span>
+                </div>
+                
+                <!-- Pagination Controls -->
+                <div class="flex items-center space-x-1">
+                    <!-- First Page -->
+                    <button data-page="1"
+                            class="px-2 py-1 md:px-3 md:py-1 text-xs md:text-sm border border-gray-300 rounded pagination-btn {% if current_page == 1 %}bg-gray-100 text-gray-400 cursor-not-allowed{% else %}bg-white text-gray-700{% endif %}"
+                            {% if current_page == 1 %}disabled{% endif %}
+                            title="First Page">
+                        <i class="fas fa-angle-double-left"></i>
+                    </button>
+                    
+                    <!-- Previous Page -->
+                    <button data-page="{{ current_page - 1 }}"
+                            class="px-2 py-1 md:px-3 md:py-1 text-xs md:text-sm border border-gray-300 rounded pagination-btn {% if current_page == 1 %}bg-gray-100 text-gray-400 cursor-not-allowed{% else %}bg-white text-gray-700{% endif %}"
+                            {% if current_page == 1 %}disabled{% endif %}
+                            title="Previous Page">
+                        <i class="fas fa-angle-left"></i>
+                    </button>
+                    
+                    <!-- Page Numbers -->
+                    {% set start_page = [current_page - 2, 1] | max %}
+                    {% set end_page = [current_page + 2, total_pages] | min %}
+                    
+                    {% for p in range(start_page, end_page + 1) %}
+                        {% if p == current_page %}
+                        <button class="px-2 py-1 md:px-3 md:py-1 text-xs md:text-sm border border-blue-500 bg-blue-500 text-white rounded pagination-btn" aria-current="page">
+                            {{ p }}
+                        </button>
+                        {% else %}
+                        <button data-page="{{ p }}"
+                                class="px-2 py-1 md:px-3 md:py-1 text-xs md:text-sm border border-gray-300 bg-white text-gray-700 rounded pagination-btn">
+                            {{ p }}
+                        </button>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    <!-- Next Page -->
+                    <button data-page="{{ current_page + 1 }}"
+                            class="px-2 py-1 md:px-3 md:py-1 text-xs md:text-sm border border-gray-300 rounded pagination-btn {% if current_page == total_pages %}bg-gray-100 text-gray-400 cursor-not-allowed{% else %}bg-white text-gray-700{% endif %}"
+                            {% if current_page == total_pages %}disabled{% endif %}
+                            title="Next Page">
+                        <i class="fas fa-angle-right"></i>
+                    </button>
+                    
+                    <!-- Last Page -->
+                    <button data-page="{{ total_pages }}"
+                            class="px-2 py-1 md:px-3 md:py-1 text-xs md:text-sm border border-gray-300 rounded pagination-btn {% if current_page == total_pages %}bg-gray-100 text-gray-400 cursor-not-allowed{% else %}bg-white text-gray-700{% endif %}"
+                            {% if current_page == total_pages %}disabled{% endif %}
+                            title="Last Page">
+                        <i class="fas fa-angle-double-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Edit Question Modal -->
+<div id="edit-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-2 md:p-4 z-50 hidden">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-2 md:mx-0 max-h-[90vh] overflow-y-auto">
+        <div class="px-4 md:px-6 py-4 border-b sticky top-0 bg-white">
+            <h2 class="text-lg md:text-xl font-semibold text-gray-800">Edit Question</h2>
+        </div>
+        <form id="edit-form" class="px-4 md:px-6 py-4">
+            <input type="hidden" id="edit-question_id">
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Question Text</label>
+                <textarea id="edit-text" class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base" rows="3"></textarea>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                {% for i in range(4) %}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Option {{ i+1 }}</label>
+                    <input type="text" id="edit-option-{{ i+1 }}" class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base">
+                </div>
+                {% endfor %}
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Correct Answer</label>
+                <select id="edit-correct-answer" class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base">
+                    <option value="">Select Correct Answer</option>
+                    {% for i in range(4) %}
+                    <option value="option{{ i+1 }}">Option {{ i+1 }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Difficulty Level</label>
+                <select id="edit-difficulty" class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base">
+                    <option value="beginner">Beginner</option>
+                    <option value="easy">Easy</option>
+                    <option value="intermediate">Intermediate</option>
+                    <option value="advanced">Advanced</option>
+                    <option value="expert">Expert</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Tags</label>
+                <input type="text" id="edit-tags" class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base" placeholder="Enter tags separated by commas">
+            </div>
+        </form>
+        <div class="px-4 md:px-6 py-4 border-t flex justify-end space-x-2 md:space-x-3 bg-white sticky bottom-0">
+            <button type="button" onclick="closeModal()" class="px-3 md:px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors text-sm md:text-base">
+                Cancel
+            </button>
+            <button type="button" onclick="submitEdit()" class="px-3 md:px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm md:text-base">
+                Save Changes
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div id="toast" class="fixed top-4 right-4 p-4 rounded-lg shadow-lg bg-white border-l-4 border-green-500 transform translate-x-full transition-transform duration-300 z-50 max-w-sm hidden">
+    <div class="flex items-start">
+        <div class="flex-shrink-0">
+            <i class="fas fa-check-circle text-green-500"></i>
+        </div>
+        <div class="ml-3">
+            <p id="toast-message" class="text-sm font-medium text-gray-800">Success!</p>
+            <p id="toast-description" class="mt-1 text-sm text-gray-600">Operation completed successfully.</p>
+        </div>
+        <button class="ml-4 flex-shrink-0 focus:outline-none" onclick="hideToast()">
+            <i class="fas fa-times text-gray-400"></i>
+        </button>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg p-6 flex items-center shadow-xl">
+        <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4 border-t-blue-500 animate-spin"></div>
+        <p class="ml-4 text-gray-800">Processing, please wait...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Selected questions state
+    const selectedQuestions = new Set();
+
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', function() {
+        // Checkbox event listeners
+        const selectAllCheckbox = document.getElementById('select-all-bank');
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener('change', function() {
+                const checkboxes = document.querySelectorAll('.question-checkbox');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                    if (this.checked) {
+                        selectedQuestions.add(checkbox.dataset.questionId);
+                    } else {
+                        selectedQuestions.delete(checkbox.dataset.questionId);
+                    }
+                });
+                updateBulkActionButtons();
+            });
+        }
+
+        // Individual checkbox events
+        document.querySelectorAll('.question-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                if (this.checked) {
+                    selectedQuestions.add(this.dataset.questionId);
+                } else {
+                    selectedQuestions.delete(this.dataset.questionId);
+                }
+                updateSelectAllCheckbox();
+                updateBulkActionButtons();
+            });
+        });
+
+        // Action button & pagination event delegation
+        document.addEventListener('click', function(event) {
+            // handle action buttons (edit/delete/view)
+            const actionBtn = event.target.closest('button[data-action]');
+            if (actionBtn) {
+                const action = actionBtn.getAttribute('data-action');
+                const questionId = actionBtn.getAttribute('data-question-id');
+
+                switch (action) {
+                    case 'edit': {
+                        const text = actionBtn.getAttribute('data-text');
+                        const options = (actionBtn.getAttribute('data-options') || '').split('|||');
+                        const correctAnswer = actionBtn.getAttribute('data-correct-answer');
+                        const difficulty = actionBtn.getAttribute('data-difficulty');
+                        const tags = actionBtn.getAttribute('data-tags');
+                        editQuestion(questionId, text, options, correctAnswer, difficulty, tags);
+                        break;
+                    }
+                    case 'delete':
+                        deleteQuestion(questionId);
+                        break;
+                    case 'view':
+                        viewQuestion(questionId);
+                        break;
+                }
+                return;
+            }
+
+            // handle pagination buttons with data-page
+            const pageBtn = event.target.closest('button[data-page]');
+            if (pageBtn) {
+                const page = pageBtn.getAttribute('data-page');
+                if (page) {
+                    goToPage(parseInt(page, 10));
+                }
+            }
+        });
+
+        // Per page select change
+        const perPageSelect = document.getElementById('per-page-select');
+        if (perPageSelect) {
+            perPageSelect.addEventListener('change', function() {
+                changePerPage(this.value);
+            });
+        }
+
+        // Bulk action buttons
+        const bulkDeleteBtn = document.getElementById('bulk-delete-btn');
+        if (bulkDeleteBtn) {
+            bulkDeleteBtn.addEventListener('click', bulkDelete);
+        }
+    });
+
+    // Pagination functions
+    function goToPage(page) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('page', page);
+        window.location.href = url.toString();
+    }
+
+    function changePerPage(perPage) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('page_size', perPage);
+        url.searchParams.set('page', 1);
+        window.location.href = url.toString();
+    }
+
+    // Update select all checkbox
+    function updateSelectAllCheckbox() {
+        const checkboxes = document.querySelectorAll('.question-checkbox');
+        const selectAll = document.getElementById('select-all-bank');
+        if (checkboxes.length > 0 && selectAll) {
+            const allChecked = Array.from(checkboxes).every(checkbox => checkbox.checked);
+            const someChecked = Array.from(checkboxes).some(checkbox => checkbox.checked);
+            
+            selectAll.checked = allChecked;
+            selectAll.indeterminate = someChecked && !allChecked;
+        }
+    }
+
+    // Update bulk action buttons
+    function updateBulkActionButtons() {
+        const hasSelected = selectedQuestions.size > 0;
+        const bulkDeleteBtn = document.getElementById('bulk-delete-btn');
+        if (bulkDeleteBtn) {
+            bulkDeleteBtn.disabled = !hasSelected;
+        }
+    }
+
+    // Bulk actions
+    function bulkDelete() {
+        const questionIds = Array.from(selectedQuestions);
+        if (questionIds.length === 0) return;
+
+        if (confirm(`Are you sure you want to delete ${questionIds.length} question(s)? This action cannot be undone.`)) {
+            showLoading();
+
+            Promise.all(questionIds.map(questionId => 
+                fetch(`/admin/questions/api/questions/delete/${questionId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                }).then(res => res.json())
+            ))
+            .then(results => {
+                hideLoading();
+                const successCount = results.filter(r => r.success).length;
+                showToast('Success', `Successfully deleted ${successCount} out of ${questionIds.length} questions`, 'success');
+                selectedQuestions.clear();
+                window.location.reload();
+            })
+            .catch(error => {
+                hideLoading();
+                showToast('Error', 'Failed to delete questions: ' + error, 'error');
+            });
+        }
+    }
+
+    // Individual question actions
+    function editQuestion(questionId, text, options, correctAnswer, difficulty, tags) {
+        document.getElementById('edit-question_id').value = questionId;
+        document.getElementById('edit-text').value = text;
+        
+        for (let i = 0; i < 4; i++) {
+            document.getElementById(`edit-option-${i+1}`).value = options[i] || '';
+        }
+        
+        document.getElementById('edit-correct-answer').value = correctAnswer;
+        document.getElementById('edit-difficulty').value = difficulty || 'intermediate';
+        document.getElementById('edit-tags').value = tags || '';
+        
+        // Show modal with animation
+        const modal = document.getElementById('edit-modal');
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            modal.classList.add('active');
+        }, 10);
+    }
+
+    function submitEdit() {
+        const questionId = document.getElementById('edit-question_id').value;
+        const text = document.getElementById('edit-text').value;
+        const options = [
+            document.getElementById('edit-option-1').value,
+            document.getElementById('edit-option-2').value,
+            document.getElementById('edit-option-3').value,
+            document.getElementById('edit-option-4').value
+        ];
+        const correctAnswer = document.getElementById('edit-correct-answer').value;
+        const difficulty = document.getElementById('edit-difficulty').value;
+        const tags = document.getElementById('edit-tags').value.split(',').map(tag => tag.trim()).filter(tag => tag);
+
+        showLoading();
+
+        fetch('/admin/questions/api/bank/update', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                question_id: questionId,
+                action: 'update',
+                text: text,
+                options: options,
+                correct_answer: correctAnswer,
+                difficulty: difficulty,
+                tags: tags
+            })
+        }).then(response => response.json())
+          .then(data => {
+              hideLoading();
+              if (data.success) {
+                  showToast('Success', 'Question updated successfully', 'success');
+                  closeModal();
+                  window.location.reload();
+              } else {
+                  showToast('Error', data.error || 'Failed to update question', 'error');
+              }
+          }).catch(error => {
+              hideLoading();
+              showToast('Error', 'Error updating question: ' + error, 'error');
+          });
+    }
+
+    function deleteQuestion(questionId) {
+        if (confirm('Are you sure you want to delete this question? This action cannot be undone.')) {
+            showLoading();
+
+            fetch(`/admin/questions/api/questions/delete/${questionId}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            }).then(response => response.json())
+              .then(data => {
+                  hideLoading();
+                  if (data.success) {
+                      showToast('Success', 'Question deleted successfully', 'success');
+                      window.location.reload();
+                  } else {
+                      showToast('Error', data.error || 'Failed to delete question', 'error');
+                  }
+              }).catch(error => {
+                  hideLoading();
+                  showToast('Error', 'Error deleting question: ' + error, 'error');
+              });
+        }
+    }
+
+    function viewQuestion(questionId) {
+        // Implementation for viewing question details
+        alert('View details for question: ' + questionId);
+    }
+
+    // Close modal
+    function closeModal() {
+        const modal = document.getElementById('edit-modal');
+        modal.classList.remove('active');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+    }
+
+    // Toast notification functions
+    function showToast(title, message, type = "success") {
+        const toast = document.getElementById("toast");
+        const toastMessage = document.getElementById("toast-message");
+        const toastDescription = document.getElementById("toast-description");
+
+        if (!toast || !toastMessage || !toastDescription) {
+            console.error("Toast elements not found");
+            return;
+        }
+
+        // Set border color based on type
+        toast.className = toast.className.replace(/border-(red|green|yellow|blue)-500/, "");
+        toast.classList.add(`border-${type === "success" ? "green" : type === "error" ? "red" : type === "warning" ? "yellow" : "blue"}-500`);
+
+        // Set icon based on type
+        const iconElement = toast.querySelector(".flex-shrink-0 i");
+        if (iconElement) {
+            iconElement.className = type === "success" ? "fas fa-check-circle text-green-500" : type === "error" ? "fas fa-exclamation-circle text-red-500" : type === "warning" ? "fas fa-exclamation-triangle text-yellow-500" : "fas fa-info-circle text-blue-500";
+        }
+
+        toastMessage.textContent = title;
+        toastDescription.textContent = message;
+
+        // Show toast
+        toast.classList.remove("hidden", "translate-x-full");
+        setTimeout(() => {
+            toast.classList.remove("translate-x-full");
+        }, 10);
+
+        // Auto hide after 5 seconds
+        setTimeout(hideToast, 5000);
+    }
+
+    function hideToast() {
+        const toast = document.getElementById("toast");
+        if (toast) {
+            toast.classList.add("translate-x-full");
+            setTimeout(() => {
+                toast.classList.add("hidden");
+            }, 300);
+        }
+    }
+
+    // Loading overlay functions
+    function showLoading() {
+        const overlay = document.getElementById("loading-overlay");
+        if (overlay) {
+            overlay.classList.remove("hidden");
+        }
+    }
+
+    function hideLoading() {
+        const overlay = document.getElementById("loading-overlay");
+        if (overlay) {
+            overlay.classList.add("hidden");
+        }
+    }
+</script>
+{% endblock %}

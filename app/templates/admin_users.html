@@ -1,0 +1,912 @@
+{% extends "admin_base.html" %}
+
+{% block title %}User Management - DSVV Quiz System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .action-btn {
+        transition: all 0.2s ease;
+    }
+    
+    .action-btn:hover {
+        transform: scale(1.1);
+    }
+    
+    .modal {
+        transition: opacity 0.3s ease, transform 0.3s ease;
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    
+    .modal.active {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    
+    .table-container {
+        overflow-x: auto;
+        max-height: calc(100vh - 300px);
+    }
+    
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+    }
+
+    /* New styles for cascading dropdowns */
+    .form-select {
+        background-repeat: no-repeat;
+        background-size: 1.5em 1.5em;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    
+    .input-focus:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+    
+    /* Pagination styles */
+    .pagination-btn {
+        transition: all 0.2s ease;
+    }
+    
+    .pagination-btn:hover:not(:disabled) {
+        background-color: #f3f4f6;
+        border-color: #d1d5db;
+    }
+    
+    /* Mobile responsive styles - FIXED */
+    @media (max-width: 768px) {
+        main {
+            margin-left: 0 !important;
+            width: 100% !important;
+            padding: 1rem 0.75rem !important;
+        }
+        
+        .mobile-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .mobile-text-sm {
+            font-size: 0.875rem;
+        }
+        
+        .mobile-padding {
+            padding: 0.75rem;
+        }
+        
+        .mobile-table th,
+        .mobile-table td {
+            padding: 0.5rem 0.25rem;
+            font-size: 0.75rem;
+        }
+        
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+        }
+        
+        /* Ensure table doesn't overflow */
+        .overflow-x-auto {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* Fix modal positioning on mobile */
+        .modal {
+            padding: 1rem;
+            align-items: flex-start;
+            padding-top: 2rem;
+        }
+        
+        /* Adjust header spacing */
+        .page-header {
+            padding-top: 0.5rem;
+        }
+    }
+
+    /* Additional mobile fixes */
+    @media (max-width: 640px) {
+        .container-mobile {
+            margin: 0;
+            padding: 0.5rem;
+            max-width: 100%;
+        }
+        
+        .table-responsive {
+            font-size: 0.7rem;
+        }
+        
+        .btn-mobile {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.75rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="p-4 md:p-6 mt-0 container-mobile">
+    <!-- Page Header -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 mobile-padding page-header">
+        <h1 class="text-2xl md:text-3xl font-bold text-gray-800 flex items-center mb-4 md:mb-0">
+            <i class="fas fa-users text-blue-600 mr-3"></i> User Management
+        </h1>
+        <div class="mt-4 md:mt-0">
+            <span class="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full">
+                Total Students: {{ stats.total_students }}
+            </span>
+        </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="bg-white p-4 md:p-6 rounded-xl shadow-md mb-6 md:mb-8">
+        <h2 class="text-lg md:text-xl font-semibold mb-4 flex items-center text-blue-700">
+            <i class="fas fa-filter mr-2"></i> Filter Users
+        </h2>
+        <form method="GET" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+            <!-- School Filter -->
+            <div class="mobile-stack">
+                <label class="block text-sm font-medium text-gray-700 mb-1 md:mb-2">School</label>
+                <select name="school" id="school-filter" class="form-select input-focus w-full p-2 border border-gray-300 rounded-md text-sm md:text-base" onchange="updateDepartmentOptions()">
+                    <option value="">All Schools</option>
+                    {% for school in schools %}
+                    <option value="{{ school }}" {% if selected_school == school %}selected{% endif %}>{{ school }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Department Filter -->
+            <div class="mobile-stack">
+                <label class="block text-sm font-medium text-gray-700 mb-1 md:mb-2">Department</label>
+                <select name="department" id="department-filter" class="form-select input-focus w-full p-2 border border-gray-300 rounded-md text-sm md:text-base" onchange="updateCourseOptions()">
+                    <option value="">All Departments</option>
+                    {% for department in departments %}
+                    <option value="{{ department }}" {% if selected_department == department %}selected{% endif %}>{{ department }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Course Filter -->
+            <div class="mobile-stack">
+                <label class="block text-sm font-medium text-gray-700 mb-1 md:mb-2">Course</label>
+                <select name="course" id="course-filter" class="form-select input-focus w-full p-2 border border-gray-300 rounded-md text-sm md:text-base">
+                    <option value="">All Courses</option>
+                    {% for course in courses %}
+                    <option value="{{ course }}" {% if selected_course == course %}selected{% endif %}>{{ course }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Semester Filter -->
+            <div class="mobile-stack">
+                <label class="block text-sm font-medium text-gray-700 mb-1 md:mb-2">Semester</label>
+                <select name="semester" class="form-select input-focus w-full p-2 border border-gray-300 rounded-md text-sm md:text-base">
+                    <option value="">All Semesters</option>
+                    {% for semester in semesters %}
+                    <option value="{{ semester }}" {% if selected_semester == semester %}selected{% endif %}>{{ semester }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="flex items-end md:col-span-2 lg:col-span-4">
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors text-sm md:text-base btn-mobile">
+                    Apply Filters
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Students Table -->
+    <div class="bg-white p-4 md:p-6 rounded-xl shadow-md mb-6 md:mb-8">
+        <h2 class="text-lg md:text-xl font-semibold mb-4 flex items-center text-green-700">
+            <i class="fas fa-list mr-2"></i> Student List
+        </h2>
+        
+        <!-- Bulk Actions -->
+        <div class="bulk-actions mb-4 flex flex-col md:flex-row items-start md:items-center space-y-2 md:space-y-0 md:space-x-4">
+            <div class="flex space-x-2">
+                <button onclick="exportUsers()" class="bg-purple-600 hover:bg-purple-700 text-white px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm transition-colors btn-mobile">
+                    <i class="fas fa-download mr-1"></i> Export Users
+                </button>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto table-responsive">
+            <table class="min-w-full divide-y divide-gray-200 mobile-table">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scholar ID</th>
+                        <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                        <th class="hidden md:table-cell px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                        <th class="hidden lg:table-cell px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Semester</th>
+                        <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                        <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for student in students %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm mobile-text-sm">{{ student.scholar_id }}</td>
+                        <td class="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm font-medium mobile-text-sm">{{ student.name }}</td>
+                        <td class="hidden md:table-cell px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm mobile-text-sm">{{ student.course }}</td>
+                        <td class="hidden lg:table-cell px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm mobile-text-sm">{{ student.semester }}</td>
+                        <td class="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm mobile-text-sm">{{ student.email }}</td>
+                        <td class="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm">
+                            <span class="px-2 py-1 rounded-full text-xs {% if student.blocked %}bg-red-100 text-red-800{% else %}bg-green-100 text-green-800{% endif %}">
+                                {{ 'Blocked' if student.blocked else 'Active' }}
+                            </span>
+                        </td>
+                        <td class="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm action-buttons">
+                            <button onclick="editUser('{{ student.scholar_id }}', '{{ student.name }}', '{{ student.course }}', '{{ student.semester }}', '{{ student.email }}', '{{ student.blocked|lower }}')" 
+                                    class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs mr-1 action-btn" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="viewMarks('{{ student.scholar_id }}')" 
+                                    class="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs mr-1 action-btn" title="View Results">
+                                <i class="fas fa-chart-bar"></i>
+                            </button>
+                            <button onclick="deleteUser('{{ student.scholar_id }}')" 
+                                    class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs mr-1 action-btn" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            {% if student.blocked %}
+                            <button onclick="blockUser('{{ student.scholar_id }}', false)" 
+                                    class="bg-yellow-600 hover:bg-yellow-700 text-white px-2 py-1 rounded text-xs action-btn" title="Unblock">
+                                <i class="fas fa-lock-open"></i>
+                            </button>
+                            {% else %}
+                            <button onclick="blockUser('{{ student.scholar_id }}', true)" 
+                                    class="bg-yellow-600 hover:bg-yellow-700 text-white px-2 py-1 rounded text-xs action-btn" title="Block">
+                                <i class="fas fa-lock"></i>
+                            </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if stats.total_pages > 1 %}
+        <div class="bg-white p-3 md:p-4 rounded-xl shadow-md mt-4">
+            <div class="flex flex-col md:flex-row justify-between items-center space-y-3 md:space-y-0">
+                <!-- Page Info -->
+                <div class="text-xs md:text-sm text-gray-600 text-center md:text-left">
+                    Showing {{ ((current_page - 1) * per_page) + 1 }} to 
+                    {{ [current_page * per_page, stats.total_students] | min }} of 
+                    {{ stats.total_students }} entries
+                </div>
+                
+                <!-- Page Size Selector -->
+                <div class="flex items-center space-x-2">
+                    <span class="text-xs md:text-sm text-gray-600 hidden sm:inline">Show:</span>
+                    <select id="per-page-select" class="form-select input-focus p-1 border border-gray-300 rounded text-xs md:text-sm" onchange="changePerPage(this.value)">
+                        <option value="5" {% if per_page == 5 %}selected{% endif %}>5</option>
+                        <option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
+                        <option value="25" {% if per_page == 25 %}selected{% endif %}>25</option>
+                        <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
+                        <option value="100" {% if per_page == 100 %}selected{% endif %}>100</option>
+                    </select>
+                    <span class="text-xs md:text-sm text-gray-600 hidden sm:inline">per page</span>
+                </div>
+                
+                <!-- Pagination Controls -->
+                <div class="flex items-center space-x-1">
+                    <!-- First Page -->
+                    <button {% if current_page != 1 %}onclick="goToPage(1)"{% endif %}
+                            class="px-2 py-1 md:px-3 md:py-1 text-xs md:text-sm border border-gray-300 rounded pagination-btn {% if current_page == 1 %}bg-gray-100 text-gray-400 cursor-not-allowed{% else %}bg-white text-gray-700{% endif %}"
+                            {% if current_page == 1 %}disabled{% endif %}
+                            title="First Page">
+                        <i class="fas fa-angle-double-left"></i>
+                    </button>
+
+                    <!-- Previous Page -->
+                    <button {% if current_page != 1 %}onclick="goToPage({{ current_page - 1 }})"{% endif %}
+                            class="px-2 py-1 md:px-3 md:py-1 text-xs md:text-sm border border-gray-300 rounded pagination-btn {% if current_page == 1 %}bg-gray-100 text-gray-400 cursor-not-allowed{% else %}bg-white text-gray-700{% endif %}"
+                            {% if current_page == 1 %}disabled{% endif %}
+                            title="Previous Page">
+                        <i class="fas fa-angle-left"></i>
+                    </button>
+                    
+                    <!-- Page Numbers -->
+                    {% set start_page = [current_page - 2, 1] | max %}
+                    {% set end_page = [current_page + 2, stats.total_pages] | min %}
+                    
+                    {% for p in range(start_page, end_page + 1) %}
+                        {% if p == current_page %}
+                        <button class="px-2 py-1 md:px-3 md:py-1 text-xs md:text-sm border border-blue-500 bg-blue-500 text-white rounded pagination-btn">
+                            {{ p }}
+                        </button>
+                        {% else %}
+                        <button onclick="goToPage('{{ p }}')" 
+                                class="px-2 py-1 md:px-3 md:py-1 text-xs md:text-sm border border-gray-300 bg-white text-gray-700 rounded pagination-btn">
+                            {{ p }}
+                        </button>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    <!-- Next Page -->
+                    <button {% if current_page != stats.total_pages %}onclick="goToPage({{ current_page + 1 }})"{% endif %}
+                            class="px-2 py-1 md:px-3 md:py-1 text-xs md:text-sm border border-gray-300 rounded pagination-btn {% if current_page == stats.total_pages %}bg-gray-100 text-gray-400 cursor-not-allowed{% else %}bg-white text-gray-700{% endif %}"
+                            {% if current_page == stats.total_pages %}disabled{% endif %}
+                            title="Next Page">
+                        <i class="fas fa-angle-right"></i>
+                    </button>
+
+                    <!-- Last Page -->
+                    <button {% if current_page != stats.total_pages %}onclick="goToPage({{ stats.total_pages }})"{% endif %}
+                            class="px-2 py-1 md:px-3 md:py-1 text-xs md:text-sm border border-gray-300 rounded pagination-btn {% if current_page == stats.total_pages %}bg-gray-100 text-gray-400 cursor-not-allowed{% else %}bg-white text-gray-700{% endif %}"
+                            {% if current_page == stats.total_pages %}disabled{% endif %}
+                            title="Last Page">
+                        <i class="fas fa-angle-double-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if not students %}
+        <div class="text-center py-8">
+            <i class="fas fa-exclamation-triangle text-gray-400 text-3xl md:text-4xl mb-4"></i>
+            <p class="text-gray-500 text-sm md:text-base">No students found</p>
+            <p class="text-xs md:text-sm text-gray-400 mt-2">Try adjusting your filters to see students</p>
+        </div>
+        {% endif %}
+    </div>
+</main>
+
+<!-- Edit User Modal -->
+<div id="edit-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-auto">
+        <div class="px-6 py-4 border-b">
+            <h2 class="text-xl font-semibold text-gray-800">Edit User</h2>
+        </div>
+        <form id="edit-form" class="px-6 py-4">
+            <input type="hidden" id="edit-scholar_id">
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                <input type="text" id="edit-name" class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input type="email" id="edit-email" class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">School</label>
+                <select id="edit-school" class="form-select input-focus w-full p-2 border border-gray-300 rounded-md" onchange="updateEditDepartmentOptions()">
+                    <option value="">Select School</option>
+                    {% for school in schools %}
+                    <option value="{{ school }}">{{ school }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                <select id="edit-department" class="form-select input-focus w-full p-2 border border-gray-300 rounded-md" onchange="updateEditCourseOptions()">
+                    <option value="">Select Department</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Course</label>
+                <select id="edit-course" class="form-select input-focus w-full p-2 border border-gray-300 rounded-md">
+                    <option value="">Select Course</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+                <select id="edit-semester" class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">Select Semester</option>
+                    {% for i in range(1, 9) %}
+                    <option value="{{ i }}">Semester {{ i }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <select id="edit-blocked" class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                    <option value="false">Active</option>
+                    <option value="true">Blocked</option>
+                </select>
+            </div>
+        </form>
+        <div class="px-6 py-4 border-t flex justify-end space-x-3">
+            <button type="button" onclick="closeModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors btn-mobile">
+                Cancel
+            </button>
+            <button type="button" onclick="submitEdit()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors btn-mobile">
+                Save Changes
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Marks Modal -->
+<div id="marks-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl mx-4">
+        <div class="px-6 py-4 border-b flex justify-between items-center">
+            <h2 class="text-xl font-semibold text-gray-800">Student Results - <span id="student-name"></span></h2>
+            <button onclick="closeMarksModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="px-6 py-4">
+            <div id="marks-content" class="max-h-96 overflow-y-auto">
+                <!-- Results will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // School and department data
+    const schoolDepartments = {
+        "School of Technology, Communication and Management": [
+            "Department of Computer Sciences",
+            "Department of Tourism Management",
+            "Department of Journalism & Mass Communication",
+            "Department of Animation and Visual Effects",
+        ],
+        "School of Biological Sciences and Sustainability": [
+            "Department of Rural Studies and Sustainability",
+        ],
+        "School of Indology": [
+            "Department of Sanskrit and Vedic Studies",
+            "Department of Hindi",
+            "Department of Indian Classical Music",
+            "Department of History and Indian Culture",
+        ],
+        "School of Humanities, Social Sciences and Foundation Courses": [
+            "Department of English",
+            "Department of Education",
+            "Department of Psychology",
+            "Department of Life Management",
+            "Department of Scientific Spirituality",
+            "Department of Oriental Studies, Religious Studies & Philosophy",
+            "Department of Yogic Sciences and Human Consciousness",
+        ],
+    };
+
+    const departmentCourses = {
+        "Department of Computer Sciences": [
+            "B.Sc. Information Technology (Honors)",
+            "Bachelor of Computer Application (Honors)",
+            "Master of Computer Application (Data Science)",
+        ],
+        "Department of Tourism Management": [
+            "B.B.A Tourism & Travel Management (Honors)",
+            "M.B.A. Tourism & Travel Management",
+        ],
+        "Department of Journalism & Mass Communication": [
+            "B.A. Journalism and Mass Communication (Honors)",
+            "M. A. Journalism and Mass Communication",
+            "M. A. Spiritual Journalism",
+        ],
+        "Department of Animation and Visual Effects": [
+            "B.Voc. (Bachelor of Vocation) in 3D Animation and VFX (Honors)",
+        ],
+        "Department of Rural Studies and Sustainability": [
+            "Bachelor of Rural Studies (Honors)",
+        ],
+        "Department of English": ["B.A. English (Honors)"],
+        "Department of Education": ["B.Ed. (Bachelor of Education)"],
+        "Department of Psychology": [
+            "B.A. Psychology (Honors)",
+            "M.A. Counselling Psychology",
+            "M.Sc. Counselling Psychology",
+        ],
+        "Department of Life Management": [
+            "Life Management - Compulsory Program for PG and UG",
+        ],
+        "Department of Scientific Spirituality": [
+            "M.Sc. Herbal Medicine and Natural Product Chemistry",
+            "M.Sc. Molecular Physiology and Traditional Health Sciences",
+            "M.Sc. Indigenous Approaches for Child Development & Generational Dynamics",
+            "M.Sc. Indian Knowledge Systems",
+            "M.A. Indian Knowledge Systems",
+        ],
+        "Department of Oriental Studies, Religious Studies & Philosophy": [
+            "M.A. Hindu Studies",
+            "M.A. Philosophy",
+        ],
+        "Department of Yogic Sciences and Human Consciousness": [
+            "B.Sc. Yogic Science (Honors)",
+            "M.Sc. Yoga Therapy",
+            "M.A. Human Consciousness & Yogic Science",
+            "M.Sc. Human Consciousness & Yogic Science",
+            "P. G. Diploma Human Consciousness, Yoga & Alternative Therapy",
+            "Certificate In Yoga And Alternative Therapy",
+        ],
+        "Department of Sanskrit and Vedic Studies": [
+            "B.A. Sanskrit (Honors)",
+            "M.A. Sanskrit",
+        ],
+        "Department of Hindi": ["B.A. Hindi (Honors)", "M.A. Hindi"],
+        "Department of Indian Classical Music": [
+            "B.A. Music (Vocal) (Honors)",
+            "M.A. Music (Vocal)",
+            "B.A. Music Instrumental Mridang/Tabla (Honors)",
+            "M.A. Music (Tabla, Pakhaawaj)",
+        ],
+        "Department of History and Indian Culture": [
+            "B.A. History (Honors)",
+            "M. A. History and Indian Culture",
+        ],
+    };
+
+    // Filter dropdown functionality
+    function updateDepartmentOptions() {
+        const schoolSelect = document.getElementById('school-filter');
+        const departmentSelect = document.getElementById('department-filter');
+        const selectedSchool = schoolSelect.value;
+        
+        // Reset and disable dependent dropdowns
+        departmentSelect.innerHTML = '<option value="">All Departments</option>';
+        document.getElementById('course-filter').innerHTML = '<option value="">All Courses</option>';
+        
+        if (selectedSchool) {
+            // Populate departments based on selected school
+            const departments = schoolDepartments[selectedSchool] || [];
+            departments.forEach(dept => {
+                const option = document.createElement('option');
+                option.value = dept;
+                option.textContent = dept;
+                departmentSelect.appendChild(option);
+            });
+        }
+    }
+
+    function updateCourseOptions() {
+        const departmentSelect = document.getElementById('department-filter');
+        const courseSelect = document.getElementById('course-filter');
+        const selectedDepartment = departmentSelect.value;
+        
+        // Reset course dropdown
+        courseSelect.innerHTML = '<option value="">All Courses</option>';
+        
+        if (selectedDepartment) {
+            // Populate courses based on selected department
+            const courses = departmentCourses[selectedDepartment] || [];
+            courses.forEach(course => {
+                const option = document.createElement('option');
+                option.value = course;
+                option.textContent = course;
+                courseSelect.appendChild(option);
+            });
+        }
+    }
+
+    // Edit modal dropdown functionality
+    function updateEditDepartmentOptions() {
+        const schoolSelect = document.getElementById('edit-school');
+        const departmentSelect = document.getElementById('edit-department');
+        const selectedSchool = schoolSelect.value;
+        
+        // Reset department dropdown
+        departmentSelect.innerHTML = '<option value="">Select Department</option>';
+        document.getElementById('edit-course').innerHTML = '<option value="">Select Course</option>';
+        
+        if (selectedSchool) {
+            // Populate departments based on selected school
+            const departments = schoolDepartments[selectedSchool] || [];
+            departments.forEach(dept => {
+                const option = document.createElement('option');
+                option.value = dept;
+                option.textContent = dept;
+                departmentSelect.appendChild(option);
+            });
+        }
+    }
+
+    function updateEditCourseOptions() {
+        const departmentSelect = document.getElementById('edit-department');
+        const courseSelect = document.getElementById('edit-course');
+        const selectedDepartment = departmentSelect.value;
+        
+        // Reset course dropdown
+        courseSelect.innerHTML = '<option value="">Select Course</option>';
+        
+        if (selectedDepartment) {
+            // Populate courses based on selected department
+            const courses = departmentCourses[selectedDepartment] || [];
+            courses.forEach(course => {
+                const option = document.createElement('option');
+                option.value = course;
+                option.textContent = course;
+                courseSelect.appendChild(option);
+            });
+        }
+    }
+
+    // Initialize dropdowns on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        updateDepartmentOptions();
+        updateCourseOptions();
+        
+        // Set initial values if filters are already applied
+        const schoolFilter = document.getElementById('school-filter');
+        const departmentFilter = document.getElementById('department-filter');
+        const courseFilter = document.getElementById('course-filter');
+        
+        if (schoolFilter.value) {
+            updateDepartmentOptions();
+            if (departmentFilter.value) {
+                updateCourseOptions();
+            }
+        }
+    });
+
+    // Pagination functions
+    function goToPage(page) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('page', page);
+        window.location.href = url.toString();
+    }
+
+    function changePerPage(perPage) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('per_page', perPage);
+        url.searchParams.set('page', 1);
+        window.location.href = url.toString();
+    }
+
+    // Edit user function with prefilled data
+    function editUser(scholar_id, name, course, semester, email, blocked) {
+        document.getElementById('edit-scholar_id').value = scholar_id;
+        document.getElementById('edit-name').value = name;
+        document.getElementById('edit-email').value = email;
+        document.getElementById('edit-semester').value = semester;
+        document.getElementById('edit-blocked').value = blocked.toString();
+        
+        // Set school, department, and course if available
+        if (course) {
+            // Find which department this course belongs to
+            let foundDept = '';
+            let foundSchool = '';
+            
+            for (const [dept, courses] of Object.entries(departmentCourses)) {
+                if (courses.includes(course)) {
+                    foundDept = dept;
+                    break;
+                }
+            }
+            
+            // Find which school this department belongs to
+            for (const [school, depts] of Object.entries(schoolDepartments)) {
+                if (depts.includes(foundDept)) {
+                    foundSchool = school;
+                    break;
+                }
+            }
+            
+            if (foundSchool) {
+                document.getElementById('edit-school').value = foundSchool;
+                updateEditDepartmentOptions();
+                
+                setTimeout(() => {
+                    if (foundDept) {
+                        document.getElementById('edit-department').value = foundDept;
+                        updateEditCourseOptions();
+                        
+                        setTimeout(() => {
+                            document.getElementById('edit-course').value = course;
+                        }, 100);
+                    }
+                }, 100);
+            }
+        }
+        
+        // Show modal with animation
+        const modal = document.getElementById('edit-modal');
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            modal.classList.add('active');
+        }, 10);
+    }
+
+    // Submit edit form
+    function submitEdit() {
+        const data = {
+            scholar_id: document.getElementById('edit-scholar_id').value,
+            name: document.getElementById('edit-name').value,
+            email: document.getElementById('edit-email').value,
+            school: document.getElementById('edit-school').value,
+            department: document.getElementById('edit-department').value,
+            course: document.getElementById('edit-course').value,
+            semester: document.getElementById('edit-semester').value,
+            blocked: document.getElementById('edit-blocked').value === 'true'
+        };
+        
+        fetch('/admin/edit_user', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        }).then(response => response.json())
+          .then(data => {
+              if (data.success) {
+                  alert('User updated successfully');
+                  location.reload();
+              } else {
+                  alert(data.error || 'Failed to update user');
+              }
+          }).catch(error => {
+              alert('Error updating user: ' + error);
+          });
+    }
+
+    // Close modal
+    function closeModal() {
+        const modal = document.getElementById('edit-modal');
+        modal.classList.remove('active');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+    }
+
+    // View student marks
+    function viewMarks(scholar_id) {
+        document.getElementById('student-name').textContent = 'Loading...';
+        
+        fetch(`/admin/user_results/${scholar_id}`)
+            .then(response => response.json())
+            .then(data => {
+                const content = document.getElementById('marks-content');
+                content.innerHTML = '';
+                
+                if (data.results && data.results.length > 0) {
+                    // Get student name from first result
+                    const studentName = data.results[0]?.user_name || 'Unknown';
+                    document.getElementById('student-name').textContent = studentName;
+                    
+                    let html = `
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Course</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Semester</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Score</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Percentage</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                    `;
+                    
+                    data.results.forEach(result => {
+                        const date = new Date(result.timestamp);
+                        const percentage = ((result.score / result.total) * 100).toFixed(2);
+                        
+                        html += `
+                            <tr>
+                                <td class="px-4 py-2 whitespace-nowrap">${result.course || 'N/A'}</td>
+                                <td class="px-4 py-2 whitespace-nowrap">${result.semester || 'N/A'}</td>
+                                <td class="px-4 py-2 whitespace-nowrap">${result.score}</td>
+                                <td class="px-4 py-2 whitespace-nowrap">${result.total}</td>
+                                <td class="px-4 py-2 whitespace-nowrap font-bold ${percentage >= 60 ? 'text-green-600' : 'text-red-600'}">${percentage}%</td>
+                                <td class="px-4 py-2 whitespace-nowrap">${date.toLocaleDateString()}</td>
+                                <td class="px-4 py-2 whitespace-nowrap">
+                                    <span class="px-2 py-1 rounded-full text-xs ${result.published ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                        ${result.published ? 'Published' : 'Pending'}
+                                    </span>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    
+                    html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                    
+                    content.innerHTML = html;
+                } else {
+                    document.getElementById('student-name').textContent = 'No Results';
+                    content.innerHTML = '<p class="text-center py-4 text-gray-500">No results found for this student.</p>';
+                }
+                
+                // Show marks modal
+                const modal = document.getElementById('marks-modal');
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modal.classList.add('active');
+                }, 10);
+            })
+            .catch(error => {
+                document.getElementById('student-name').textContent = 'Error';
+                const content = document.getElementById('marks-content');
+                content.innerHTML = `<p class="text-center py-4 text-red-500">Error loading results: ${error}</p>`;
+                
+                const modal = document.getElementById('marks-modal');
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modal.classList.add('active');
+                }, 10);
+            });
+    }
+
+    // Close marks modal
+    function closeMarksModal() {
+        const modal = document.getElementById('marks-modal');
+        modal.classList.remove('active');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+    }
+
+    // Delete user
+    function deleteUser(scholar_id) {
+        if (confirm('Are you sure you want to delete this user? This action cannot be undone and will delete all related data.')) {
+            fetch('/admin/delete_user', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({scholar_id})
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      alert('User deleted successfully');
+                      location.reload();
+                  } else {
+                      alert(data.error || 'Failed to delete user');
+                  }
+              }).catch(error => {
+                  alert('Error deleting user: ' + error);
+              });
+        }
+    }
+
+    // Block/unblock user
+    function blockUser(scholar_id, block) {
+        const action = block ? 'block' : 'unblock';
+        if (confirm(`Are you sure you want to ${action} this user?`)) {
+            fetch('/admin/block_user', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({scholar_id, block})
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      alert(`User ${action}ed successfully`);
+                      location.reload();
+                  } else {
+                      alert(data.error || `Failed to ${action} user`);
+                  }
+              }).catch(error => {
+                  alert(`Error ${action}ing user: ` + error);
+              });
+        }
+    }
+
+    // Export users function
+    function exportUsers() {
+        // Get current filter parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // Build export URL with current filters
+        let exportUrl = '/admin/export_users?';
+        urlParams.forEach((value, key) => {
+            if (key !== 'page' && key !== 'per_page') {
+                exportUrl += `${key}=${encodeURIComponent(value)}&`;
+            }
+        });
+        
+        // Remove trailing & or ? if no params
+        exportUrl = exportUrl.replace(/[&?]$/, '');
+        
+        // Trigger download
+        window.location.href = exportUrl;
+    }
+</script>
+{% endblock %}

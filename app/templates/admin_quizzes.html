@@ -1,0 +1,1101 @@
+{% extends "admin_base.html" %} {% block title %}Quiz Management - DSVV Quiz
+System{% endblock %} {% block extra_css %}
+<style>
+  .card-hover {
+    transition: all 0.3s ease;
+  }
+  .card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  }
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .fade-in {
+    animation: fadeIn 0.5s ease-out;
+  }
+</style>
+{% endblock %} {% block content %}
+<!-- Main Content -->
+<div class="min-h-screen bg-gray-50 p-4 md:p-6 lg:p-8">
+  <div class="max-w-9xl mx-auto">
+    <!-- Header Section -->
+    <div class="mb-8 fade-in">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+        <div class="mb-4 lg:mb-0">
+          <h1 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
+            Quiz Management
+          </h1>
+          <p class="text-lg text-gray-600 max-w-3xl">
+            Create and manage quizzes for different courses and departments
+          </p>
+        </div>
+        <div class="flex space-x-3">
+          <!-- Create New Quiz Button -->
+          <button
+            id="create-quiz-btn"
+            class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center"
+          >
+            <i class="fas fa-plus-circle mr-3 text-lg"></i>
+            <span>Create New Quiz</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 fade-in"
+    >
+      <div
+        class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 card-hover"
+      >
+        <div class="flex items-center">
+          <div class="bg-blue-100 p-3 rounded-xl mr-4">
+            <i class="fas fa-file-alt text-blue-600 text-xl"></i>
+          </div>
+          <div>
+            <p class="text-sm font-medium text-gray-600">Total Quizzes</p>
+            <h3 id="total-quizzes" class="text-2xl font-bold text-gray-900">
+              0
+            </h3>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 card-hover"
+      >
+        <div class="flex items-center">
+          <div class="bg-green-100 p-3 rounded-xl mr-4">
+            <i class="fas fa-play-circle text-green-600 text-xl"></i>
+          </div>
+          <div>
+            <p class="text-sm font-medium text-gray-600">Active Quizzes</p>
+            <h3 id="active-quizzes" class="text-2xl font-bold text-gray-900">
+              0
+            </h3>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 card-hover"
+      >
+        <div class="flex items-center">
+          <div class="bg-purple-100 p-3 rounded-xl mr-4">
+            <i class="fas fa-question-circle text-purple-600 text-xl"></i>
+          </div>
+          <div>
+            <p class="text-sm font-medium text-gray-600">Total Questions</p>
+            <h3 id="total-questions" class="text-2xl font-bold text-gray-900">
+              0
+            </h3>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 card-hover"
+      >
+        <div class="flex items-center">
+          <div class="bg-orange-100 p-3 rounded-xl mr-4">
+            <i class="fas fa-users text-orange-600 text-xl"></i>
+          </div>
+          <div>
+            <p class="text-sm font-medium text-gray-600">Total Participants</p>
+            <h3
+              id="total-participants"
+              class="text-2xl font-bold text-gray-900"
+            >
+              0
+            </h3>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Create Quiz Modal -->
+    <div
+      id="create-quiz-modal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden p-4"
+    >
+      <div
+        class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden fade-in"
+      >
+        <!-- Modal Header -->
+        <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xl font-semibold text-white">
+              <i class="fas fa-plus-circle mr-3"></i>
+              Create New Quiz
+            </h2>
+            <button
+              id="cancel-quiz-btn"
+              class="text-white hover:text-blue-200 transition-colors"
+            >
+              <i class="fas fa-times text-xl"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+          <form id="create-quiz-form" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- Quiz Title -->
+              <div class="md:col-span-2">
+                <label
+                  for="quiz-title"
+                  class="block text-sm font-semibold text-gray-800 mb-3"
+                >
+                  <i class="fas fa-heading mr-2 text-blue-600"></i>
+                  Quiz Title
+                </label>
+                <input
+                  type="text"
+                  id="quiz-title"
+                  name="quiz_title"
+                  class="w-full px-4 py-3 text-lg border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white"
+                  placeholder="Enter quiz title"
+                  required
+                />
+                <p class="text-xs text-gray-500 mt-1">
+                  Quiz title must be unique
+                </p>
+              </div>
+
+              <!-- Quiz Description -->
+              <div class="md:col-span-2">
+                <label
+                  for="quiz-description"
+                  class="block text-sm font-semibold text-gray-800 mb-3"
+                >
+                  <i class="fas fa-align-left mr-2 text-blue-600"></i>
+                  Description
+                </label>
+                <textarea
+                  id="quiz-description"
+                  name="description"
+                  rows="3"
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white resize-none"
+                  placeholder="Enter quiz description (optional)"
+                ></textarea>
+              </div>
+
+              <!-- School -->
+              <div>
+                <label
+                  for="quiz-school"
+                  class="block text-sm font-semibold text-gray-800 mb-3"
+                >
+                  <i class="fas fa-university mr-2 text-blue-600"></i>
+                  School
+                </label>
+                <select
+                  id="quiz-school"
+                  name="school"
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white"
+                  required
+                >
+                  <option value="">Select School</option>
+                  <option value="all">All Schools</option>
+                  <option
+                    value="School of Technology, Communication and Management"
+                  >
+                    School of Technology, Communication and Management
+                  </option>
+                  <option
+                    value="School of Biological Sciences and Sustainability"
+                  >
+                    School of Biological Sciences and Sustainability
+                  </option>
+                  <option value="School of Indology">School of Indology</option>
+                  <option
+                    value="School of Humanities, Social Sciences and Foundation Courses"
+                  >
+                    School of Humanities, Social Sciences and Foundation Courses
+                  </option>
+                </select>
+              </div>
+
+              <!-- Department -->
+              <div>
+                <label
+                  for="quiz-department"
+                  class="block text-sm font-semibold text-gray-800 mb-3"
+                >
+                  <i class="fas fa-building mr-2 text-blue-600"></i>
+                  Department
+                </label>
+                <select
+                  id="quiz-department"
+                  name="department"
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white"
+                  required
+                >
+                  <option value="">Select Department</option>
+                  <option value="all">All Departments</option>
+                </select>
+              </div>
+
+              <!-- Course -->
+              <div>
+                <label
+                  for="quiz-course"
+                  class="block text-sm font-semibold text-gray-800 mb-3"
+                >
+                  <i class="fas fa-graduation-cap mr-2 text-blue-600"></i>
+                  Course
+                </label>
+                <select
+                  id="quiz-course"
+                  name="course"
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white"
+                  required
+                >
+                  <option value="">Select Course</option>
+                  <option value="all">All Courses</option>
+                </select>
+              </div>
+
+              <!-- Semester -->
+              <div>
+                <label
+                  for="quiz-semester"
+                  class="block text-sm font-semibold text-gray-800 mb-3"
+                >
+                  <i class="fas fa-calendar-alt mr-2 text-blue-600"></i>
+                  Semester
+                </label>
+                <select
+                  id="quiz-semester"
+                  name="semester"
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white"
+                  required
+                >
+                  <option value="">Select Semester</option>
+                  <option value="all">All Semesters</option>
+                  <option value="1">Semester 1</option>
+                  <option value="2">Semester 2</option>
+                  <option value="3">Semester 3</option>
+                  <option value="4">Semester 4</option>
+                  <option value="5">Semester 5</option>
+                  <option value="6">Semester 6</option>
+                  <option value="7">Semester 7</option>
+                  <option value="8">Semester 8</option>
+                </select>
+              </div>
+
+              <!-- Duration -->
+              <div>
+                <label
+                  for="quiz-duration"
+                  class="block text-sm font-semibold text-gray-800 mb-3"
+                >
+                  <i class="fas fa-clock mr-2 text-blue-600"></i>
+                  Duration (minutes)
+                </label>
+                <input
+                  type="number"
+                  id="quiz-duration"
+                  name="duration"
+                  min="1"
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white"
+                  placeholder="Enter duration"
+                  required
+                />
+              </div>
+
+              <!-- Pass Percentage -->
+              <div>
+                <label
+                  for="quiz-pass-percentage"
+                  class="block text-sm font-semibold text-gray-800 mb-3"
+                >
+                  <i class="fas fa-percentage mr-2 text-blue-600"></i>
+                  Pass Percentage
+                </label>
+                <input
+                  type="number"
+                  id="quiz-pass-percentage"
+                  name="pass_percentage"
+                  min="1"
+                  max="100"
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white"
+                  placeholder="Enter pass percentage"
+                  required
+                />
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div
+              class="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-6 border-t border-gray-200"
+            >
+              <button
+                type="button"
+                id="cancel-quiz-btn-2"
+                class="px-6 py-3 border-2 border-gray-300 rounded-xl text-gray-700 font-semibold hover:bg-gray-50 transition-all duration-200 w-full sm:w-auto"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl w-full sm:w-auto"
+              >
+                <i class="fas fa-plus-circle mr-2"></i>
+                Create Quiz
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quizzes List Section -->
+    <div
+      class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden fade-in"
+    >
+      <!-- Table Header -->
+      <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+        <div
+          class="flex flex-col sm:flex-row sm:items-center sm:justify-between"
+        >
+          <h2 class="text-xl font-semibold text-gray-900 mb-2 sm:mb-0">
+            <i class="fas fa-list-alt mr-3 text-blue-600"></i>
+            All Quizzes
+          </h2>
+          <div class="flex items-center space-x-4">
+            <span
+              id="quizzes-count"
+              class="text-sm text-gray-600 bg-white px-3 py-1 rounded-full border"
+            >
+              0 quizzes
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table Container -->
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-gray-50">
+            <tr>
+              <th
+                class="px-4 md:px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider"
+              >
+                Quiz Details
+              </th>
+              <th
+                class="px-4 md:px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider hidden lg:table-cell"
+              >
+                Course Info
+              </th>
+              <th
+                class="px-4 md:px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider"
+              >
+                Status
+              </th>
+              <th
+                class="px-4 md:px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider hidden md:table-cell"
+              >
+                Statistics
+              </th>
+              <th
+                class="px-4 md:px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider"
+              >
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody
+            id="quizzes-table-body"
+            class="bg-white divide-y divide-gray-200"
+          >
+            <!-- Quizzes will be populated here via JavaScript -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Empty State -->
+      <div id="no-quizzes-message" class="text-center py-12 hidden">
+        <div class="bg-gray-50 rounded-2xl p-8 max-w-md mx-auto">
+          <div
+            class="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+          >
+            <i class="fas fa-file-alt text-gray-400 text-2xl"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">
+            No Quizzes Found
+          </h3>
+          <p class="text-gray-600 mb-6">
+            Create your first quiz to get started
+          </p>
+          <button
+            id="create-first-quiz-btn"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl font-medium transition-colors duration-200"
+          >
+            <i class="fas fa-plus-circle mr-2"></i>
+            Create Quiz
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Success/Error Toast -->
+<div
+  id="toast"
+  class="fixed top-4 right-4 p-4 rounded-xl shadow-2xl bg-white border-l-4 border-green-500 transform translate-x-full transition-all duration-300 z-50 max-w-sm fade-in"
+>
+  <div class="flex items-start">
+    <div class="flex-shrink-0 pt-0.5">
+      <i class="fas fa-check-circle text-green-500 text-lg"></i>
+    </div>
+    <div class="ml-3 flex-1">
+      <p id="toast-message" class="text-sm font-semibold text-gray-900">
+        Success!
+      </p>
+      <p id="toast-description" class="mt-1 text-sm text-gray-600">
+        Operation completed successfully.
+      </p>
+    </div>
+    <button
+      class="ml-4 flex-shrink-0 focus:outline-none hover:bg-gray-100 rounded-full p-1 transition-colors"
+      onclick="hideToast()"
+    >
+      <i class="fas fa-times text-gray-400"></i>
+    </button>
+  </div>
+</div>
+
+<!-- Loading Overlay -->
+<div
+  id="loading-overlay"
+  class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden"
+>
+  <div class="bg-white rounded-2xl p-8 flex items-center shadow-2xl">
+    <div
+      class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mr-4"
+    ></div>
+    <div>
+      <p class="text-lg font-semibold text-gray-900">Processing</p>
+      <p class="text-gray-600">Please wait...</p>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extra_js %}
+<script>
+  // School, department, and course data with "All" options
+  const schoolDepartments = {
+    all: ["all"], // All departments option
+    "School of Technology, Communication and Management": [
+      "all", // All departments for this school
+      "Department of Computer Sciences",
+      "Department of Tourism Management",
+      "Department of Journalism & Mass Communication",
+      "Department of Animation and Visual Effects",
+    ],
+    "School of Biological Sciences and Sustainability": [
+      "all",
+      "Department of Rural Studies and Sustainability",
+    ],
+    "School of Indology": [
+      "all",
+      "Department of Sanskrit and Vedic Studies",
+      "Department of Hindi",
+      "Department of Indian Classical Music",
+      "Department of History and Indian Culture",
+    ],
+    "School of Humanities, Social Sciences and Foundation Courses": [
+      "all",
+      "Department of English",
+      "Department of Education",
+      "Department of Psychology",
+      "Department of Life Management",
+      "Department of Scientific Spirituality",
+      "Department of Oriental Studies, Religious Studies & Philosophy",
+      "Department of Yogic Sciences and Human Consciousness",
+    ],
+  };
+
+  const departmentCourses = {
+    all: ["all"], // All courses option
+    "Department of Computer Sciences": [
+      "all", // All courses for this department
+      "B.Sc. Information Technology (Honors)",
+      "Bachelor of Computer Application (Honors)",
+      "Master of Computer Application (Data Science)",
+    ],
+    "Department of Tourism Management": [
+      "all",
+      "B.B.A Tourism & Travel Management (Honors)",
+      "M.B.A. Tourism & Travel Management",
+    ],
+    "Department of Journalism & Mass Communication": [
+      "all",
+      "B.A. Journalism and Mass Communication (Honors)",
+      "M. A. Journalism and Mass Communication",
+      "M. A. Spiritual Journalism",
+    ],
+    "Department of Animation and Visual Effects": [
+      "all",
+      "B.Voc. (Bachelor of Vocation) in 3D Animation and VFX (Honors)",
+    ],
+    "Department of Rural Studies and Sustainability": [
+      "all",
+      "Bachelor of Rural Studies (Honors)",
+    ],
+    "Department of English": ["all", "B.A. English (Honors)"],
+    "Department of Education": ["all", "B.Ed. (Bachelor of Education)"],
+    "Department of Psychology": [
+      "all",
+      "B.A. Psychology (Honors)",
+      "M.A. Counselling Psychology",
+      "M.Sc. Counselling Psychology",
+    ],
+    "Department of Life Management": [
+      "all",
+      "Life Management - Compulsory Program for PG and UG",
+    ],
+    "Department of Scientific Spirituality": [
+      "all",
+      "M.Sc. Herbal Medicine and Natural Product Chemistry",
+      "M.Sc. Molecular Physiology and Traditional Health Sciences",
+      "M.Sc. Indigenous Approaches for Child Development & Generational Dynamics",
+      "M.Sc. Indian Knowledge Systems",
+      "M.A. Indian Knowledge Systems",
+    ],
+    "Department of Oriental Studies, Religious Studies & Philosophy": [
+      "all",
+      "M.A. Hindu Studies",
+      "M.A. Philosophy",
+    ],
+    "Department of Yogic Sciences and Human Consciousness": [
+      "all",
+      "B.Sc. Yogic Science (Honors)",
+      "M.Sc. Yoga Therapy",
+      "M.A. Human Consciousness & Yogic Science",
+      "M.Sc. Human Consciousness & Yogic Science",
+      "P. G. Diploma Human Consciousness, Yoga & Alternative Therapy",
+      "Certificate In Yoga And Alternative Therapy",
+    ],
+    "Department of Sanskrit and Vedic Studies": [
+      "all",
+      "B.A. Sanskrit (Honors)",
+      "M.A. Sanskrit",
+    ],
+    "Department of Hindi": ["all", "B.A. Hindi (Honors)", "M.A. Hindi"],
+    "Department of Indian Classical Music": [
+      "all",
+      "B.A. Music (Vocal) (Honors)",
+      "M.A. Music (Vocal)",
+      "B.A. Music Instrumental Mridang/Tabla (Honors)",
+      "M.A. Music (Tabla, Pakhaawaj)",
+    ],
+    "Department of History and Indian Culture": [
+      "all",
+      "B.A. History (Honors)",
+      "M. A. History and Indian Culture",
+    ],
+  };
+
+  // Modal functionality
+  function showCreateQuizModal() {
+    document.getElementById("create-quiz-modal").classList.remove("hidden");
+    document.body.classList.add("overflow-hidden");
+  }
+
+  function hideCreateQuizModal() {
+    document.getElementById("create-quiz-modal").classList.add("hidden");
+    document.body.classList.remove("overflow-hidden");
+    document.getElementById("create-quiz-form").reset();
+
+    // Reset dependent dropdowns
+    const departmentSelect = document.getElementById("quiz-department");
+    const courseSelect = document.getElementById("quiz-course");
+    if (departmentSelect)
+      departmentSelect.innerHTML =
+        '<option value="">Select Department</option>';
+    if (courseSelect)
+      courseSelect.innerHTML = '<option value="">Select Course</option>';
+  }
+
+  // Event listeners for modal
+  document.addEventListener("DOMContentLoaded", function () {
+    // Modal buttons
+    const createQuizBtn = document.getElementById("create-quiz-btn");
+    const createFirstQuizBtn = document.getElementById("create-first-quiz-btn");
+    const cancelQuizBtn = document.getElementById("cancel-quiz-btn");
+    const cancelQuizBtn2 = document.getElementById("cancel-quiz-btn-2");
+
+    if (createQuizBtn) {
+      createQuizBtn.addEventListener("click", showCreateQuizModal);
+    }
+    if (createFirstQuizBtn) {
+      createFirstQuizBtn.addEventListener("click", showCreateQuizModal);
+    }
+    if (cancelQuizBtn) {
+      cancelQuizBtn.addEventListener("click", hideCreateQuizModal);
+    }
+    if (cancelQuizBtn2) {
+      cancelQuizBtn2.addEventListener("click", hideCreateQuizModal);
+    }
+
+    // Close modal when clicking outside
+    const modal = document.getElementById("create-quiz-modal");
+    if (modal) {
+      modal.addEventListener("click", function (e) {
+        if (e.target === this) {
+          hideCreateQuizModal();
+        }
+      });
+    }
+
+    // School selection change handler
+    const schoolSelect = document.getElementById("quiz-school");
+    if (schoolSelect) {
+      schoolSelect.addEventListener("change", function () {
+        const school = this.value;
+        const departmentSelect = document.getElementById("quiz-department");
+        const courseSelect = document.getElementById("quiz-course");
+
+        // Clear previous options
+        departmentSelect.innerHTML =
+          '<option value="">Select Department</option>';
+        courseSelect.innerHTML = '<option value="">Select Course</option>';
+
+        if (school) {
+          // Add departments for selected school
+          if (school === "all") {
+            // For "All Schools", show "All Departments" option
+            const option = document.createElement("option");
+            option.value = "all";
+            option.textContent = "All Departments";
+            departmentSelect.appendChild(option);
+          } else if (schoolDepartments[school]) {
+            // Add "All Departments" option first
+            const allOption = document.createElement("option");
+            allOption.value = "all";
+            allOption.textContent = "All Departments";
+            departmentSelect.appendChild(allOption);
+
+            // Add specific departments for the school
+            schoolDepartments[school].forEach((department) => {
+              if (department !== "all") {
+                // Skip the "all" we already added
+                const option = document.createElement("option");
+                option.value = department;
+                option.textContent = department;
+                departmentSelect.appendChild(option);
+              }
+            });
+          }
+        }
+      });
+    }
+
+    // Department selection change handler
+    const departmentSelect = document.getElementById("quiz-department");
+    if (departmentSelect) {
+      departmentSelect.addEventListener("change", function () {
+        const department = this.value;
+        const courseSelect = document.getElementById("quiz-course");
+
+        courseSelect.innerHTML = '<option value="">Select Course</option>';
+
+        if (department) {
+          if (department === "all") {
+            // For "All Departments", show "All Courses" option
+            const option = document.createElement("option");
+            option.value = "all";
+            option.textContent = "All Courses";
+            courseSelect.appendChild(option);
+          } else if (departmentCourses[department]) {
+            // Add "All Courses" option first
+            const allOption = document.createElement("option");
+            allOption.value = "all";
+            allOption.textContent = "All Courses";
+            courseSelect.appendChild(allOption);
+
+            // Add specific courses for the department
+            departmentCourses[department].forEach((course) => {
+              if (course !== "all") {
+                // Skip the "all" we already added
+                const option = document.createElement("option");
+                option.value = course;
+                option.textContent = course;
+                courseSelect.appendChild(option);
+              }
+            });
+          }
+        }
+      });
+    }
+
+    // Form submission
+    const createQuizForm = document.getElementById("create-quiz-form");
+    if (createQuizForm) {
+      createQuizForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        const quizData = Object.fromEntries(formData.entries());
+
+        showLoading();
+
+        fetch("/admin/quizzes/create", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(quizData),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            hideLoading();
+            if (data.success) {
+              showToast("Success", "Quiz created successfully", "success");
+              hideCreateQuizModal();
+              loadQuizzes();
+            } else {
+              showToast(
+                "Error",
+                data.error || "Failed to create quiz",
+                "error"
+              );
+            }
+          })
+          .catch((error) => {
+            hideLoading();
+            showToast("Error", "Failed to create quiz: " + error, "error");
+          });
+      });
+    }
+
+    // Load initial quizzes
+    loadQuizzes();
+  });
+
+  // Load quizzes function
+  function loadQuizzes() {
+    showLoading();
+
+    fetch("/admin/quizzes/list")
+      .then((response) => response.json())
+      .then((data) => {
+        hideLoading();
+        const tableBody = document.getElementById("quizzes-table-body");
+        const noQuizzesMessage = document.getElementById("no-quizzes-message");
+        const quizzesCount = document.getElementById("quizzes-count");
+
+        if (tableBody) {
+          tableBody.innerHTML = "";
+        }
+
+        if (data.success && data.quizzes && data.quizzes.length > 0) {
+          if (noQuizzesMessage) noQuizzesMessage.classList.add("hidden");
+          if (quizzesCount)
+            quizzesCount.textContent = `${data.quizzes.length} quizzes`;
+
+          // Update stats with proper calculation
+          updateStats(data.quizzes);
+
+          data.quizzes.forEach((quiz) => {
+            const row = document.createElement("tr");
+            row.className = "hover:bg-gray-50 transition-colors duration-200";
+
+            // Format status badge
+            let statusClass, statusText, statusIcon;
+            if (quiz.status === "active") {
+              statusClass = "bg-green-100 text-green-800 border-green-200";
+              statusText = "Active";
+              statusIcon = "fa-play-circle";
+            } else if (quiz.status === "draft") {
+              statusClass = "bg-yellow-100 text-yellow-800 border-yellow-200";
+              statusText = "Draft";
+              statusIcon = "fa-edit";
+            } else {
+              statusClass = "bg-gray-100 text-gray-800 border-gray-200";
+              statusText = "Inactive";
+              statusIcon = "fa-pause-circle";
+            }
+
+            // Get counts - FIXED: Handle different participant types
+            const questionCount = quiz.questions ? quiz.questions.length : 0;
+
+            // Calculate participant count properly
+            let participantCount = 0;
+            if (quiz.participants && quiz.participants.length > 0) {
+              if (quiz.participants.includes("all")) {
+                participantCount = "All Students";
+              } else {
+                participantCount = quiz.participants.length;
+              }
+            }
+
+            // Format description for display
+            const description = quiz.description || "No description provided";
+            const shortDescription =
+              description.length > 100
+                ? description.substring(0, 100) + "..."
+                : description;
+
+            row.innerHTML = `
+              <td class="px-4 md:px-6 py-4">
+                <div class="flex items-start space-x-4">
+                  <div class="bg-blue-100 p-3 rounded-xl flex-shrink-0">
+                    <i class="fas fa-file-alt text-blue-600 text-lg"></i>
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-1 truncate">${
+                      quiz.title
+                    }</h3>
+                    <p class="text-sm text-gray-600 mb-2">${shortDescription}</p>
+                    <div class="flex flex-wrap gap-2 text-sm text-gray-600">
+                      <span class="bg-gray-100 px-2 py-1 rounded-lg">
+                        <i class="fas fa-clock mr-1"></i>${quiz.duration}m
+                      </span>
+                      <span class="bg-gray-100 px-2 py-1 rounded-lg">
+                        <i class="fas fa-percentage mr-1"></i>${
+                          quiz.pass_percentage || 40
+                        }%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </td>
+              
+              <td class="px-4 md:px-6 py-4 hidden lg:table-cell">
+                <div class="space-y-2">
+                  <div class="text-sm text-gray-900 font-medium">${
+                    quiz.course === "all" ? "All Courses" : quiz.course
+                  }</div>
+                  <div class="text-sm text-gray-600">
+                    <div class="flex items-center mb-1">
+                      <i class="fas fa-university mr-2 text-gray-400 text-xs"></i>
+                      <span class="truncate">${
+                        quiz.school === "all" ? "All Schools" : quiz.school
+                      }</span>
+                    </div>
+                    <div class="flex items-center">
+                      <i class="fas fa-building mr-2 text-gray-400 text-xs"></i>
+                      <span class="truncate">${
+                        quiz.department === "all"
+                          ? "All Departments"
+                          : quiz.department
+                      }</span>
+                    </div>
+                  </div>
+                </div>
+              </td>
+              
+              <td class="px-4 md:px-6 py-4">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${statusClass}">
+                  <i class="fas ${statusIcon} mr-2"></i>
+                  ${statusText}
+                </span>
+              </td>
+              
+              <td class="px-4 md:px-6 py-4 hidden md:table-cell">
+                <div class="space-y-2">
+                  <div class="flex items-center text-sm text-gray-600">
+                    <i class="fas fa-question-circle mr-2 text-blue-500"></i>
+                    <span>${questionCount} questions</span>
+                  </div>
+                  <div class="flex items-center text-sm text-gray-600">
+                    <i class="fas fa-users mr-2 text-green-500"></i>
+                    <span>${participantCount} participants</span>
+                  </div>
+                </div>
+              </td>
+              
+              <td class="px-4 md:px-6 py-4">
+                <div class="flex flex-col space-y-2">
+                  <a href="/admin/quizzes/manage/${quiz.quiz_id}" 
+                     class="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm font-medium">
+                    <i class="fas fa-cog mr-2"></i>
+                    Manage
+                  </a>
+                  <button onclick="deleteQuiz('${quiz.quiz_id}')" 
+                          class="inline-flex items-center justify-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 text-sm font-medium">
+                    <i class="fas fa-trash mr-2"></i>
+                    Delete
+                  </button>
+                </div>
+              </td>
+            `;
+
+            if (tableBody) {
+              tableBody.appendChild(row);
+            }
+          });
+        } else {
+          if (noQuizzesMessage) noQuizzesMessage.classList.remove("hidden");
+          if (quizzesCount) quizzesCount.textContent = "0 quizzes";
+          updateStats([]);
+        }
+      })
+      .catch((error) => {
+        hideLoading();
+        showToast("Error", "Failed to load quizzes: " + error, "error");
+      });
+  }
+
+  // Update statistics with proper calculation
+  function updateStats(quizzes) {
+    const totalQuizzes = quizzes.length;
+    const activeQuizzes = quizzes.filter((q) => q.status === "active").length;
+
+    // Calculate total questions properly
+    const totalQuestions = quizzes.reduce(
+      (sum, quiz) => sum + (quiz.questions ? quiz.questions.length : 0),
+      0
+    );
+
+    // Calculate total participants properly (handle 'all' case)
+    const totalParticipants = quizzes.reduce((sum, quiz) => {
+      if (!quiz.participants || quiz.participants.length === 0) {
+        return sum;
+      }
+      if (quiz.participants.includes("all")) {
+        // For 'all', we can't count exact numbers, so we'll indicate it's all
+        return sum + 1; // Or you might want to fetch actual student counts
+      }
+      return sum + quiz.participants.length;
+    }, 0);
+
+    const totalQuizzesEl = document.getElementById("total-quizzes");
+    const activeQuizzesEl = document.getElementById("active-quizzes");
+    const totalQuestionsEl = document.getElementById("total-questions");
+    const totalParticipantsEl = document.getElementById("total-participants");
+
+    if (totalQuizzesEl) totalQuizzesEl.textContent = totalQuizzes;
+    if (activeQuizzesEl) activeQuizzesEl.textContent = activeQuizzes;
+    if (totalQuestionsEl) totalQuestionsEl.textContent = totalQuestions;
+    if (totalParticipantsEl) {
+      if (
+        quizzes.some((q) => q.participants && q.participants.includes("all"))
+      ) {
+        totalParticipantsEl.textContent = "Multiple (Includes 'All')";
+      } else {
+        totalParticipantsEl.textContent = totalParticipants;
+      }
+    }
+  }
+
+  // DELETE QUIZ FUNCTION - ADD THIS MISSING FUNCTION
+  async function deleteQuiz(quiz_id) {
+    if (
+      !confirm(
+        "Are you sure you want to delete this quiz? This action cannot be undone and will delete all related data."
+      )
+    ) {
+      return;
+    }
+
+    showLoading();
+
+    try {
+      const response = await fetch(`/admin/quizzes/api/${quiz_id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      const data = await response.json();
+      hideLoading();
+
+      if (data.success) {
+        showToast("Success", "Quiz deleted successfully", "success");
+        // Reload the quizzes list
+        loadQuizzes();
+      } else {
+        showToast("Error", data.error || "Failed to delete quiz", "error");
+      }
+    } catch (error) {
+      hideLoading();
+      showToast("Error", "Failed to delete quiz: " + error.message, "error");
+    }
+  }
+
+  // Toast notification functions
+  function showToast(title, message, type = "success") {
+    const toast = document.getElementById("toast");
+    const toastMessage = document.getElementById("toast-message");
+    const toastDescription = document.getElementById("toast-description");
+
+    if (!toast || !toastMessage || !toastDescription) return;
+
+    // Set border color based on type
+    const borderColors = {
+      success: "border-green-500",
+      error: "border-red-500",
+      warning: "border-yellow-500",
+      info: "border-blue-500",
+    };
+
+    // Remove all border color classes
+    Object.values(borderColors).forEach((color) => {
+      toast.classList.remove(color);
+    });
+
+    // Add the appropriate border color
+    toast.classList.add(borderColors[type] || borderColors.success);
+
+    // Set icon based on type
+    const iconElement = toast.querySelector(".flex-shrink-0 i");
+    const icons = {
+      success: "fa-check-circle text-green-500",
+      error: "fa-exclamation-circle text-red-500",
+      warning: "fa-exclamation-triangle text-yellow-500",
+      info: "fa-info-circle text-blue-500",
+    };
+
+    if (iconElement) {
+      iconElement.className = `fas ${icons[type] || icons.success} text-lg`;
+    }
+
+    toastMessage.textContent = title;
+    toastDescription.textContent = message;
+
+    // Show toast
+    toast.classList.remove("translate-x-full");
+
+    // Auto hide after 5 seconds
+    setTimeout(hideToast, 5000);
+  }
+
+  function hideToast() {
+    const toast = document.getElementById("toast");
+    if (toast) {
+      toast.classList.add("translate-x-full");
+    }
+  }
+
+  // Loading overlay functions
+  function showLoading() {
+    const loadingOverlay = document.getElementById("loading-overlay");
+    if (loadingOverlay) {
+      loadingOverlay.classList.remove("hidden");
+    }
+  }
+
+  function hideLoading() {
+    const loadingOverlay = document.getElementById("loading-overlay");
+    if (loadingOverlay) {
+      loadingOverlay.classList.add("hidden");
+    }
+  }
+</script>
+{% endblock %}
