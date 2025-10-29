@@ -3,7 +3,7 @@ services:
     name: quiz-app
     runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn "app:create_app()"
+    startCommand: gunicorn app:app
     envVars:
       - key: MONGO_URI
         value: mongodb+srv://pyaman003:vjkdRaysGU3rRoTj@quizapp.kcjc3is.mongodb.net/?retryWrites=true&w=majority&appName=quizapp

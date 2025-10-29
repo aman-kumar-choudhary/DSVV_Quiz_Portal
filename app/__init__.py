@@ -12,16 +12,18 @@ db = None
 
 def create_app():
     app = Flask(__name__)
-    app.secret_key = os.urandom(24)
     
     # Load environment variables
     load_dotenv()
+    
+    # Set secret key from environment
+    app.secret_key = os.getenv("SECRET_KEY", "fallback-secret-key-for-development")
     
     # Database configuration
     global client, db
     mongo_uri = os.getenv("MONGO_URI")
     if not mongo_uri:
-        raise ValueError("MONGO_URI not set in .env file")
+        raise ValueError("MONGO_URI not set in environment variables")
     
     client = MongoClient(mongo_uri)
     db = client.quiz_db
@@ -32,18 +34,19 @@ def create_app():
     # Configuration
     app.config['UPLOAD_FOLDER'] = 'static/uploads'
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=2)
-    app.config['SESSION_COOKIE_SECURE'] = False
+    app.config['SESSION_COOKIE_SECURE'] = True
     app.config['SESSION_COOKIE_HTTPONLY'] = True
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
     
     # Create upload folder
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     
-    # Initialize database
+    # Import and initialize database
     from app.utils.helpers import initialize_database
-    initialize_database()
+    with app.app_context():
+        initialize_database()
     
-    # Register blueprints
+    # Register blueprints - fix import paths
     from app.routes.auth import auth_bp
     from app.routes.admin import admin_bp
     from app.routes.student import student_bp
